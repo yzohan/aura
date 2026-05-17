@@ -74,11 +74,13 @@ function LoginPage() {
 
       <div className="flex items-center justify-center p-6 md:p-12">
         <div className="w-full max-w-sm">
-          <h1 className="text-2xl font-bold tracking-tight">Masuk ke AURA</h1>
+          <h1 className="text-2xl font-bold tracking-tight">
+            Masuk ke <span className="bg-leaf-gradient bg-clip-text text-transparent">AURA</span>
+          </h1>
           <p className="mt-1 text-sm text-muted-foreground">
-            Belum punya akun?{" "}
-            <Link to="/auth/signup" className="font-medium text-primary hover:underline">
-              Daftar
+            Warga?{" "}
+            <Link to="/warga" className="font-medium text-primary hover:underline">
+              Mulai Lapor Disini
             </Link>
           </p>
 

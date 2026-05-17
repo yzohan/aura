@@ -9,9 +9,6 @@ CREATE TYPE public.urgency_level AS ENUM ('low', 'medium', 'high', 'critical');
 CREATE TABLE public.profiles (
   id UUID PRIMARY KEY REFERENCES auth.users(id) ON DELETE CASCADE,
   full_name TEXT NOT NULL,
-  phone TEXT,
-  avatar_url TEXT,
-  address TEXT,
   created_at TIMESTAMPTZ NOT NULL DEFAULT now(),
   updated_at TIMESTAMPTZ NOT NULL DEFAULT now()
 );

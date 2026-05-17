@@ -19,6 +19,9 @@ import { Route as AuthLoginRouteImport } from './routes/auth.login'
 import { Route as AppWargaRouteImport } from './routes/_app.warga'
 import { Route as AppPetugasRouteImport } from './routes/_app.petugas'
 import { Route as AppAdminRouteImport } from './routes/_app.admin'
+import { Route as AppAdminIndexRouteImport } from './routes/_app.admin.index'
+import { Route as AppAdminUsersRouteImport } from './routes/_app.admin.users'
+import { Route as AppAdminReportsIdRouteImport } from './routes/_app.admin.reports.$id'
 
 const TimRoute = TimRouteImport.update({
   id: '/tim',
@@ -69,28 +72,48 @@ const AppAdminRoute = AppAdminRouteImport.update({
   path: '/admin',
   getParentRoute: () => AppRoute,
 } as any)
+const AppAdminIndexRoute = AppAdminIndexRouteImport.update({
+  id: '/',
+  path: '/',
+  getParentRoute: () => AppAdminRoute,
+} as any)
+const AppAdminUsersRoute = AppAdminUsersRouteImport.update({
+  id: '/users',
+  path: '/users',
+  getParentRoute: () => AppAdminRoute,
+} as any)
+const AppAdminReportsIdRoute = AppAdminReportsIdRouteImport.update({
+  id: '/reports/$id',
+  path: '/reports/$id',
+  getParentRoute: () => AppAdminRoute,
+} as any)
 
 export interface FileRoutesByFullPath {
   '/': typeof IndexRoute
   '/fitur': typeof FiturRoute
   '/tentang': typeof TentangRoute
   '/tim': typeof TimRoute
-  '/admin': typeof AppAdminRoute
+  '/admin': typeof AppAdminRouteWithChildren
   '/petugas': typeof AppPetugasRoute
   '/warga': typeof AppWargaRoute
   '/auth/login': typeof AuthLoginRoute
   '/auth/signup': typeof AuthSignupRoute
+  '/admin/users': typeof AppAdminUsersRoute
+  '/admin/': typeof AppAdminIndexRoute
+  '/admin/reports/$id': typeof AppAdminReportsIdRoute
 }
 export interface FileRoutesByTo {
   '/': typeof IndexRoute
   '/fitur': typeof FiturRoute
   '/tentang': typeof TentangRoute
   '/tim': typeof TimRoute
-  '/admin': typeof AppAdminRoute
   '/petugas': typeof AppPetugasRoute
   '/warga': typeof AppWargaRoute
   '/auth/login': typeof AuthLoginRoute
   '/auth/signup': typeof AuthSignupRoute
+  '/admin/users': typeof AppAdminUsersRoute
+  '/admin': typeof AppAdminIndexRoute
+  '/admin/reports/$id': typeof AppAdminReportsIdRoute
 }
 export interface FileRoutesById {
   __root__: typeof rootRouteImport
@@ -99,11 +122,14 @@ export interface FileRoutesById {
   '/fitur': typeof FiturRoute
   '/tentang': typeof TentangRoute
   '/tim': typeof TimRoute
-  '/_app/admin': typeof AppAdminRoute
+  '/_app/admin': typeof AppAdminRouteWithChildren
   '/_app/petugas': typeof AppPetugasRoute
   '/_app/warga': typeof AppWargaRoute
   '/auth/login': typeof AuthLoginRoute
   '/auth/signup': typeof AuthSignupRoute
+  '/_app/admin/users': typeof AppAdminUsersRoute
+  '/_app/admin/': typeof AppAdminIndexRoute
+  '/_app/admin/reports/$id': typeof AppAdminReportsIdRoute
 }
 export interface FileRouteTypes {
   fileRoutesByFullPath: FileRoutesByFullPath
@@ -117,17 +143,22 @@ export interface FileRouteTypes {
     | '/warga'
     | '/auth/login'
     | '/auth/signup'
+    | '/admin/users'
+    | '/admin/'
+    | '/admin/reports/$id'
   fileRoutesByTo: FileRoutesByTo
   to:
     | '/'
     | '/fitur'
     | '/tentang'
     | '/tim'
-    | '/admin'
     | '/petugas'
     | '/warga'
     | '/auth/login'
     | '/auth/signup'
+    | '/admin/users'
+    | '/admin'
+    | '/admin/reports/$id'
   id:
     | '__root__'
     | '/'
@@ -140,6 +171,9 @@ export interface FileRouteTypes {
     | '/_app/warga'
     | '/auth/login'
     | '/auth/signup'
+    | '/_app/admin/users'
+    | '/_app/admin/'
+    | '/_app/admin/reports/$id'
   fileRoutesById: FileRoutesById
 }
 export interface RootRouteChildren {
@@ -224,17 +258,54 @@ declare module '@tanstack/react-router' {
       preLoaderRoute: typeof AppAdminRouteImport
       parentRoute: typeof AppRoute
     }
+    '/_app/admin/': {
+      id: '/_app/admin/'
+      path: '/'
+      fullPath: '/admin/'
+      preLoaderRoute: typeof AppAdminIndexRouteImport
+      parentRoute: typeof AppAdminRoute
+    }
+    '/_app/admin/users': {
+      id: '/_app/admin/users'
+      path: '/users'
+      fullPath: '/admin/users'
+      preLoaderRoute: typeof AppAdminUsersRouteImport
+      parentRoute: typeof AppAdminRoute
+    }
+    '/_app/admin/reports/$id': {
+      id: '/_app/admin/reports/$id'
+      path: '/reports/$id'
+      fullPath: '/admin/reports/$id'
+      preLoaderRoute: typeof AppAdminReportsIdRouteImport
+      parentRoute: typeof AppAdminRoute
+    }
   }
 }
 
+interface AppAdminRouteChildren {
+  AppAdminUsersRoute: typeof AppAdminUsersRoute
+  AppAdminIndexRoute: typeof AppAdminIndexRoute
+  AppAdminReportsIdRoute: typeof AppAdminReportsIdRoute
+}
+
+const AppAdminRouteChildren: AppAdminRouteChildren = {
+  AppAdminUsersRoute: AppAdminUsersRoute,
+  AppAdminIndexRoute: AppAdminIndexRoute,
+  AppAdminReportsIdRoute: AppAdminReportsIdRoute,
+}
+
+const AppAdminRouteWithChildren = AppAdminRoute._addFileChildren(
+  AppAdminRouteChildren,
+)
+
 interface AppRouteChildren {
-  AppAdminRoute: typeof AppAdminRoute
+  AppAdminRoute: typeof AppAdminRouteWithChildren
   AppPetugasRoute: typeof AppPetugasRoute
   AppWargaRoute: typeof AppWargaRoute
 }
 
 const AppRouteChildren: AppRouteChildren = {
-  AppAdminRoute: AppAdminRoute,
+  AppAdminRoute: AppAdminRouteWithChildren,
   AppPetugasRoute: AppPetugasRoute,
   AppWargaRoute: AppWargaRoute,
 }

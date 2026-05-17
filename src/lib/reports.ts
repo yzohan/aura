@@ -1,21 +1,21 @@
+import { Construction, Wrench } from "lucide-react";
+
 export const CATEGORY_LABEL = {
   jalan_berlubang: "Jalan Berlubang",
-  trotoar_rusak: "Trotoar Rusak",
-  pju_mati: "PJU Mati / Rusak",
+  trotoar_rusak: "Fasilitas Umum Rusak",
 } as const;
 
 export const CATEGORY_ICON = {
-  jalan_berlubang: "🕳️",
-  trotoar_rusak: "🚶",
-  pju_mati: "💡",
-} as const;
+  jalan_berlubang: Construction,
+  trotoar_rusak: Wrench,
+};
 
 export const STATUS_LABEL = {
-  pending: "Menunggu Verifikasi",
+  pending: "Menunggu Verifikasi Petugas",
   verified: "Terverifikasi",
-  in_progress: "Dikerjakan",
-  resolved: "Selesai",
-  rejected: "Ditolak",
+  in_progress: "Dikerjakan Petugas",
+  resolved: "Selesai Diperbaiki",
+  rejected: " Laporan Ditolak",
 } as const;
 
 export const STATUS_TONE: Record<keyof typeof STATUS_LABEL, string> = {

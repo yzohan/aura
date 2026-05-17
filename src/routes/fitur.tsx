@@ -7,7 +7,7 @@ import { SiteHeader, SiteFooter } from "@/components/site-chrome";
 export const Route = createFileRoute("/fitur")({
   head: () => ({
     meta: [
-      { title: "Fitur AURA — Pelaporan, GIS Monitoring, Work Order" },
+      { title: "Fitur" },
       {
         name: "description",
         content:

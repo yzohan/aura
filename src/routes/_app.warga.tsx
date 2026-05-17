@@ -1,11 +1,13 @@
-import { createFileRoute, useNavigate } from "@tanstack/react-router";
-import { useEffect, useState } from "react";
-import { Camera, MapPin, FileText, Plus, ListChecks, Loader2, Crosshair } from "lucide-react";
+import { createFileRoute } from "@tanstack/react-router";
+import { useEffect, useState, useRef } from "react";
+import {
+  Camera, MapPin, FileText, Plus, ListChecks,
+  Loader2, Crosshair, ShieldAlert, Clock,
+} from "lucide-react";
 import { z } from "zod";
 import { toast } from "sonner";
 import { formatDistanceToNow } from "date-fns";
 import { id as idLocale } from "date-fns/locale";
-import { useAuth } from "@/lib/auth";
 import { supabase } from "@/integrations/supabase/client";
 import { DashboardShell } from "@/components/dashboard-shell";
 import { Button } from "@/components/ui/button";
@@ -18,26 +20,54 @@ import {
 import { Badge } from "@/components/ui/badge";
 import { Card } from "@/components/ui/card";
 import {
-  CATEGORY_LABEL, CATEGORY_ICON, STATUS_LABEL, STATUS_TONE, URGENCY_LABEL, URGENCY_TONE,
+  CATEGORY_LABEL, CATEGORY_ICON,
+  STATUS_LABEL, STATUS_TONE,
+  URGENCY_LABEL, URGENCY_TONE,
 } from "@/lib/reports";
 
 export const Route = createFileRoute("/_app/warga")({
-  head: () => ({ meta: [{ title: "Dashboard Warga" }] }),
+  head: () => ({ meta: [{ title: "Lapor Kerusakan" }] }),
   component: WargaPage,
 });
 
-const NAV = [
-  { to: "/warga", label: "Lapor & Riwayat", icon: ListChecks },
-];
+const NAV = [{ to: "/warga", label: "Lapor & Riwayat", icon: ListChecks }];
 
 const reportSchema = z.object({
-  category: z.enum(["jalan_berlubang", "trotoar_rusak"]),
+  category: z.enum(["jalan_berlubang", "trotoar_rusak", "pju_mati"]),
   title: z.string().trim().min(4, "Judul minimal 4 karakter").max(120),
   description: z.string().trim().min(10, "Deskripsi minimal 10 karakter").max(1000),
   latitude: z.number().min(-90).max(90),
   longitude: z.number().min(-180).max(180),
   address: z.string().trim().max(200).optional(),
 });
+
+// ──────────────────────────────────────────────────────────
+// Cara pakai ip-api.com:
+//   GET http://ip-api.com/json/?fields=query,status
+//   → { "status": "success", "query": "114.10.52.133" }
+//   field "query" = IP publik pengguna saat ini
+//   PENTING: versi gratis hanya HTTP (bukan HTTPS)
+//   Jika website pakai HTTPS di production, browser akan
+//   blokir mixed-content → kita punya fallback ke ipify.org (HTTPS)
+// ──────────────────────────────────────────────────────────
+async function fetchPublicIp(): Promise<string | null> {
+  try {
+    const res = await fetch("http://ip-api.com/json/?fields=query,status");
+    if (!res.ok) throw new Error("bad response");
+    const data = (await res.json()) as { status: string; query?: string };
+    if (data.status === "success" && data.query) return data.query;
+    throw new Error("status bukan success");
+  } catch {
+    // Fallback: ipify.org – HTTPS, gratis, tanpa API key
+    try {
+      const res = await fetch("https://api.ipify.org?format=json");
+      const data = (await res.json()) as { ip?: string };
+      return data.ip ?? null;
+    } catch {
+      return null;
+    }
+  }
+}
 
 interface MyReport {
   id: string;
@@ -49,29 +79,25 @@ interface MyReport {
   created_at: string;
   address: string | null;
   photo_url: string | null;
+  ip_address: string | null;
   latitude: number;
   longitude: number;
 }
 
+// ── Root page ──────────────────────────────────────────────
 function WargaPage() {
-  const { user, role, loading } = useAuth();
-  const navigate = useNavigate();
-
-  useEffect(() => {
-    if (!loading && role && role !== "warga") navigate({ to: "/" });
-  }, [role, loading, navigate]);
-
   return (
-    <DashboardShell title="Dashboard Warga" nav={NAV}>
+    <DashboardShell title="Lapor Kerusakan Infrastruktur" nav={NAV}>
       <div className="grid gap-6 lg:grid-cols-[1.1fr_1fr]">
-        <ReportForm userId={user?.id ?? ""} />
-        <MyReportsList userId={user?.id ?? ""} />
+        <ReportForm />
+        <RecentReportsList />
       </div>
     </DashboardShell>
   );
 }
 
-function ReportForm({ userId }: { userId: string }) {
+// ── Form laporan ───────────────────────────────────────────
+function ReportForm() {
   const [category, setCategory] = useState<keyof typeof CATEGORY_LABEL>("jalan_berlubang");
   const [title, setTitle] = useState("");
   const [description, setDescription] = useState("");
@@ -81,11 +107,40 @@ function ReportForm({ userId }: { userId: string }) {
   const [submitting, setSubmitting] = useState(false);
   const [locating, setLocating] = useState(false);
 
+  // "loading" = sedang fetch IP
+  // "ok"      = IP terdeteksi, masih ada kuota
+  // "blocked" = sudah 3 laporan hari ini → cooldown
+  // "error"   = tidak bisa fetch IP
+  const [ipStatus, setIpStatus] = useState<"loading" | "ok" | "blocked" | "error">("loading");
+  const [userIp, setUserIp] = useState<string | null>(null);
+  const [remainingReports, setRemainingReports] = useState(3);
+  const ipFetched = useRef(false);
+
+  // Ambil IP & cek kuota saat halaman pertama dibuka
+  useEffect(() => {
+    if (ipFetched.current) return;
+    ipFetched.current = true;
+
+    (async () => {
+      // 1. Fetch IP publik
+      const ip = await fetchPublicIp();
+      if (!ip) { setIpStatus("error"); return; }
+      setUserIp(ip);
+
+      // 2. Panggil Supabase RPC: hitung laporan dari IP ini dalam 24 jam terakhir
+      //    Fungsi ini kita buat di migration SQL: count_reports_by_ip(_ip TEXT) → INTEGER
+      const { data, error } = await supabase.rpc("count_reports_by_ip", { _ip: ip });
+      if (error) { setIpStatus("error"); return; }
+
+      const count = (data as number) ?? 0;
+      const remaining = Math.max(0, 3 - count);
+      setRemainingReports(remaining);
+      setIpStatus(count >= 3 ? "blocked" : "ok");
+    })();
+  }, []);
+
   const getLocation = () => {
-    if (!navigator.geolocation) {
-      toast.error("Browser tidak mendukung geolocation");
-      return;
-    }
+    if (!navigator.geolocation) { toast.error("Browser tidak mendukung geolocation"); return; }
     setLocating(true);
     navigator.geolocation.getCurrentPosition(
       (pos) => {
@@ -93,39 +148,42 @@ function ReportForm({ userId }: { userId: string }) {
         setLocating(false);
         toast.success("Lokasi terdeteksi");
       },
-      (err) => {
-        setLocating(false);
-        toast.error("Gagal mengambil lokasi: " + err.message);
-      },
+      (err) => { setLocating(false); toast.error("Gagal ambil lokasi: " + err.message); },
       { enableHighAccuracy: true, timeout: 10000 }
     );
   };
 
   const onSubmit = async (e: React.FormEvent) => {
     e.preventDefault();
-    if (!coords) {
-      toast.error("Ambil lokasi GPS terlebih dahulu");
-      return;
-    }
+
+    if (ipStatus === "blocked") { toast.error("Batas harian tercapai. Coba lagi besok."); return; }
+    if (!userIp) { toast.error("IP tidak terdeteksi. Refresh halaman dan coba lagi."); return; }
+    if (!coords) { toast.error("Ambil lokasi GPS terlebih dahulu"); return; }
+
     const parsed = reportSchema.safeParse({
-      category,
-      title,
-      description,
-      latitude: coords.lat,
-      longitude: coords.lng,
+      category, title, description,
+      latitude: coords.lat, longitude: coords.lng,
       address: address || undefined,
     });
-    if (!parsed.success) {
-      toast.error(parsed.error.issues[0].message);
+    if (!parsed.success) { toast.error(parsed.error.issues[0].message); return; }
+
+    setSubmitting(true);
+
+    // Double-check cooldown di detik terakhir (security layer ke-2)
+    const { data: freshCount } = await supabase.rpc("count_reports_by_ip", { _ip: userIp });
+    if (((freshCount as number) ?? 0) >= 3) {
+      setSubmitting(false);
+      setIpStatus("blocked");
+      setRemainingReports(0);
+      toast.error("Batas harian tercapai. Silakan coba lagi besok (reset setiap 24 jam).");
       return;
     }
 
-    setSubmitting(true);
+    // Upload foto (opsional) – simpan di folder 'anon'
     let photoPath: string | null = null;
-
     if (photo) {
       const ext = photo.name.split(".").pop() ?? "jpg";
-      photoPath = `${userId}/${Date.now()}.${ext}`;
+      photoPath = `anon/${Date.now()}.${ext}`;
       const { error: upErr } = await supabase.storage.from("reports").upload(photoPath, photo, {
         cacheControl: "3600", upsert: false,
       });
@@ -136,8 +194,10 @@ function ReportForm({ userId }: { userId: string }) {
       }
     }
 
+    // Insert laporan → reporter_id = null (anonim), ip_address = IP user
     const { error } = await supabase.from("reports").insert({
-      reporter_id: userId,
+      reporter_id: null,       // tidak perlu akun
+      ip_address: userIp,      // dicatat untuk anti-spam & cooldown
       category: parsed.data.category,
       title: parsed.data.title,
       description: parsed.data.description,
@@ -146,13 +206,54 @@ function ReportForm({ userId }: { userId: string }) {
       address: parsed.data.address ?? null,
       photo_url: photoPath,
     });
+
     setSubmitting(false);
-    if (error) {
-      toast.error(error.message);
-      return;
-    }
-    toast.success("Laporan berhasil dikirim!");
+    if (error) { toast.error(error.message); return; }
+
+    toast.success("Laporan berhasil dikirim! Terima kasih.");
     setTitle(""); setDescription(""); setAddress(""); setPhoto(null); setCoords(null);
+
+    const newRemaining = Math.max(0, remainingReports - 1);
+    setRemainingReports(newRemaining);
+    if (newRemaining === 0) setIpStatus("blocked");
+  };
+
+  const formDisabled = ipStatus === "blocked" || ipStatus === "loading";
+
+  const IpBanner = () => {
+    if (ipStatus === "loading") return (
+      <div className="flex items-center gap-2 rounded-lg border border-border bg-secondary/40 px-4 py-3 text-sm text-muted-foreground">
+        <Loader2 className="h-4 w-4 animate-spin shrink-0" />
+        <span>Mendeteksi perangkat Anda…</span>
+      </div>
+    );
+    if (ipStatus === "error") return (
+      <div className="flex items-center gap-2 rounded-lg border border-yellow-500/30 bg-yellow-500/10 px-4 py-3 text-sm text-yellow-600 dark:text-yellow-400">
+        <ShieldAlert className="h-4 w-4 shrink-0" />
+        <span>Tidak dapat mendeteksi jaringan. Pastikan internet aktif lalu refresh halaman.</span>
+      </div>
+    );
+    if (ipStatus === "blocked") return (
+      <div className="flex items-center gap-2 rounded-lg border border-red-500/30 bg-red-500/10 px-4 py-3 text-sm text-red-600 dark:text-red-400">
+        <Clock className="h-4 w-4 shrink-0" />
+        <div>
+          <p className="font-medium">Batas harian tercapai</p>
+          <p className="text-xs opacity-80 mt-0.5">
+            Anda sudah mengirim 3 laporan hari ini. Kuota reset otomatis setelah 24 jam.
+          </p>
+        </div>
+      </div>
+    );
+    return (
+      <div className="flex items-center justify-between rounded-lg border border-green-500/30 bg-green-500/10 px-4 py-2.5 text-sm">
+        <span className="text-green-700 dark:text-green-400 text-xs">
+          IP terdeteksi: <code className="font-mono">{userIp}</code>
+        </span>
+        <span className="font-semibold text-green-700 dark:text-green-400">
+          Sisa kuota: {remainingReports}/3
+        </span>
+      </div>
+    );
   };
 
   return (
@@ -163,45 +264,58 @@ function ReportForm({ userId }: { userId: string }) {
         </span>
         <div>
           <h2 className="text-lg font-semibold">Buat laporan baru</h2>
-          <p className="text-xs text-muted-foreground">Sertakan foto & lokasi untuk verifikasi cepat.</p>
+          <p className="text-xs text-muted-foreground">Tanpa akun · Maks. 3 laporan per hari per perangkat.</p>
         </div>
       </div>
 
-      <form onSubmit={onSubmit} className="mt-6 space-y-4">
+      <div className="mt-4"><IpBanner /></div>
+
+      <form onSubmit={onSubmit} className="mt-4 space-y-4">
         <div className="space-y-1.5">
           <Label>Kategori kerusakan</Label>
-          <Select value={category} onValueChange={(v) => setCategory(v as keyof typeof CATEGORY_LABEL)}>
+          <Select value={category} onValueChange={(v) => setCategory(v as keyof typeof CATEGORY_LABEL)} disabled={formDisabled}>
             <SelectTrigger><SelectValue /></SelectTrigger>
             <SelectContent>
-              {Object.entries(CATEGORY_LABEL).map(([k, v]) => (
-                <SelectItem key={k} value={k}>
-                  {CATEGORY_ICON[k as keyof typeof CATEGORY_ICON]} {v}
-                </SelectItem>
-              ))}
+              {Object.entries(CATEGORY_LABEL).map(([k, v]) => {
+                const Icon = CATEGORY_ICON[k as keyof typeof CATEGORY_ICON];
+                return (
+                  <SelectItem key={k} value={k}>
+                    <div className="flex items-center gap-2">
+                      <Icon className="h-4 w-4 text-primary" /><span>{v}</span>
+                    </div>
+                  </SelectItem>
+                );
+              })}
             </SelectContent>
           </Select>
         </div>
 
         <div className="space-y-1.5">
           <Label htmlFor="title">Judul singkat</Label>
-          <Input id="title" value={title} onChange={(e) => setTitle(e.target.value)} placeholder="Contoh: Lubang besar di Jl. Sudirman" required />
+          <Input id="title" value={title} onChange={(e) => setTitle(e.target.value)}
+            placeholder="Contoh: Lubang besar di Jl. Sudirman" disabled={formDisabled} required />
         </div>
 
         <div className="space-y-1.5">
           <Label htmlFor="desc">Deskripsi</Label>
-          <Textarea id="desc" value={description} onChange={(e) => setDescription(e.target.value)} placeholder="Jelaskan kondisi, ukuran, dan dampaknya…" rows={3} required />
+          <Textarea id="desc" value={description} onChange={(e) => setDescription(e.target.value)}
+            placeholder="Jelaskan kondisi, ukuran, dan dampaknya…" rows={3} disabled={formDisabled} required />
         </div>
 
         <div className="space-y-1.5">
           <Label htmlFor="address">Alamat (opsional)</Label>
-          <Input id="address" value={address} onChange={(e) => setAddress(e.target.value)} placeholder="Patokan / nama jalan" />
+          <Input id="address" value={address} onChange={(e) => setAddress(e.target.value)}
+            placeholder="Patokan / nama jalan" disabled={formDisabled} />
         </div>
 
         <div className="space-y-1.5">
           <Label>Lokasi GPS</Label>
           <div className="flex flex-wrap items-center gap-3">
-            <Button type="button" variant="outline" onClick={getLocation} disabled={locating}>
-              {locating ? <Loader2 className="mr-2 h-4 w-4 animate-spin" /> : <Crosshair className="mr-2 h-4 w-4" />}
+            <Button type="button" variant="outline" onClick={getLocation}
+              disabled={locating || formDisabled}>
+              {locating
+                ? <Loader2 className="mr-2 h-4 w-4 animate-spin" />
+                : <Crosshair className="mr-2 h-4 w-4" />}
               {coords ? "Ulang ambil lokasi" : "Ambil lokasi sekarang"}
             </Button>
             {coords && (
@@ -215,42 +329,47 @@ function ReportForm({ userId }: { userId: string }) {
         <div className="space-y-1.5">
           <Label htmlFor="photo">Foto (opsional)</Label>
           <div className="flex items-center gap-3">
-            <label htmlFor="photo" className="flex cursor-pointer items-center gap-2 rounded-lg border border-dashed border-border bg-secondary/40 px-4 py-3 text-sm text-muted-foreground hover:border-primary/40">
+            <label htmlFor="photo"
+              className="flex cursor-pointer items-center gap-2 rounded-lg border border-dashed border-border bg-secondary/40 px-4 py-3 text-sm text-muted-foreground hover:border-primary/40">
               <Camera className="h-4 w-4" /> {photo ? photo.name : "Pilih foto"}
             </label>
             <input id="photo" type="file" accept="image/*" capture="environment" className="sr-only"
-              onChange={(e) => setPhoto(e.target.files?.[0] ?? null)} />
+              onChange={(e) => setPhoto(e.target.files?.[0] ?? null)} disabled={formDisabled} />
           </div>
         </div>
 
-        <Button type="submit" disabled={submitting} className="w-full bg-leaf-gradient text-primary-foreground hover:opacity-90">
-          {submitting ? <><Loader2 className="mr-2 h-4 w-4 animate-spin" /> Mengirim…</> : <><FileText className="mr-2 h-4 w-4" /> Kirim laporan</>}
+        <Button type="submit"
+          disabled={submitting || formDisabled || ipStatus === "error"}
+          className="w-full bg-leaf-gradient text-primary-foreground hover:opacity-90">
+          {submitting
+            ? <><Loader2 className="mr-2 h-4 w-4 animate-spin" /> Mengirim…</>
+            : <><FileText className="mr-2 h-4 w-4" /> Kirim laporan</>}
         </Button>
       </form>
     </Card>
   );
 }
 
-function MyReportsList({ userId }: { userId: string }) {
+// ── Daftar laporan terbaru (semua, bukan per user) ─────────
+function RecentReportsList() {
   const [reports, setReports] = useState<MyReport[] | null>(null);
 
   useEffect(() => {
-    if (!userId) return;
     const load = async () => {
       const { data } = await supabase
         .from("reports")
         .select("*")
-        .eq("reporter_id", userId)
-        .order("created_at", { ascending: false });
+        .order("created_at", { ascending: false })
+        .limit(30);
       setReports((data ?? []) as MyReport[]);
     };
     load();
     const channel = supabase
-      .channel("my-reports")
-      .on("postgres_changes", { event: "*", schema: "public", table: "reports", filter: `reporter_id=eq.${userId}` }, load)
+      .channel("recent-reports")
+      .on("postgres_changes", { event: "INSERT", schema: "public", table: "reports" }, load)
       .subscribe();
     return () => { supabase.removeChannel(channel); };
-  }, [userId]);
+  }, []);
 
   return (
     <Card className="p-6 shadow-soft">
@@ -259,24 +378,26 @@ function MyReportsList({ userId }: { userId: string }) {
           <ListChecks className="h-5 w-5" />
         </span>
         <div>
-          <h2 className="text-lg font-semibold">Riwayat laporan saya</h2>
-          <p className="text-xs text-muted-foreground">{reports?.length ?? 0} laporan</p>
+          <h2 className="text-lg font-semibold">Laporan terbaru</h2>
+          <p className="text-xs text-muted-foreground">{reports?.length ?? 0} laporan termuat</p>
         </div>
       </div>
       <div className="mt-4 max-h-[640px] space-y-3 overflow-y-auto pr-2">
         {reports === null && <p className="text-sm text-muted-foreground">Memuat…</p>}
         {reports?.length === 0 && (
           <div className="rounded-xl border border-dashed border-border p-8 text-center text-sm text-muted-foreground">
-            Belum ada laporan. Buat laporan pertamamu di sebelah ←
+            Belum ada laporan. Jadilah yang pertama!
           </div>
         )}
         {reports?.map((r) => (
           <div key={r.id} className="rounded-xl border border-border bg-card p-4">
             <div className="flex items-start justify-between gap-2">
               <div className="min-w-0">
-                <p className="text-xs text-muted-foreground">
-                  {CATEGORY_ICON[r.category]} {CATEGORY_LABEL[r.category]} ·{" "}
-                  {formatDistanceToNow(new Date(r.created_at), { addSuffix: true, locale: idLocale })}
+                <p className="text-xs text-muted-foreground flex items-center gap-1.5">
+                  {(() => { const Icon = CATEGORY_ICON[r.category]; return <Icon className="h-3 w-3" />; })()}
+                  <span>{CATEGORY_LABEL[r.category]}</span>
+                  <span>·</span>
+                  <span>{formatDistanceToNow(new Date(r.created_at), { addSuffix: true, locale: idLocale })}</span>
                 </p>
                 <p className="mt-0.5 truncate font-medium">{r.title}</p>
               </div>
@@ -286,7 +407,11 @@ function MyReportsList({ userId }: { userId: string }) {
               </div>
             </div>
             <p className="mt-2 line-clamp-2 text-sm text-muted-foreground">{r.description}</p>
-            {r.address && <p className="mt-1 text-xs text-muted-foreground"><MapPin className="mr-1 inline h-3 w-3" />{r.address}</p>}
+            {r.address && (
+              <p className="mt-1 text-xs text-muted-foreground">
+                <MapPin className="mr-1 inline h-3 w-3" />{r.address}
+              </p>
+            )}
           </div>
         ))}
       </div>

@@ -92,10 +92,10 @@ export function SiteHeader() {
           ) : (
             <>
               <Button variant="ghost" asChild>
-                <Link to="/auth/login">Masuk</Link>
+                <Link to="/warga">Lapor Sekarang</Link>
               </Button>
-              <Button asChild className="bg-leaf-gradient text-primary-foreground hover:opacity-90">
-                <Link to="/auth/signup">Daftar</Link>
+              <Button variant="ghost" asChild>
+                <Link to="/auth/login">Masuk</Link>
               </Button>
             </>
           )}
@@ -149,14 +149,10 @@ export function SiteHeader() {
               ) : (
                 <>
                   <Button variant="outline" asChild onClick={() => setOpen(false)}>
-                    <Link to="/auth/login">Masuk</Link>
+                    <Link to="/warga">Lapor Sekarang</Link>
                   </Button>
-                  <Button
-                    asChild
-                    className="bg-leaf-gradient text-primary-foreground"
-                    onClick={() => setOpen(false)}
-                  >
-                    <Link to="/auth/signup">Daftar</Link>
+                  <Button variant="ghost" asChild onClick={() => setOpen(false)}>
+                    <Link to="/auth/login">Masuk</Link>
                   </Button>
                 </>
               )}
@@ -193,10 +189,10 @@ export function SiteFooter() {
           </ul>
         </div>
         <div>
-          <h4 className="text-sm font-semibold">Akun</h4>
+          <h4 className="text-sm font-semibold">Aksi</h4>
           <ul className="mt-3 space-y-2 text-sm text-muted-foreground">
-            <li><Link to="/auth/login" className="hover:text-foreground">Masuk</Link></li>
-            <li><Link to="/auth/signup" className="hover:text-foreground">Daftar</Link></li>
+            <li><Link to="/warga" className="hover:text-foreground">Lapor Kerusakan</Link></li>
+            <li><Link to="/auth/login" className="hover:text-foreground">Masuk (Admin/Petugas)</Link></li>
           </ul>
         </div>
       </div>

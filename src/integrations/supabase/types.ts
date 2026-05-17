@@ -51,10 +51,11 @@ export type Database = {
           created_at: string
           description: string
           id: string
+          ip_address: string | null
           latitude: number
           longitude: number
           photo_url: string | null
-          reporter_id: string
+          reporter_id: string | null
           status: Database["public"]["Enums"]["report_status"]
           title: string
           updated_at: string
@@ -66,10 +67,11 @@ export type Database = {
           created_at?: string
           description: string
           id?: string
+          ip_address?: string | null
           latitude: number
           longitude: number
           photo_url?: string | null
-          reporter_id: string
+          reporter_id?: string | null
           status?: Database["public"]["Enums"]["report_status"]
           title: string
           updated_at?: string
@@ -81,10 +83,11 @@ export type Database = {
           created_at?: string
           description?: string
           id?: string
+          ip_address?: string | null
           latitude?: number
           longitude?: number
           photo_url?: string | null
-          reporter_id?: string
+          reporter_id?: string | null
           status?: Database["public"]["Enums"]["report_status"]
           title?: string
           updated_at?: string
@@ -162,6 +165,10 @@ export type Database = {
       [_ in never]: never
     }
     Functions: {
+      count_reports_by_ip: {
+        Args: { _ip: string }
+        Returns: number
+      }
       get_user_role: {
         Args: { _user_id: string }
         Returns: Database["public"]["Enums"]["app_role"]

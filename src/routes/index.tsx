@@ -103,8 +103,8 @@ function HomePage() {
                   size="lg"
                   className="bg-leaf-gradient text-primary-foreground shadow-elev hover:opacity-90"
                 >
-                  <Link to="/auth/signup">
-                    Mulai Lapor <ArrowRight className="ml-1 h-4 w-4" />
+                  <Link to="/warga">
+                    Lapor Sekarang <ArrowRight className="ml-1 h-4 w-4" />
                   </Link>
                 </Button>
                 <Button asChild size="lg" variant="outline">
@@ -360,13 +360,13 @@ function HomePage() {
                   Jadilah bagian dari kota yang lebih baik.
                 </h2>
                 <p className="mt-3 max-w-xl text-primary-foreground/85">
-                  Daftar sebagai warga, petugas, atau admin dinas. Bersama wujudkan tata kota yang
-                  responsif terhadap kebutuhan publik.
+                  Lapor kerusakan infrastruktur langsung tanpa perlu mendaftar. Admin dan petugas
+                  dinas dapat masuk untuk memantau dan mengelola penanganan.
                 </p>
               </div>
               <div className="flex flex-wrap gap-3">
                 <Button asChild size="lg" variant="secondary">
-                  <Link to="/auth/signup">Daftar gratis</Link>
+                  <Link to="/warga">Lapor Sekarang</Link>
                 </Button>
                 <Button
                   asChild
