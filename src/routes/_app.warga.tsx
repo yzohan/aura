@@ -48,25 +48,31 @@ const reportSchema = z.object({
 //   field "query" = IP publik pengguna saat ini
 //   PENTING: versi gratis hanya HTTP (bukan HTTPS)
 //   Jika website pakai HTTPS di production, browser akan
-//   blokir mixed-content → kita punya fallback ke ipify.org (HTTPS)
-// ──────────────────────────────────────────────────────────
 async function fetchPublicIp(): Promise<string | null> {
-  try {
-    const res = await fetch("http://ip-api.com/json/?fields=query,status");
-    if (!res.ok) throw new Error("bad response");
-    const data = (await res.json()) as { status: string; query?: string };
-    if (data.status === "success" && data.query) return data.query;
-    throw new Error("status bukan success");
-  } catch {
-    // Fallback: ipify.org – HTTPS, gratis, tanpa API key
-    try {
-      const res = await fetch("https://api.ipify.org?format=json");
-      const data = (await res.json()) as { ip?: string };
-      return data.ip ?? null;
-    } catch {
-      return null;
-    }
+  // Bypass untuk local development: agar tidak error karena AdBlock/CORS di localhost
+  if (import.meta.env.DEV) {
+    return "127.0.0.1";
   }
+
+  // 1. Coba api.ipify.org (Paling standar untuk production)
+  try {
+    const res = await fetch("https://api.ipify.org?format=json");
+    if (res.ok) {
+      const data = (await res.json()) as { ip?: string };
+      if (data.ip) return data.ip;
+    }
+  } catch {}
+
+  // 2. Fallback ke jsonip.com (Alternatif stabil dengan CORS support)
+  try {
+    const res = await fetch("https://jsonip.com");
+    if (res.ok) {
+      const data = (await res.json()) as { ip?: string };
+      if (data.ip) return data.ip;
+    }
+  } catch {}
+
+  return null;
 }
 
 interface MyReport {
@@ -96,7 +102,6 @@ function WargaPage() {
   );
 }
 
-// ── Form laporan ───────────────────────────────────────────
 function ReportForm() {
   const [category, setCategory] = useState<keyof typeof CATEGORY_LABEL>("jalan_berlubang");
   const [title, setTitle] = useState("");
@@ -106,11 +111,6 @@ function ReportForm() {
   const [photo, setPhoto] = useState<File | null>(null);
   const [submitting, setSubmitting] = useState(false);
   const [locating, setLocating] = useState(false);
-
-  // "loading" = sedang fetch IP
-  // "ok"      = IP terdeteksi, masih ada kuota
-  // "blocked" = sudah 3 laporan hari ini → cooldown
-  // "error"   = tidak bisa fetch IP
   const [ipStatus, setIpStatus] = useState<"loading" | "ok" | "blocked" | "error">("loading");
   const [userIp, setUserIp] = useState<string | null>(null);
   const [remainingReports, setRemainingReports] = useState(3);
@@ -122,6 +122,14 @@ function ReportForm() {
     ipFetched.current = true;
 
     (async () => {
+      // DEV MODE: bypass IP fetch & RPC check agar bisa ditest tanpa migration SQL
+      if (import.meta.env.DEV) {
+        setUserIp("dev-mode");
+        setRemainingReports(3);
+        setIpStatus("ok");
+        return;
+      }
+
       // 1. Fetch IP publik
       const ip = await fetchPublicIp();
       if (!ip) { setIpStatus("error"); return; }
@@ -130,7 +138,11 @@ function ReportForm() {
       // 2. Panggil Supabase RPC: hitung laporan dari IP ini dalam 24 jam terakhir
       //    Fungsi ini kita buat di migration SQL: count_reports_by_ip(_ip TEXT) → INTEGER
       const { data, error } = await supabase.rpc("count_reports_by_ip", { _ip: ip });
-      if (error) { setIpStatus("error"); return; }
+      if (error) { 
+        console.error("Supabase RPC Error:", error);
+        setIpStatus("error"); 
+        return; 
+      }
 
       const count = (data as number) ?? 0;
       const remaining = Math.max(0, 3 - count);
