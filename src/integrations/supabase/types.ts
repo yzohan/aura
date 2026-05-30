@@ -46,52 +46,58 @@ export type Database = {
       }
       reports: {
         Row: {
-          address: string | null
+          address: string
           category: Database["public"]["Enums"]["report_category"]
           created_at: string
-          description: string
+          detail_laporan: string
           id: string
           ip_address: string | null
           latitude: number
           longitude: number
-          photo_url: string | null
+          photo_url: string
           reporter_id: string | null
-          status: Database["public"]["Enums"]["report_status"]
-          title: string
+          status_pelaporan: string
+          kategori_pelaporan: string
+          name: string
+          email: string
+          no_hp: string
           updated_at: string
-          urgency: Database["public"]["Enums"]["urgency_level"]
         }
         Insert: {
-          address?: string | null
+          address: string
           category: Database["public"]["Enums"]["report_category"]
           created_at?: string
-          description: string
+          detail_laporan: string
           id?: string
           ip_address?: string | null
           latitude: number
           longitude: number
-          photo_url?: string | null
+          photo_url: string
           reporter_id?: string | null
-          status?: Database["public"]["Enums"]["report_status"]
-          title: string
+          status_pelaporan?: string
+          kategori_pelaporan?: string
+          name: string
+          email: string
+          no_hp: string
           updated_at?: string
-          urgency?: Database["public"]["Enums"]["urgency_level"]
         }
         Update: {
-          address?: string | null
+          address?: string
           category?: Database["public"]["Enums"]["report_category"]
           created_at?: string
-          description?: string
+          detail_laporan?: string
           id?: string
           ip_address?: string | null
           latitude?: number
           longitude?: number
-          photo_url?: string | null
+          photo_url?: string
           reporter_id?: string | null
-          status?: Database["public"]["Enums"]["report_status"]
-          title?: string
+          status_pelaporan?: string
+          kategori_pelaporan?: string
+          name?: string
+          email?: string
+          no_hp?: string
           updated_at?: string
-          urgency?: Database["public"]["Enums"]["urgency_level"]
         }
         Relationships: []
       }
@@ -158,6 +164,68 @@ export type Database = {
             referencedRelation: "reports"
             referencedColumns: ["id"]
           },
+        ]
+      }
+      roads: {
+        Row: {
+          id: string
+          name: string
+          kelurahan: string | null
+          kecamatan: string | null
+          length_m: number | null
+          condition: "baik" | "sedang" | "rusak_ringan" | "rusak_berat" | null
+          created_at: string
+        }
+        Insert: {
+          id?: string
+          name: string
+          kelurahan?: string | null
+          kecamatan?: string | null
+          length_m?: number | null
+          condition?: "baik" | "sedang" | "rusak_ringan" | "rusak_berat" | null
+          created_at?: string
+        }
+        Update: {
+          id?: string
+          name?: string
+          kelurahan?: string | null
+          kecamatan?: string | null
+          length_m?: number | null
+          condition?: "baik" | "sedang" | "rusak_ringan" | "rusak_berat" | null
+          created_at?: string
+        }
+        Relationships: []
+      }
+      road_facilities: {
+        Row: {
+          id: string
+          road_id: string
+          name: string
+          type: string
+          description: string | null
+        }
+        Insert: {
+          id?: string
+          road_id: string
+          name: string
+          type: string
+          description?: string | null
+        }
+        Update: {
+          id?: string
+          road_id?: string
+          name?: string
+          type?: string
+          description?: string | null
+        }
+        Relationships: [
+          {
+            foreignKeyName: "road_facilities_road_id_fkey"
+            columns: ["road_id"]
+            isOneToOne: false
+            referencedRelation: "roads"
+            referencedColumns: ["id"]
+          }
         ]
       }
     }

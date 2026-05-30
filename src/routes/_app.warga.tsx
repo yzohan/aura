@@ -2,7 +2,7 @@ import { createFileRoute } from "@tanstack/react-router";
 import { useEffect, useState, useRef } from "react";
 import {
   Camera, MapPin, FileText, Plus, ListChecks,
-  Loader2, Crosshair, ShieldAlert, Clock,
+  Loader2, Crosshair, ShieldAlert, Clock, Users,
 } from "lucide-react";
 import { z } from "zod";
 import { toast } from "sonner";
@@ -33,12 +33,14 @@ export const Route = createFileRoute("/_app/warga")({
 const NAV = [{ to: "/warga", label: "Lapor & Riwayat", icon: ListChecks }];
 
 const reportSchema = z.object({
-  category: z.enum(["jalan_berlubang", "trotoar_rusak", "pju_mati"]),
-  title: z.string().trim().min(4, "Judul minimal 4 karakter").max(120),
-  description: z.string().trim().min(10, "Deskripsi minimal 10 karakter").max(1000),
+  category: z.enum(["jalan_berlubang", "pju_mati"]),
+  detail_laporan: z.string().trim().min(10, "Detail laporan minimal 10 karakter").max(1000),
   latitude: z.number().min(-90).max(90),
   longitude: z.number().min(-180).max(180),
-  address: z.string().trim().max(200).optional(),
+  address: z.string().trim().min(5, "Alamat wajib diisi minimal 5 karakter").max(200),
+  name: z.string().trim().min(2, "Nama wajib diisi minimal 2 karakter").max(100),
+  email: z.string().trim().min(1, "Email wajib diisi").email("Format email tidak valid"),
+  phone: z.string().trim().min(8, "Nomor HP wajib diisi minimal 8 karakter").max(20),
 });
 
 // ──────────────────────────────────────────────────────────
@@ -78,10 +80,12 @@ async function fetchPublicIp(): Promise<string | null> {
 interface MyReport {
   id: string;
   category: keyof typeof CATEGORY_LABEL;
-  title: string;
-  description: string;
-  status: keyof typeof STATUS_LABEL;
-  urgency: keyof typeof URGENCY_LABEL;
+  name: string;
+  email: string | null;
+  no_hp: string;
+  detail_laporan: string;
+  status_pelaporan: string;
+  kategori_pelaporan: string;
   created_at: string;
   address: string | null;
   photo_url: string | null;
@@ -90,31 +94,60 @@ interface MyReport {
   longitude: number;
 }
 
-// ── Root page ──────────────────────────────────────────────
 function WargaPage() {
   return (
     <DashboardShell title="Lapor Kerusakan Infrastruktur" nav={NAV}>
-      <div className="grid gap-6 lg:grid-cols-[1.1fr_1fr]">
-        <ReportForm />
-        <RecentReportsList />
-      </div>
+      <ReportForm />
     </DashboardShell>
   );
 }
 
 function ReportForm() {
   const [category, setCategory] = useState<keyof typeof CATEGORY_LABEL>("jalan_berlubang");
-  const [title, setTitle] = useState("");
   const [description, setDescription] = useState("");
   const [address, setAddress] = useState("");
   const [coords, setCoords] = useState<{ lat: number; lng: number } | null>(null);
   const [photo, setPhoto] = useState<File | null>(null);
+  const [name, setName] = useState("");
+  const [email, setEmail] = useState("");
+  const [phone, setPhone] = useState("");
   const [submitting, setSubmitting] = useState(false);
   const [locating, setLocating] = useState(false);
   const [ipStatus, setIpStatus] = useState<"loading" | "ok" | "blocked" | "error">("loading");
   const [userIp, setUserIp] = useState<string | null>(null);
   const [remainingReports, setRemainingReports] = useState(3);
   const ipFetched = useRef(false);
+  const [activeCategories, setActiveCategories] = useState<{
+    jalan_berlubang: boolean;
+  }>({
+    jalan_berlubang: true,
+  });
+
+  // Ambil pengaturan kategori aktif dari Admin settings
+  useEffect(() => {
+    try {
+      const saved = localStorage.getItem("aura_system_settings");
+      if (saved) {
+        const parsed = JSON.parse(saved);
+        const updated = {
+          jalan_berlubang: parsed.catJalan !== false,
+        };
+        setActiveCategories(updated);
+
+        // Jika default category tidak aktif, pindahkan ke kategori pertama yang aktif
+        if (!updated.jalan_berlubang) {
+          const firstActive = Object.keys(updated).find(
+            (k) => updated[k as keyof typeof updated]
+          ) as keyof typeof CATEGORY_LABEL | undefined;
+          if (firstActive) {
+            setCategory(firstActive);
+          }
+        }
+      }
+    } catch (e) {
+      console.error("Gagal memuat pengaturan kategori aktif", e);
+    }
+  }, []);
 
   // Ambil IP & cek kuota saat halaman pertama dibuka
   useEffect(() => {
@@ -173,9 +206,9 @@ function ReportForm() {
     if (!coords) { toast.error("Ambil lokasi GPS terlebih dahulu"); return; }
 
     const parsed = reportSchema.safeParse({
-      category, title, description,
+      category, detail_laporan: description, name, email, phone,
       latitude: coords.lat, longitude: coords.lng,
-      address: address || undefined,
+      address,
     });
     if (!parsed.success) { toast.error(parsed.error.issues[0].message); return; }
 
@@ -191,19 +224,20 @@ function ReportForm() {
       return;
     }
 
-    // Upload foto (opsional) – simpan di folder 'anon'
-    let photoPath: string | null = null;
-    if (photo) {
-      const ext = photo.name.split(".").pop() ?? "jpg";
-      photoPath = `anon/${Date.now()}.${ext}`;
-      const { error: upErr } = await supabase.storage.from("reports").upload(photoPath, photo, {
-        cacheControl: "3600", upsert: false,
-      });
-      if (upErr) {
-        setSubmitting(false);
-        toast.error("Gagal upload foto: " + upErr.message);
-        return;
-      }
+    // Upload foto (wajib) – simpan di folder 'anon'
+    if (!photo) {
+      toast.error("Foto bukti kerusakan wajib dilampirkan");
+      return;
+    }
+    const ext = photo.name.split(".").pop() ?? "jpg";
+    const photoPath = `anon/${Date.now()}.${ext}`;
+    const { error: upErr } = await supabase.storage.from("reports").upload(photoPath, photo, {
+      cacheControl: "3600", upsert: false,
+    });
+    if (upErr) {
+      setSubmitting(false);
+      toast.error("Gagal upload foto: " + upErr.message);
+      return;
     }
 
     // Insert laporan → reporter_id = null (anonim), ip_address = IP user
@@ -211,11 +245,13 @@ function ReportForm() {
       reporter_id: null,       // tidak perlu akun
       ip_address: userIp,      // dicatat untuk anti-spam & cooldown
       category: parsed.data.category,
-      title: parsed.data.title,
-      description: parsed.data.description,
+      name: parsed.data.name,
+      email: parsed.data.email,
+      no_hp: parsed.data.phone,
+      detail_laporan: parsed.data.detail_laporan,
       latitude: parsed.data.latitude,
       longitude: parsed.data.longitude,
-      address: parsed.data.address ?? null,
+      address: parsed.data.address,
       photo_url: photoPath,
     });
 
@@ -223,7 +259,8 @@ function ReportForm() {
     if (error) { toast.error(error.message); return; }
 
     toast.success("Laporan berhasil dikirim! Terima kasih.");
-    setTitle(""); setDescription(""); setAddress(""); setPhoto(null); setCoords(null);
+    setDescription(""); setAddress(""); setPhoto(null); setCoords(null);
+    setName(""); setEmail(""); setPhone("");
 
     const newRemaining = Math.max(0, remainingReports - 1);
     setRemainingReports(newRemaining);
@@ -284,40 +321,54 @@ function ReportForm() {
 
       <form onSubmit={onSubmit} className="mt-4 space-y-4">
         <div className="space-y-1.5">
+          <Label htmlFor="name">Nama Lengkap</Label>
+          <Input id="name" value={name} onChange={(e) => setName(e.target.value)}
+            placeholder="Masukkan nama lengkap Anda" disabled={formDisabled} required />
+        </div>
+
+        <div className="space-y-1.5">
+          <Label htmlFor="email">Email</Label>
+          <Input id="email" type="email" value={email} onChange={(e) => setEmail(e.target.value)}
+            placeholder="nama@email.com" disabled={formDisabled} required />
+        </div>
+
+        <div className="space-y-1.5">
+          <Label htmlFor="phone">No. HP / WhatsApp</Label>
+          <Input id="phone" type="tel" value={phone} onChange={(e) => setPhone(e.target.value)}
+            placeholder="Contoh: 08123456789" disabled={formDisabled} required />
+        </div>
+
+        <div className="space-y-1.5">
           <Label>Kategori kerusakan</Label>
           <Select value={category} onValueChange={(v) => setCategory(v as keyof typeof CATEGORY_LABEL)} disabled={formDisabled}>
             <SelectTrigger><SelectValue /></SelectTrigger>
             <SelectContent>
-              {Object.entries(CATEGORY_LABEL).map(([k, v]) => {
-                const Icon = CATEGORY_ICON[k as keyof typeof CATEGORY_ICON];
-                return (
-                  <SelectItem key={k} value={k}>
-                    <div className="flex items-center gap-2">
-                      <Icon className="h-4 w-4 text-primary" /><span>{v}</span>
-                    </div>
-                  </SelectItem>
-                );
-              })}
+              {Object.entries(CATEGORY_LABEL)
+                .filter(([k]) => activeCategories[k as keyof typeof activeCategories])
+                .map(([k, v]) => {
+                  const Icon = CATEGORY_ICON[k as keyof typeof CATEGORY_ICON];
+                  return (
+                    <SelectItem key={k} value={k}>
+                      <div className="flex items-center gap-2">
+                        <Icon className="h-4 w-4 text-primary" /><span>{v}</span>
+                      </div>
+                    </SelectItem>
+                  );
+                })}
             </SelectContent>
           </Select>
         </div>
 
         <div className="space-y-1.5">
-          <Label htmlFor="title">Judul singkat</Label>
-          <Input id="title" value={title} onChange={(e) => setTitle(e.target.value)}
-            placeholder="Contoh: Lubang besar di Jl. Sudirman" disabled={formDisabled} required />
-        </div>
-
-        <div className="space-y-1.5">
-          <Label htmlFor="desc">Deskripsi</Label>
+          <Label htmlFor="desc">Detail Laporan</Label>
           <Textarea id="desc" value={description} onChange={(e) => setDescription(e.target.value)}
-            placeholder="Jelaskan kondisi, ukuran, dan dampaknya…" rows={3} disabled={formDisabled} required />
+            placeholder="Jelaskan detail kondisi, ukuran, dan dampak kerusakan…" rows={3} disabled={formDisabled} required />
         </div>
 
         <div className="space-y-1.5">
-          <Label htmlFor="address">Alamat (opsional)</Label>
+          <Label htmlFor="address">Alamat Lengkap</Label>
           <Input id="address" value={address} onChange={(e) => setAddress(e.target.value)}
-            placeholder="Patokan / nama jalan" disabled={formDisabled} />
+            placeholder="Patokan / nama jalan" disabled={formDisabled} required />
         </div>
 
         <div className="space-y-1.5">
@@ -339,14 +390,14 @@ function ReportForm() {
         </div>
 
         <div className="space-y-1.5">
-          <Label htmlFor="photo">Foto (opsional)</Label>
+          <Label htmlFor="photo">Foto Bukti Kerusakan</Label>
           <div className="flex items-center gap-3">
             <label htmlFor="photo"
               className="flex cursor-pointer items-center gap-2 rounded-lg border border-dashed border-border bg-secondary/40 px-4 py-3 text-sm text-muted-foreground hover:border-primary/40">
-              <Camera className="h-4 w-4" /> {photo ? photo.name : "Pilih foto"}
+              <Camera className="h-4 w-4" /> {photo ? photo.name : "Pilih foto (Wajib)"}
             </label>
             <input id="photo" type="file" accept="image/*" capture="environment" className="sr-only"
-              onChange={(e) => setPhoto(e.target.files?.[0] ?? null)} disabled={formDisabled} />
+              onChange={(e) => setPhoto(e.target.files?.[0] ?? null)} disabled={formDisabled} required />
           </div>
         </div>
 
@@ -411,14 +462,18 @@ function RecentReportsList() {
                   <span>·</span>
                   <span>{formatDistanceToNow(new Date(r.created_at), { addSuffix: true, locale: idLocale })}</span>
                 </p>
-                <p className="mt-0.5 truncate font-medium">{r.title}</p>
+                <p className="mt-0.5 truncate font-medium">{r.name} - {r.no_hp}</p>
               </div>
               <div className="flex shrink-0 flex-col items-end gap-1">
-                <Badge variant="outline" className={STATUS_TONE[r.status]}>{STATUS_LABEL[r.status]}</Badge>
-                <Badge variant="outline" className={URGENCY_TONE[r.urgency]}>{URGENCY_LABEL[r.urgency]}</Badge>
+                <Badge variant="outline" className={r.status_pelaporan === 'progress' ? STATUS_TONE.in_progress : (STATUS_TONE[r.status_pelaporan as keyof typeof STATUS_TONE] || 'bg-secondary text-secondary-foreground')}>
+                  {r.status_pelaporan === 'progress' ? 'Dikerjakan' : (STATUS_LABEL[r.status_pelaporan as keyof typeof STATUS_LABEL] || r.status_pelaporan)}
+                </Badge>
+                <Badge variant="outline" className={r.kategori_pelaporan === 'ringan' ? URGENCY_TONE.low : (URGENCY_TONE[r.kategori_pelaporan as keyof typeof URGENCY_TONE] || 'bg-secondary text-secondary-foreground')}>
+                  {r.kategori_pelaporan === 'ringan' ? 'Ringan' : (URGENCY_LABEL[r.kategori_pelaporan as keyof typeof URGENCY_LABEL] || r.kategori_pelaporan)}
+                </Badge>
               </div>
             </div>
-            <p className="mt-2 line-clamp-2 text-sm text-muted-foreground">{r.description}</p>
+            <p className="mt-2 line-clamp-2 text-sm text-muted-foreground">{r.detail_laporan}</p>
             {r.address && (
               <p className="mt-1 text-xs text-muted-foreground">
                 <MapPin className="mr-1 inline h-3 w-3" />{r.address}

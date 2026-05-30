@@ -53,12 +53,6 @@ const PLACEHOLDER_MEMBERS = [
   },
   {
     id: 5,
-    name: "⁠M Rizqy Putra",
-    role: "Data Science",
-    task: "",
-  },
-  {
-    id: 6,
     name: "Nethania Emmanuela Rahadian",
     role: "Full-Stack Development",
     task: "",

@@ -19,8 +19,16 @@ import { Route as AuthLoginRouteImport } from './routes/auth.login'
 import { Route as AppWargaRouteImport } from './routes/_app.warga'
 import { Route as AppPetugasRouteImport } from './routes/_app.petugas'
 import { Route as AppAdminRouteImport } from './routes/_app.admin'
+import { Route as AppPetugasIndexRouteImport } from './routes/_app.petugas.index'
 import { Route as AppAdminIndexRouteImport } from './routes/_app.admin.index'
+import { Route as AppPetugasProfileRouteImport } from './routes/_app.petugas.profile'
 import { Route as AppAdminUsersRouteImport } from './routes/_app.admin.users'
+import { Route as AppAdminSettingsRouteImport } from './routes/_app.admin.settings'
+import { Route as AppAdminRoadsRouteImport } from './routes/_app.admin.roads'
+import { Route as AppAdminReportsRouteImport } from './routes/_app.admin.reports'
+import { Route as AppAdminProfileRouteImport } from './routes/_app.admin.profile'
+import { Route as AppAdminPetugasRouteImport } from './routes/_app.admin.petugas'
+import { Route as AppAdminReportsIndexRouteImport } from './routes/_app.admin.reports.index'
 import { Route as AppAdminReportsIdRouteImport } from './routes/_app.admin.reports.$id'
 
 const TimRoute = TimRouteImport.update({
@@ -72,20 +80,60 @@ const AppAdminRoute = AppAdminRouteImport.update({
   path: '/admin',
   getParentRoute: () => AppRoute,
 } as any)
+const AppPetugasIndexRoute = AppPetugasIndexRouteImport.update({
+  id: '/',
+  path: '/',
+  getParentRoute: () => AppPetugasRoute,
+} as any)
 const AppAdminIndexRoute = AppAdminIndexRouteImport.update({
   id: '/',
   path: '/',
   getParentRoute: () => AppAdminRoute,
+} as any)
+const AppPetugasProfileRoute = AppPetugasProfileRouteImport.update({
+  id: '/profile',
+  path: '/profile',
+  getParentRoute: () => AppPetugasRoute,
 } as any)
 const AppAdminUsersRoute = AppAdminUsersRouteImport.update({
   id: '/users',
   path: '/users',
   getParentRoute: () => AppAdminRoute,
 } as any)
-const AppAdminReportsIdRoute = AppAdminReportsIdRouteImport.update({
-  id: '/reports/$id',
-  path: '/reports/$id',
+const AppAdminSettingsRoute = AppAdminSettingsRouteImport.update({
+  id: '/settings',
+  path: '/settings',
   getParentRoute: () => AppAdminRoute,
+} as any)
+const AppAdminRoadsRoute = AppAdminRoadsRouteImport.update({
+  id: '/roads',
+  path: '/roads',
+  getParentRoute: () => AppAdminRoute,
+} as any)
+const AppAdminReportsRoute = AppAdminReportsRouteImport.update({
+  id: '/reports',
+  path: '/reports',
+  getParentRoute: () => AppAdminRoute,
+} as any)
+const AppAdminProfileRoute = AppAdminProfileRouteImport.update({
+  id: '/profile',
+  path: '/profile',
+  getParentRoute: () => AppAdminRoute,
+} as any)
+const AppAdminPetugasRoute = AppAdminPetugasRouteImport.update({
+  id: '/petugas',
+  path: '/petugas',
+  getParentRoute: () => AppAdminRoute,
+} as any)
+const AppAdminReportsIndexRoute = AppAdminReportsIndexRouteImport.update({
+  id: '/',
+  path: '/',
+  getParentRoute: () => AppAdminReportsRoute,
+} as any)
+const AppAdminReportsIdRoute = AppAdminReportsIdRouteImport.update({
+  id: '/$id',
+  path: '/$id',
+  getParentRoute: () => AppAdminReportsRoute,
 } as any)
 
 export interface FileRoutesByFullPath {
@@ -94,26 +142,40 @@ export interface FileRoutesByFullPath {
   '/tentang': typeof TentangRoute
   '/tim': typeof TimRoute
   '/admin': typeof AppAdminRouteWithChildren
-  '/petugas': typeof AppPetugasRoute
+  '/petugas': typeof AppPetugasRouteWithChildren
   '/warga': typeof AppWargaRoute
   '/auth/login': typeof AuthLoginRoute
   '/auth/signup': typeof AuthSignupRoute
+  '/admin/petugas': typeof AppAdminPetugasRoute
+  '/admin/profile': typeof AppAdminProfileRoute
+  '/admin/reports': typeof AppAdminReportsRouteWithChildren
+  '/admin/roads': typeof AppAdminRoadsRoute
+  '/admin/settings': typeof AppAdminSettingsRoute
   '/admin/users': typeof AppAdminUsersRoute
+  '/petugas/profile': typeof AppPetugasProfileRoute
   '/admin/': typeof AppAdminIndexRoute
+  '/petugas/': typeof AppPetugasIndexRoute
   '/admin/reports/$id': typeof AppAdminReportsIdRoute
+  '/admin/reports/': typeof AppAdminReportsIndexRoute
 }
 export interface FileRoutesByTo {
   '/': typeof IndexRoute
   '/fitur': typeof FiturRoute
   '/tentang': typeof TentangRoute
   '/tim': typeof TimRoute
-  '/petugas': typeof AppPetugasRoute
   '/warga': typeof AppWargaRoute
   '/auth/login': typeof AuthLoginRoute
   '/auth/signup': typeof AuthSignupRoute
+  '/admin/petugas': typeof AppAdminPetugasRoute
+  '/admin/profile': typeof AppAdminProfileRoute
+  '/admin/roads': typeof AppAdminRoadsRoute
+  '/admin/settings': typeof AppAdminSettingsRoute
   '/admin/users': typeof AppAdminUsersRoute
+  '/petugas/profile': typeof AppPetugasProfileRoute
   '/admin': typeof AppAdminIndexRoute
+  '/petugas': typeof AppPetugasIndexRoute
   '/admin/reports/$id': typeof AppAdminReportsIdRoute
+  '/admin/reports': typeof AppAdminReportsIndexRoute
 }
 export interface FileRoutesById {
   __root__: typeof rootRouteImport
@@ -123,13 +185,21 @@ export interface FileRoutesById {
   '/tentang': typeof TentangRoute
   '/tim': typeof TimRoute
   '/_app/admin': typeof AppAdminRouteWithChildren
-  '/_app/petugas': typeof AppPetugasRoute
+  '/_app/petugas': typeof AppPetugasRouteWithChildren
   '/_app/warga': typeof AppWargaRoute
   '/auth/login': typeof AuthLoginRoute
   '/auth/signup': typeof AuthSignupRoute
+  '/_app/admin/petugas': typeof AppAdminPetugasRoute
+  '/_app/admin/profile': typeof AppAdminProfileRoute
+  '/_app/admin/reports': typeof AppAdminReportsRouteWithChildren
+  '/_app/admin/roads': typeof AppAdminRoadsRoute
+  '/_app/admin/settings': typeof AppAdminSettingsRoute
   '/_app/admin/users': typeof AppAdminUsersRoute
+  '/_app/petugas/profile': typeof AppPetugasProfileRoute
   '/_app/admin/': typeof AppAdminIndexRoute
+  '/_app/petugas/': typeof AppPetugasIndexRoute
   '/_app/admin/reports/$id': typeof AppAdminReportsIdRoute
+  '/_app/admin/reports/': typeof AppAdminReportsIndexRoute
 }
 export interface FileRouteTypes {
   fileRoutesByFullPath: FileRoutesByFullPath
@@ -143,22 +213,36 @@ export interface FileRouteTypes {
     | '/warga'
     | '/auth/login'
     | '/auth/signup'
+    | '/admin/petugas'
+    | '/admin/profile'
+    | '/admin/reports'
+    | '/admin/roads'
+    | '/admin/settings'
     | '/admin/users'
+    | '/petugas/profile'
     | '/admin/'
+    | '/petugas/'
     | '/admin/reports/$id'
+    | '/admin/reports/'
   fileRoutesByTo: FileRoutesByTo
   to:
     | '/'
     | '/fitur'
     | '/tentang'
     | '/tim'
-    | '/petugas'
     | '/warga'
     | '/auth/login'
     | '/auth/signup'
+    | '/admin/petugas'
+    | '/admin/profile'
+    | '/admin/roads'
+    | '/admin/settings'
     | '/admin/users'
+    | '/petugas/profile'
     | '/admin'
+    | '/petugas'
     | '/admin/reports/$id'
+    | '/admin/reports'
   id:
     | '__root__'
     | '/'
@@ -171,9 +255,17 @@ export interface FileRouteTypes {
     | '/_app/warga'
     | '/auth/login'
     | '/auth/signup'
+    | '/_app/admin/petugas'
+    | '/_app/admin/profile'
+    | '/_app/admin/reports'
+    | '/_app/admin/roads'
+    | '/_app/admin/settings'
     | '/_app/admin/users'
+    | '/_app/petugas/profile'
     | '/_app/admin/'
+    | '/_app/petugas/'
     | '/_app/admin/reports/$id'
+    | '/_app/admin/reports/'
   fileRoutesById: FileRoutesById
 }
 export interface RootRouteChildren {
@@ -258,12 +350,26 @@ declare module '@tanstack/react-router' {
       preLoaderRoute: typeof AppAdminRouteImport
       parentRoute: typeof AppRoute
     }
+    '/_app/petugas/': {
+      id: '/_app/petugas/'
+      path: '/'
+      fullPath: '/petugas/'
+      preLoaderRoute: typeof AppPetugasIndexRouteImport
+      parentRoute: typeof AppPetugasRoute
+    }
     '/_app/admin/': {
       id: '/_app/admin/'
       path: '/'
       fullPath: '/admin/'
       preLoaderRoute: typeof AppAdminIndexRouteImport
       parentRoute: typeof AppAdminRoute
+    }
+    '/_app/petugas/profile': {
+      id: '/_app/petugas/profile'
+      path: '/profile'
+      fullPath: '/petugas/profile'
+      preLoaderRoute: typeof AppPetugasProfileRouteImport
+      parentRoute: typeof AppPetugasRoute
     }
     '/_app/admin/users': {
       id: '/_app/admin/users'
@@ -272,41 +378,119 @@ declare module '@tanstack/react-router' {
       preLoaderRoute: typeof AppAdminUsersRouteImport
       parentRoute: typeof AppAdminRoute
     }
+    '/_app/admin/settings': {
+      id: '/_app/admin/settings'
+      path: '/settings'
+      fullPath: '/admin/settings'
+      preLoaderRoute: typeof AppAdminSettingsRouteImport
+      parentRoute: typeof AppAdminRoute
+    }
+    '/_app/admin/roads': {
+      id: '/_app/admin/roads'
+      path: '/roads'
+      fullPath: '/admin/roads'
+      preLoaderRoute: typeof AppAdminRoadsRouteImport
+      parentRoute: typeof AppAdminRoute
+    }
+    '/_app/admin/reports': {
+      id: '/_app/admin/reports'
+      path: '/reports'
+      fullPath: '/admin/reports'
+      preLoaderRoute: typeof AppAdminReportsRouteImport
+      parentRoute: typeof AppAdminRoute
+    }
+    '/_app/admin/profile': {
+      id: '/_app/admin/profile'
+      path: '/profile'
+      fullPath: '/admin/profile'
+      preLoaderRoute: typeof AppAdminProfileRouteImport
+      parentRoute: typeof AppAdminRoute
+    }
+    '/_app/admin/petugas': {
+      id: '/_app/admin/petugas'
+      path: '/petugas'
+      fullPath: '/admin/petugas'
+      preLoaderRoute: typeof AppAdminPetugasRouteImport
+      parentRoute: typeof AppAdminRoute
+    }
+    '/_app/admin/reports/': {
+      id: '/_app/admin/reports/'
+      path: '/'
+      fullPath: '/admin/reports/'
+      preLoaderRoute: typeof AppAdminReportsIndexRouteImport
+      parentRoute: typeof AppAdminReportsRoute
+    }
     '/_app/admin/reports/$id': {
       id: '/_app/admin/reports/$id'
-      path: '/reports/$id'
+      path: '/$id'
       fullPath: '/admin/reports/$id'
       preLoaderRoute: typeof AppAdminReportsIdRouteImport
-      parentRoute: typeof AppAdminRoute
+      parentRoute: typeof AppAdminReportsRoute
     }
   }
 }
 
+interface AppAdminReportsRouteChildren {
+  AppAdminReportsIdRoute: typeof AppAdminReportsIdRoute
+  AppAdminReportsIndexRoute: typeof AppAdminReportsIndexRoute
+}
+
+const AppAdminReportsRouteChildren: AppAdminReportsRouteChildren = {
+  AppAdminReportsIdRoute: AppAdminReportsIdRoute,
+  AppAdminReportsIndexRoute: AppAdminReportsIndexRoute,
+}
+
+const AppAdminReportsRouteWithChildren = AppAdminReportsRoute._addFileChildren(
+  AppAdminReportsRouteChildren,
+)
+
 interface AppAdminRouteChildren {
+  AppAdminPetugasRoute: typeof AppAdminPetugasRoute
+  AppAdminProfileRoute: typeof AppAdminProfileRoute
+  AppAdminReportsRoute: typeof AppAdminReportsRouteWithChildren
+  AppAdminRoadsRoute: typeof AppAdminRoadsRoute
+  AppAdminSettingsRoute: typeof AppAdminSettingsRoute
   AppAdminUsersRoute: typeof AppAdminUsersRoute
   AppAdminIndexRoute: typeof AppAdminIndexRoute
-  AppAdminReportsIdRoute: typeof AppAdminReportsIdRoute
 }
 
 const AppAdminRouteChildren: AppAdminRouteChildren = {
+  AppAdminPetugasRoute: AppAdminPetugasRoute,
+  AppAdminProfileRoute: AppAdminProfileRoute,
+  AppAdminReportsRoute: AppAdminReportsRouteWithChildren,
+  AppAdminRoadsRoute: AppAdminRoadsRoute,
+  AppAdminSettingsRoute: AppAdminSettingsRoute,
   AppAdminUsersRoute: AppAdminUsersRoute,
   AppAdminIndexRoute: AppAdminIndexRoute,
-  AppAdminReportsIdRoute: AppAdminReportsIdRoute,
 }
 
 const AppAdminRouteWithChildren = AppAdminRoute._addFileChildren(
   AppAdminRouteChildren,
 )
 
+interface AppPetugasRouteChildren {
+  AppPetugasProfileRoute: typeof AppPetugasProfileRoute
+  AppPetugasIndexRoute: typeof AppPetugasIndexRoute
+}
+
+const AppPetugasRouteChildren: AppPetugasRouteChildren = {
+  AppPetugasProfileRoute: AppPetugasProfileRoute,
+  AppPetugasIndexRoute: AppPetugasIndexRoute,
+}
+
+const AppPetugasRouteWithChildren = AppPetugasRoute._addFileChildren(
+  AppPetugasRouteChildren,
+)
+
 interface AppRouteChildren {
   AppAdminRoute: typeof AppAdminRouteWithChildren
-  AppPetugasRoute: typeof AppPetugasRoute
+  AppPetugasRoute: typeof AppPetugasRouteWithChildren
   AppWargaRoute: typeof AppWargaRoute
 }
 
 const AppRouteChildren: AppRouteChildren = {
   AppAdminRoute: AppAdminRouteWithChildren,
-  AppPetugasRoute: AppPetugasRoute,
+  AppPetugasRoute: AppPetugasRouteWithChildren,
   AppWargaRoute: AppWargaRoute,
 }
 

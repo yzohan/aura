@@ -9,6 +9,7 @@ export interface Profile {
   full_name: string;
   phone: string | null;
   avatar_url: string | null;
+  resolved_avatar_url?: string | null;
   address: string | null;
 }
 
@@ -36,6 +37,41 @@ export function AuthProvider({ children }: { children: ReactNode }) {
       supabase.from("profiles").select("*").eq("id", userId).maybeSingle(),
       supabase.from("user_roles").select("role").eq("user_id", userId).maybeSingle(),
     ]);
+
+    let resolvedAvatar = prof?.avatar_url || null;
+    if (prof && prof.avatar_url) {
+      let url = prof.avatar_url;
+      let path = url;
+      let isStoragePath = false;
+
+      if (url.startsWith("http")) {
+        const marker = "/storage/v1/object/public/reports/";
+        const index = url.indexOf(marker);
+        if (index !== -1) {
+          path = url.substring(index + marker.length);
+          isStoragePath = true;
+        }
+      } else {
+        isStoragePath = true;
+      }
+
+      if (isStoragePath) {
+        try {
+          const { data } = await supabase.storage
+            .from("reports")
+            .createSignedUrl(path, 31536000); // 1 year expiration
+          if (data?.signedUrl) {
+            resolvedAvatar = data.signedUrl;
+          }
+        } catch (e) {
+          console.error("Gagal membuat signed URL untuk avatar:", e);
+        }
+      }
+    }
+    if (prof) {
+      (prof as any).resolved_avatar_url = resolvedAvatar;
+    }
+
     setProfile(prof as Profile | null);
     setRole((roleRow?.role as AppRole | undefined) ?? null);
   };
@@ -74,6 +110,63 @@ export function AuthProvider({ children }: { children: ReactNode }) {
   const refreshProfile = async () => {
     if (user) await loadProfile(user.id);
   };
+
+  // Real-time user profile update subscription
+  useEffect(() => {
+    if (!user) return;
+
+    const channel = supabase
+      .channel(`my-profile-realtime-${user.id}`)
+      .on(
+        "postgres_changes",
+        {
+          event: "UPDATE",
+          schema: "public",
+          table: "profiles",
+          filter: `id=eq.${user.id}`,
+        },
+        async (payload) => {
+          const prof = payload.new as Profile;
+          let resolvedAvatar = prof?.avatar_url || null;
+          if (prof && prof.avatar_url) {
+            let url = prof.avatar_url;
+            let path = url;
+            let isStoragePath = false;
+            if (url.startsWith("http")) {
+              const marker = "/storage/v1/object/public/reports/";
+              const index = url.indexOf(marker);
+              if (index !== -1) {
+                path = url.substring(index + marker.length);
+                isStoragePath = true;
+              }
+            } else {
+              isStoragePath = true;
+            }
+            if (isStoragePath) {
+              try {
+                const { data } = await supabase.storage
+                  .from("reports")
+                  .createSignedUrl(path, 31536000);
+                if (data?.signedUrl) {
+                  resolvedAvatar = data.signedUrl;
+                }
+              } catch (e) {
+                console.error(e);
+              }
+            }
+          }
+          if (prof) {
+            prof.resolved_avatar_url = resolvedAvatar;
+          }
+          setProfile(prof);
+        }
+      )
+      .subscribe();
+
+    return () => {
+      supabase.removeChannel(channel);
+    };
+  }, [user]);
 
   return (
     <AuthContext.Provider value={{ session, user, profile, role, loading, signOut, refreshProfile }}>

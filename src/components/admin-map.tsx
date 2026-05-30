@@ -7,10 +7,11 @@ import { urgencyDivIcon, URGENCY_COLORS } from "@/lib/leaflet-setup";
 interface Report {
   id: string;
   category: string;
-  title: string;
-  description: string;
-  status: string;
-  urgency: string;
+  name: string;
+  no_hp: string;
+  detail_laporan: string;
+  status_pelaporan: string;
+  kategori_pelaporan: string;
   latitude: number;
   longitude: number;
 }
@@ -88,14 +89,14 @@ export default function AdminMap({ reports, center }: AdminMapProps) {
     // Add markers
     reports.forEach((r) => {
       const marker = L.marker([r.latitude, r.longitude], {
-        icon: urgencyDivIcon(r.urgency),
+        icon: urgencyDivIcon(r.kategori_pelaporan),
       }).addTo(map);
 
       const popupContent = `
         <div style="min-width:180px;font-family:inherit;">
-          <p style="font-weight:700;border-bottom:1px solid #e5e7eb;padding-bottom:6px;margin-bottom:6px;font-size:14px;">${r.title}</p>
+          <p style="font-weight:700;border-bottom:1px solid #e5e7eb;padding-bottom:6px;margin-bottom:6px;font-size:14px;">${r.name} - ${r.no_hp}</p>
           <p style="font-size:12px;opacity:0.7;margin-bottom:2px;">${(CATEGORY_LABEL as any)[r.category]}</p>
-          <p style="font-size:12px;font-weight:500;margin-bottom:8px;">Status: ${(STATUS_LABEL as any)[r.status]}</p>
+          <p style="font-size:12px;font-weight:500;margin-bottom:8px;">Status: ${r.status_pelaporan === 'progress' ? 'Dikerjakan' : ((STATUS_LABEL as any)[r.status_pelaporan] || r.status_pelaporan)}</p>
           <a href="/admin/reports/${r.id}" style="display:inline-flex;align-items:center;gap:4px;font-size:12px;font-weight:600;color:#2e7d32;text-decoration:none;" onmouseover="this.style.textDecoration='underline'" onmouseout="this.style.textDecoration='none'">
             Lihat Detail →
           </a>

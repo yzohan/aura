@@ -1,9 +1,9 @@
 import { Link, useLocation } from "@tanstack/react-router";
 import { type ReactNode } from "react";
-import { Leaf, LogOut } from "lucide-react";
+import { ArrowLeft, Leaf, LogOut } from "lucide-react";
 import { useAuth, ROLE_LABEL } from "@/lib/auth";
 import { Button } from "@/components/ui/button";
-import { Avatar, AvatarFallback } from "@/components/ui/avatar";
+import { Avatar, AvatarFallback, AvatarImage } from "@/components/ui/avatar";
 
 export function DashboardShell({
   children,
@@ -30,7 +30,10 @@ export function DashboardShell({
         </Link>
         <nav className="flex flex-1 flex-col gap-1">
           {nav.map((n) => {
-            const active = loc.pathname === n.to || loc.pathname.startsWith(n.to + "/");
+            const isRootLink = ["/admin", "/petugas", "/warga", "/"].includes(n.to);
+            const active = isRootLink 
+              ? loc.pathname === n.to 
+              : loc.pathname === n.to || loc.pathname.startsWith(n.to + "/");
             return (
               <Link
                 key={n.to}
@@ -46,38 +49,105 @@ export function DashboardShell({
           })}
         </nav>
         <div className="mt-4 rounded-xl border border-border bg-card p-3">
-          <div className="flex items-center gap-3">
-            <Avatar className="h-10 w-10">
-              <AvatarFallback className="bg-primary text-primary-foreground text-xs">{initials}</AvatarFallback>
-            </Avatar>
-            <div className="min-w-0 flex-1">
-              <p className="truncate text-sm font-medium">{profile?.full_name ?? "Pengguna"}</p>
-              <p className="truncate text-xs text-muted-foreground">{role && ROLE_LABEL[role]}</p>
+          {loc.pathname.startsWith("/warga") || !user ? (
+            <div className="space-y-2">
+              <div className="flex items-center gap-3">
+                <div className="h-10 w-10 shrink-0 rounded-full bg-slate-300 dark:bg-slate-700 flex items-center justify-center overflow-hidden">
+                  <svg viewBox="0 0 24 24" className="h-8 w-8 text-white mt-1">
+                    <path fill="currentColor" d="M12,4A4,4 0 0,1 16,8A4,4 0 0,1 12,12A4,4 0 0,1 8,8A4,4 0 0,1 12,4M12,14C16.42,14 20,15.79 20,18V20H4V18C4,15.79 7.58,14 12,14Z" />
+                  </svg>
+                </div>
+                <div className="min-w-0 flex-1">
+                  <p className="truncate text-sm font-semibold">Tamu</p>
+                  <p className="truncate text-xs text-muted-foreground">Mode Warga</p>
+                </div>
+              </div>
+              {!user && (
+                <Link to="/auth/login" className="block w-full">
+                  <Button variant="outline" size="sm" className="w-full justify-start text-xs">
+                    <LogOut className="mr-2 h-3.5 w-3.5 rotate-180" /> Masuk Akun
+                  </Button>
+                </Link>
+              )}
             </div>
-          </div>
-          <Button onClick={() => signOut()} variant="ghost" size="sm" className="mt-2 w-full justify-start">
-            <LogOut className="mr-2 h-4 w-4" /> Keluar
-          </Button>
+          ) : (
+            <>
+              <div className="flex items-center gap-3">
+                <Avatar className="h-10 w-10">
+                  {(profile?.resolved_avatar_url || profile?.avatar_url) && (
+                    <AvatarImage src={profile.resolved_avatar_url || profile.avatar_url || ""} className="object-cover" />
+                  )}
+                  <AvatarFallback className="bg-primary text-primary-foreground text-xs">{initials}</AvatarFallback>
+                </Avatar>
+                <div className="min-w-0 flex-1">
+                  <p className="truncate text-sm font-medium">{profile?.full_name ?? "Pengguna"}</p>
+                  <p className="truncate text-xs text-muted-foreground">{role && ROLE_LABEL[role]}</p>
+                </div>
+              </div>
+              <Button onClick={() => signOut()} variant="ghost" size="sm" className="mt-2 w-full justify-start">
+                <LogOut className="mr-2 h-4 w-4" /> Keluar
+              </Button>
+            </>
+          )}
         </div>
       </aside>
 
       <div className="flex min-w-0 flex-1 flex-col">
-        <header className="sticky top-0 z-30 flex h-16 items-center justify-between border-b border-border bg-background/80 px-6 backdrop-blur">
-          <h1 className="text-lg font-semibold tracking-tight">{title}</h1>
+        <header className="sticky top-0 z-30 flex h-16 items-center justify-between border-b border-border bg-background/80 px-4 md:px-6 backdrop-blur">
+          <div className="flex items-center gap-3">
+            {(() => {
+              const backUrl = loc.pathname.startsWith("/admin") && loc.pathname !== "/admin" ? "/admin" : "/";
+              return (
+                <Link
+                  to={backUrl}
+                  className="flex h-8 w-8 items-center justify-center rounded-lg border border-border bg-background hover:bg-secondary text-muted-foreground hover:text-foreground transition-colors shrink-0"
+                  title="Kembali"
+                >
+                  <ArrowLeft className="h-4 w-4" />
+                </Link>
+              );
+            })()}
+            <h1 className="text-lg font-semibold tracking-tight">{title}</h1>
+          </div>
           <div className="flex items-center gap-3 md:hidden">
-            <Avatar className="h-8 w-8">
-              <AvatarFallback className="bg-primary text-primary-foreground text-xs">{initials}</AvatarFallback>
-            </Avatar>
-            <Button onClick={() => signOut()} variant="ghost" size="icon">
-              <LogOut className="h-4 w-4" />
-            </Button>
+            {loc.pathname.startsWith("/warga") || !user ? (
+              <>
+                <div className="h-8 w-8 rounded-full bg-slate-300 dark:bg-slate-700 flex items-center justify-center overflow-hidden">
+                  <svg viewBox="0 0 24 24" className="h-6 w-6 text-white mt-1">
+                    <path fill="currentColor" d="M12,4A4,4 0 0,1 16,8A4,4 0 0,1 12,12A4,4 0 0,1 8,8A4,4 0 0,1 12,4M12,14C16.42,14 20,15.79 20,18V20H4V18C4,15.79 7.58,14 12,14Z" />
+                  </svg>
+                </div>
+                {!user && (
+                  <Link to="/auth/login">
+                    <Button variant="outline" size="sm" className="h-8 px-2.5 text-xs">
+                      Masuk
+                    </Button>
+                  </Link>
+                )}
+              </>
+            ) : (
+              <>
+                <Avatar className="h-8 w-8">
+                  {(profile?.resolved_avatar_url || profile?.avatar_url) && (
+                    <AvatarImage src={profile.resolved_avatar_url || profile.avatar_url || ""} className="object-cover" />
+                  )}
+                  <AvatarFallback className="bg-primary text-primary-foreground text-xs">{initials}</AvatarFallback>
+                </Avatar>
+                <Button onClick={() => signOut()} variant="ghost" size="icon">
+                  <LogOut className="h-4 w-4" />
+                </Button>
+              </>
+            )}
           </div>
         </header>
 
         {/* Mobile nav */}
         <nav className="flex gap-1 overflow-x-auto border-b border-border bg-background px-4 py-2 md:hidden">
           {nav.map((n) => {
-            const active = loc.pathname === n.to || loc.pathname.startsWith(n.to + "/");
+            const isRootLink = ["/admin", "/petugas", "/warga", "/"].includes(n.to);
+            const active = isRootLink 
+              ? loc.pathname === n.to 
+              : loc.pathname === n.to || loc.pathname.startsWith(n.to + "/");
             return (
               <Link
                 key={n.to}

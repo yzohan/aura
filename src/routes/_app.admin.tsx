@@ -1,7 +1,15 @@
 import { createFileRoute, Outlet, useNavigate } from "@tanstack/react-router";
 import { useEffect } from "react";
 import { useAuth } from "@/lib/auth";
-import { Map as MapIcon, Users } from "lucide-react";
+import { 
+  Map as MapIcon, 
+  Users,
+  UserCog,
+  MapPin,
+  FileText,
+  UserCircle,
+  Settings,
+} from "lucide-react";
 import { DashboardShell } from "@/components/dashboard-shell";
 
 export const Route = createFileRoute("/_app/admin")({
@@ -9,8 +17,13 @@ export const Route = createFileRoute("/_app/admin")({
 });
 
 const NAV = [
-  { to: "/admin", label: "Peta GIS", icon: MapIcon },
+  { to: "/admin", label: "Dashboard", icon: MapIcon },
+  { to: "/admin/petugas", label: "Kelola Petugas", icon: UserCog },
   { to: "/admin/users", label: "Kelola Pengguna", icon: Users },
+  { to: "/admin/roads", label: "Data Jalan", icon: MapPin },
+  { to: "/admin/reports", label: "Kelola Laporan", icon: FileText },
+  { to: "/admin/profile", label: "Profile", icon: UserCircle },
+  { to: "/admin/settings", label: "Settings", icon: Settings },
 ];
 
 function AdminLayout() {

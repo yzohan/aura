@@ -26,12 +26,14 @@ export const Route = createFileRoute("/_app/admin/reports/$id")({
 
 interface Report {
   id: string;
-  reporter_id: string;
+  reporter_id: string | null;
   category: keyof typeof CATEGORY_LABEL;
-  title: string;
-  description: string;
-  status: keyof typeof STATUS_LABEL;
-  urgency: keyof typeof URGENCY_LABEL;
+  name: string;
+  email: string | null;
+  no_hp: string;
+  detail_laporan: string;
+  status_pelaporan: string;
+  kategori_pelaporan: string;
   latitude: number;
   longitude: number;
   address: string | null;
@@ -93,12 +95,14 @@ function ReportDetailPage() {
       }
 
       // Load reporter profile
-      const { data: profile } = await supabase
-        .from("profiles")
-        .select("full_name, avatar_url")
-        .eq("id", data.reporter_id)
-        .single();
-      if (profile) setReporter(profile as ReporterProfile);
+      if (data.reporter_id) {
+        const { data: profile } = await supabase
+          .from("profiles")
+          .select("full_name, avatar_url")
+          .eq("id", data.reporter_id)
+          .single();
+        if (profile) setReporter(profile as ReporterProfile);
+      }
 
       // Load petugas
       const { data: roleRows } = await supabase
@@ -117,10 +121,10 @@ function ReportDetailPage() {
     load();
   }, [id, navigate]);
 
-  const updateStatus = async (status: Report["status"]) => {
+  const updateStatus = async (status: Report["status_pelaporan"]) => {
     if (!report) return;
-    setReport((prev) => prev ? { ...prev, status } : prev);
-    const { error } = await supabase.from("reports").update({ status }).eq("id", report.id);
+    setReport((prev) => prev ? { ...prev, status_pelaporan: status } : prev);
+    const { error } = await supabase.from("reports").update({ status_pelaporan: status }).eq("id", report.id);
     if (error) {
       toast.error(error.message);
       // Refetch to revert
@@ -131,10 +135,10 @@ function ReportDetailPage() {
     }
   };
 
-  const updateUrgency = async (urgency: Report["urgency"]) => {
+  const updateUrgency = async (urgency: Report["kategori_pelaporan"]) => {
     if (!report) return;
-    setReport((prev) => prev ? { ...prev, urgency } : prev);
-    const { error } = await supabase.from("reports").update({ urgency }).eq("id", report.id);
+    setReport((prev) => prev ? { ...prev, kategori_pelaporan: urgency } : prev);
+    const { error } = await supabase.from("reports").update({ kategori_pelaporan: urgency }).eq("id", report.id);
     if (error) {
       toast.error(error.message);
       const { data } = await supabase.from("reports").select("*").eq("id", id).single();
@@ -146,7 +150,7 @@ function ReportDetailPage() {
 
   const assignPetugas = async (assignedTo: string) => {
     if (!report || !user) return;
-    setReport((prev) => prev ? { ...prev, status: "in_progress" as Report["status"] } : prev);
+    setReport((prev) => prev ? { ...prev, status_pelaporan: "in_progress" } : prev);
 
     const { error: woErr } = await supabase.from("work_orders").insert({
       report_id: report.id, assigned_to: assignedTo, assigned_by: user.id,
@@ -159,7 +163,7 @@ function ReportDetailPage() {
       return;
     }
 
-    await supabase.from("reports").update({ status: "in_progress" }).eq("id", report.id);
+    await supabase.from("reports").update({ status_pelaporan: "in_progress" }).eq("id", report.id);
     toast.success("Petugas berhasil ditugaskan");
   };
 
@@ -174,7 +178,7 @@ function ReportDetailPage() {
   // photoUrl is already resolved via state
 
   const CategoryIcon = CATEGORY_ICON[report.category as keyof typeof CATEGORY_ICON];
-  const urgencyColor = URGENCY_COLORS[report.urgency] ?? "#5a7a55";
+  const urgencyColor = URGENCY_COLORS[report.kategori_pelaporan] ?? "#5a7a55";
   const createdDate = new Date(report.created_at);
 
   return (
@@ -205,7 +209,7 @@ function ReportDetailPage() {
               {/* Main photo */}
               <img
                 src={photoUrl}
-                alt={report.title}
+                alt={report.name}
                 onLoad={() => setPhotoLoaded(true)}
                 onError={() => setPhotoError(true)}
                 className={`relative z-10 h-full w-full object-contain transition-all duration-700 ${photoLoaded ? "opacity-100 scale-100" : "opacity-0 scale-105"}`}
@@ -235,14 +239,14 @@ function ReportDetailPage() {
                 style={{ backgroundColor: urgencyColor + "CC" }}
               >
                 <AlertTriangle className="h-3 w-3 mr-1" />
-                {URGENCY_LABEL[report.urgency as keyof typeof URGENCY_LABEL]}
+                {report.kategori_pelaporan === 'ringan' ? 'Ringan' : (URGENCY_LABEL[report.kategori_pelaporan as keyof typeof URGENCY_LABEL] || report.kategori_pelaporan)}
               </Badge>
-              <Badge className={`backdrop-blur-sm ${STATUS_TONE[report.status as keyof typeof STATUS_LABEL]}`}>
-                {STATUS_LABEL[report.status as keyof typeof STATUS_LABEL]}
+              <Badge className={`backdrop-blur-sm ${report.status_pelaporan === 'progress' ? STATUS_TONE.in_progress : (STATUS_TONE[report.status_pelaporan as keyof typeof STATUS_TONE] || 'bg-secondary text-secondary-foreground')}`}>
+                {report.status_pelaporan === 'progress' ? 'Dikerjakan' : (STATUS_LABEL[report.status_pelaporan as keyof typeof STATUS_LABEL] || report.status_pelaporan)}
               </Badge>
             </div>
             <h1 className="text-3xl md:text-4xl font-bold text-white tracking-tight drop-shadow-lg">
-              {report.title}
+              {report.name} - {report.no_hp}
             </h1>
             <div className="flex items-center gap-4 mt-3 text-white/70 text-sm">
               <span className="flex items-center gap-1.5">
@@ -266,11 +270,11 @@ function ReportDetailPage() {
           <Card className="p-6 shadow-soft">
             <h3 className="text-xs font-bold uppercase text-primary/60 tracking-wider mb-4 flex items-center gap-2">
               <Tag className="h-3.5 w-3.5" />
-              Deskripsi Laporan
+              Detail Laporan
             </h3>
             <div className="bg-secondary/10 p-5 rounded-xl border border-border/50">
               <p className="text-base text-foreground/90 leading-relaxed italic">
-                "{report.description}"
+                "{report.detail_laporan}"
               </p>
             </div>
           </Card>
@@ -303,23 +307,35 @@ function ReportDetailPage() {
             </div>
           </Card>
 
-          {/* Reporter */}
-          {reporter && (
-            <Card className="p-6 shadow-soft">
-              <h3 className="text-xs font-bold uppercase text-primary/60 tracking-wider mb-4">
-                Pelapor
-              </h3>
+          {/* Reporter (Identitas Pelapor) */}
+          <Card className="p-6 shadow-soft">
+            <h3 className="text-xs font-bold uppercase text-primary/60 tracking-wider mb-4">
+              Identitas Pelapor
+            </h3>
+            <div className="space-y-3.5 text-sm">
               <div className="flex items-center gap-3">
-                <div className="h-10 w-10 rounded-full bg-leaf-gradient flex items-center justify-center text-primary-foreground font-bold text-sm">
-                  {(reporter.full_name ?? "?")[0].toUpperCase()}
+                <div className="h-10 w-10 rounded-full bg-leaf-gradient flex items-center justify-center text-primary-foreground font-bold text-sm animate-pulse-slow">
+                  {(report.name || "?")[0].toUpperCase()}
                 </div>
                 <div>
-                  <p className="font-medium">{reporter.full_name ?? "Anonim"}</p>
-                  <p className="text-xs text-muted-foreground">ID: {report.reporter_id.slice(0, 8)}…</p>
+                  <p className="font-semibold text-base">{report.name || "Anonim"}</p>
+                  <p className="text-[10px] text-muted-foreground">Pelapor Mandiri</p>
                 </div>
               </div>
-            </Card>
-          )}
+              <div className="border-t border-border pt-3 space-y-2">
+                <div className="flex justify-between items-center py-1">
+                  <span className="text-xs text-muted-foreground">No. HP / WhatsApp</span>
+                  <span className="font-semibold text-sm text-foreground">{report.no_hp}</span>
+                </div>
+                {report.email && (
+                  <div className="flex justify-between items-center py-1">
+                    <span className="text-xs text-muted-foreground">Email</span>
+                    <span className="font-medium text-xs text-foreground">{report.email}</span>
+                  </div>
+                )}
+              </div>
+            </div>
+          </Card>
         </div>
 
         {/* Right: Admin Actions */}
@@ -330,10 +346,10 @@ function ReportDetailPage() {
               Update Status
             </h3>
             <Select
-              value={report.status}
-              onValueChange={(v) => updateStatus(v as Report["status"])}
+              value={report.status_pelaporan}
+              onValueChange={(v) => updateStatus(v)}
             >
-              <SelectTrigger className={`h-12 text-sm font-semibold rounded-xl ${STATUS_TONE[report.status as keyof typeof STATUS_LABEL]}`}>
+              <SelectTrigger className={`h-12 text-sm font-semibold rounded-xl ${report.status_pelaporan === 'progress' ? STATUS_TONE.in_progress : (STATUS_TONE[report.status_pelaporan as keyof typeof STATUS_TONE] || 'bg-secondary text-secondary-foreground')}`}>
                 <SelectValue />
               </SelectTrigger>
               <SelectContent>
@@ -350,10 +366,10 @@ function ReportDetailPage() {
               Tingkat Urgensi
             </h3>
             <Select
-              value={report.urgency}
-              onValueChange={(v) => updateUrgency(v as Report["urgency"])}
+              value={report.kategori_pelaporan}
+              onValueChange={(v) => updateUrgency(v)}
             >
-              <SelectTrigger className={`h-12 text-sm font-semibold rounded-xl ${URGENCY_TONE[report.urgency as keyof typeof URGENCY_LABEL]}`}>
+              <SelectTrigger className={`h-12 text-sm font-semibold rounded-xl ${report.kategori_pelaporan === 'ringan' ? URGENCY_TONE.low : (URGENCY_TONE[report.kategori_pelaporan as keyof typeof URGENCY_TONE] || 'bg-secondary text-secondary-foreground')}`}>
                 <SelectValue />
               </SelectTrigger>
               <SelectContent>
