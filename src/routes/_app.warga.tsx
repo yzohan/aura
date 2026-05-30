@@ -97,7 +97,10 @@ interface MyReport {
 function WargaPage() {
   return (
     <DashboardShell title="Lapor Kerusakan Infrastruktur" nav={NAV}>
-      <ReportForm />
+      <div className="grid gap-6 lg:grid-cols-[1.2fr_1fr] max-w-6xl mx-auto items-start animate-in fade-in duration-300">
+        <ReportForm />
+        <RecentReportsList />
+      </div>
     </DashboardShell>
   );
 }
