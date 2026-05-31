@@ -183,14 +183,6 @@ function AdminReportsPage() {
                       <Icon className="h-6 w-6 opacity-60" />
                     </div>
                   )}
-                  {/* Status Indicator over image */}
-                  <div className="absolute top-1.5 left-1.5 z-10">
-                    <Badge className={`text-[9px] px-2 py-0.5 rounded shadow-sm border-none font-semibold ${
-                      r.status_pelaporan === 'progress' ? STATUS_TONE.in_progress : (STATUS_TONE[r.status_pelaporan as keyof typeof STATUS_TONE] || 'bg-secondary text-secondary-foreground')
-                    }`}>
-                      {r.status_pelaporan === 'progress' ? 'Dikerjakan' : (STATUS_LABEL[r.status_pelaporan as keyof typeof STATUS_LABEL] || r.status_pelaporan)}
-                    </Badge>
-                  </div>
                 </div>
 
                 {/* Content info */}
@@ -198,9 +190,14 @@ function AdminReportsPage() {
                   <div>
                     <div className="flex items-start justify-between gap-3">
                       <div>
-                        <h3 className="font-bold text-sm md:text-base text-foreground group-hover:text-primary transition-colors flex items-center gap-1.5">
+                        <h3 className="font-bold text-sm md:text-base text-foreground group-hover:text-primary transition-colors flex items-center flex-wrap gap-2">
                           <Icon className="h-4.5 w-4.5 text-primary shrink-0" />
-                          {CATEGORY_LABEL[r.category as keyof typeof CATEGORY_LABEL] || r.category}
+                          <span>{CATEGORY_LABEL[r.category as keyof typeof CATEGORY_LABEL] || r.category}</span>
+                          <Badge className={`text-[10px] px-2 py-0.5 rounded shadow-sm border-none font-bold ${
+                            r.status_pelaporan === 'progress' ? STATUS_TONE.in_progress : (STATUS_TONE[r.status_pelaporan as keyof typeof STATUS_TONE] || 'bg-secondary text-secondary-foreground')
+                          }`}>
+                            {r.status_pelaporan === 'progress' ? 'Dikerjakan' : (STATUS_LABEL[r.status_pelaporan as keyof typeof STATUS_LABEL] || r.status_pelaporan)}
+                          </Badge>
                         </h3>
                         <p className="text-[10px] text-muted-foreground mt-0.5 font-medium">
                           Pelapor: <span className="text-foreground font-semibold">{r.name}</span> ({r.no_hp})
