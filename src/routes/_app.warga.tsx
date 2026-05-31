@@ -77,6 +77,47 @@ async function fetchPublicIp(): Promise<string | null> {
   return null;
 }
 
+async function fetchOSMPlaces(lat: number, lng: number): Promise<string[]> {
+  // Query Overpass API untuk mencari amenity (fasilitas umum), bangunan penting, dan landuse pemukiman dalam radius 300m
+  const query = `[out:json][timeout:15];(node(around:300,${lat},${lng})["amenity"];way(around:300,${lat},${lng})["amenity"];node(around:300,${lat},${lng})["building"~"school|hospital|residential|apartments|house"];way(around:300,${lat},${lng})["building"~"school|hospital|residential|apartments|house"];way(around:300,${lat},${lng})["landuse"~"residential"];relation(around:300,${lat},${lng})["landuse"~"residential"];);out tags center;`;
+  
+  try {
+    const response = await fetch(`https://overpass-api.de/api/interpreter?data=${encodeURIComponent(query)}`);
+    if (!response.ok) throw new Error("OSM Overpass query failed");
+    
+    const data = await response.json();
+    const places: string[] = [];
+    
+    if (data.elements && Array.isArray(data.elements)) {
+      for (const element of data.elements) {
+        const tags = element.tags;
+        if (!tags) continue;
+        
+        const name = tags.name;
+        const amenity = tags.amenity;
+        const building = tags.building;
+        const landuse = tags.landuse;
+        
+        // Gunakan nama tempat jika ada, fallback ke tipe tempat
+        if (name) {
+          places.push(name);
+        } else if (amenity) {
+          places.push(amenity.replace(/_/g, " "));
+        } else if (building) {
+          places.push(building.replace(/_/g, " "));
+        } else if (landuse) {
+          places.push(landuse.replace(/_/g, " "));
+        }
+      }
+    }
+    
+    return Array.from(new Set(places)).filter(Boolean);
+  } catch (err) {
+    console.error("Gagal mengambil data dari OSM Overpass:", err);
+    return [];
+  }
+}
+
 interface MyReport {
   id: string;
   category: keyof typeof CATEGORY_LABEL;
@@ -273,7 +314,21 @@ function ReportForm() {
       return;
     }
 
-    // 2. Simpan Laporan Utama ke tabel public.laporan_jalan
+    // 2. Ambil data tempat sekitar dari OSM Overpass API secara realtime di sisi klien
+    let osmPlaces: string[] = [];
+    try {
+      osmPlaces = await fetchOSMPlaces(parsed.data.latitude, parsed.data.longitude);
+    } catch (err) {
+      console.error("Gagal mengambil data OSM Overpass di onSubmit:", err);
+    }
+
+    // Gabungkan fasilitas dari AI response dan OSM Overpass
+    const combinedFasilitas = Array.from(new Set([
+      ...(aiResponse.Konteks_Geospasial?.Fasilitas_Radius_300m || []),
+      ...osmPlaces
+    ])).filter(Boolean);
+
+    // 3. Simpan Laporan Utama ke tabel public.laporan_jalan
     const { data: jalanData, error: jalanErr } = await supabase
       .from("laporan_jalan")
       .insert({
@@ -294,10 +349,9 @@ function ReportForm() {
 
     const laporanId = jalanData.id;
 
-    // 3. Simpan Fasilitas Radius 300 meter ke tabel public.fasilitas_radius
-    const daftarFasilitas = aiResponse.Konteks_Geospasial?.Fasilitas_Radius_300m || [];
-    if (daftarFasilitas.length > 0) {
-      const insertFasilitas = daftarFasilitas.map((nama: string) => ({
+    // 4. Simpan Fasilitas Radius 300 meter ke tabel public.fasilitas_radius
+    if (combinedFasilitas.length > 0) {
+      const insertFasilitas = combinedFasilitas.map((nama: string) => ({
         laporan_id: laporanId,
         nama_fasilitas: nama,
       }));
@@ -307,7 +361,46 @@ function ReportForm() {
       }
     }
 
-    // 4. Simpan Detail Analisis Lubang ke tabel public.detail_lubang
+    // Tentukan tingkat urgensi berdasarkan fasilitas sekitar (OSM)
+    const hasCritical = combinedFasilitas.some((place: string) => {
+      const norm = place.toLowerCase();
+      return norm.includes("sekolah") || norm.includes("school") || 
+             norm.includes("sd") || norm.includes("smp") || 
+             norm.includes("sma") || norm.includes("smk") || 
+             norm.includes("madrasah") || norm.includes("tk") ||
+             norm.includes("rumah sakit") || norm.includes("hospital") || 
+             norm.includes("klinik") || norm.includes("clinic") || 
+             norm.includes("puskesmas") || norm.includes("apotek");
+    });
+
+    const hasMedium = combinedFasilitas.some((place: string) => {
+      const norm = place.toLowerCase();
+      return norm.includes("pemukiman") || norm.includes("residential") || 
+             norm.includes("perumahan") || norm.includes("apartmen") || 
+             norm.includes("kampung") || norm.includes("residence") || 
+             norm.includes("house") || norm.includes("griya") || 
+             norm.includes("kost") || norm.includes("warga");
+    });
+
+    let determinedUrgencyKey: "low" | "medium" | "high" | "critical" = "low";
+    if (hasCritical) {
+      determinedUrgencyKey = "critical";
+    } else if (hasMedium) {
+      determinedUrgencyKey = "medium";
+    } else {
+      determinedUrgencyKey = "low";
+    }
+
+    const urgencyLabelMap = {
+      low: "Ringan",
+      medium: "Sedang",
+      high: "Tinggi",
+      critical: "Kritis",
+    };
+
+    const determinedUrgencyOSMLabel = urgencyLabelMap[determinedUrgencyKey];
+
+    // 5. Simpan Detail Analisis Lubang ke tabel public.detail_lubang
     const daftarAnalisis = aiResponse.Analisis_Kerusakan || [];
     const parsePctValue = (val: string | number) => {
       if (typeof val === "number") return val;
@@ -321,7 +414,7 @@ function ReportForm() {
         severity_visual: item.Severity_Visual || item.Severity || "Kecil",
         persentase_kerusakan: parsePctValue(item.Persentase_Kerusakan || item["Persentase Kerusakan"]),
         persentase_kedalaman: parsePctValue(item.Persentase_Kedalaman || item["Persentase Kedalaman"]),
-        kategori_pelaporan_osm: item.Kategori_Pelaporan_OSM || item["Kategori Pelaporan"] || "Ringan",
+        kategori_pelaporan_osm: determinedUrgencyOSMLabel,
         nilai_score: item.Severity_Scoring?.Nilai_Score ?? 0,
         status_score: item.Severity_Scoring?.Status_Score ?? "Baik",
         petugas_penanganan: item.Severity_Scoring?.Petugas_Penanganan || "Dinas PUPR Kota Cirebon",
@@ -338,7 +431,7 @@ function ReportForm() {
         severity_visual: "Kecil",
         persentase_kerusakan: 0,
         persentase_kedalaman: 0,
-        kategori_pelaporan_osm: "Ringan",
+        kategori_pelaporan_osm: determinedUrgencyOSMLabel,
         nilai_score: 0,
         status_score: "Baik",
         petugas_penanganan: "Dinas PUPR Kota Cirebon",
@@ -349,7 +442,7 @@ function ReportForm() {
       }
     }
 
-    // 5. Update Akumulasi Indeks ALI Global ke tabel public.metadata_ali
+    // 6. Update Akumulasi Indeks ALI Global ke tabel public.metadata_ali
     const indexAliTerbaru = aiResponse.AURA_Location_Index_Kumulatif ?? 0;
     if (indexAliTerbaru > 0) {
       const { error: aliErr } = await supabase
@@ -361,8 +454,7 @@ function ReportForm() {
       }
     }
 
-    // 6. Simpan Laporan Utama ke data backup tabel reports untuk kelayakan admin panel
-    // (Hal ini menjaga agar fitur panel admin & petugas tetap berjalan mulus menggunakan reports)
+    // 7. Simpan Laporan Utama ke data backup tabel reports untuk kelayakan admin panel
     const { error: reportsBackupErr } = await supabase.from("reports").insert({
       reporter_id: null,
       ip_address: userIp,
@@ -375,7 +467,7 @@ function ReportForm() {
       longitude: parsed.data.longitude,
       address: parsed.data.address,
       photo_url: photoPath,
-      kategori_pelaporan: mapUrgencyToKey(daftarAnalisis[0]?.Severity_Visual || daftarAnalisis[0]?.Severity || "low"),
+      kategori_pelaporan: determinedUrgencyKey,
       status_pelaporan: "pending",
     });
 
