@@ -2,7 +2,7 @@ import { createFileRoute, useNavigate } from "@tanstack/react-router";
 import { useEffect, useState, lazy, Suspense } from "react";
 import {
   ArrowLeft, Camera, MapPin, Calendar, Loader2, ExternalLink, Clock, AlertTriangle, Tag,
-  Sparkles, Wrench, Building2, ShieldAlert, CheckCircle2,
+  Sparkles, Wrench, Building2, ShieldAlert, CheckCircle2, ClipboardList, Activity,
 } from "lucide-react";
 import { toast } from "sonner";
 import { formatDistanceToNow } from "date-fns";
@@ -337,15 +337,15 @@ function ReportDetailPage() {
               <div className="flex items-center justify-between mb-6 pb-4 border-b border-border/50">
                 <div className="flex items-center gap-2">
                   <span className="flex h-8 w-8 items-center justify-center rounded-lg bg-primary/10 text-primary">
-                    <Sparkles className="h-4 w-4" />
+                    <ClipboardList className="h-4 w-4" />
                   </span>
                   <div>
-                    <h3 className="font-bold text-base text-foreground">Hasil Analisis AI AURA</h3>
-                    <p className="text-[10px] text-muted-foreground">Kecerdasan Buatan · Deteksi Real-Time</p>
+                    <h3 className="font-bold text-base text-foreground">Analisis Teknis Kerusakan Jalan</h3>
+                    <p className="text-[10px] text-muted-foreground">Sistem Pemindaian Citra & Pengukuran Geospasial</p>
                   </div>
                 </div>
                 <Badge variant="outline" className="bg-primary/10 text-primary border-primary/20 text-[10px] font-semibold tracking-wider uppercase px-2 py-0.5">
-                  AI Verified
+                  Terverifikasi Sistem
                 </Badge>
               </div>
 
@@ -361,7 +361,7 @@ function ReportDetailPage() {
 
                 {/* Score */}
                 <div className="bg-secondary/15 p-4 rounded-xl border border-border/40 text-center">
-                  <p className="text-[10px] text-muted-foreground uppercase font-bold tracking-wider">Skor Kelayakan</p>
+                  <p className="text-[10px] text-muted-foreground uppercase font-bold tracking-wider">Indeks Kondisi Jalan</p>
                   <p className="text-2xl font-extrabold text-primary mt-1">
                     {aiData.detail[0]?.nilai_score ?? 0}
                     <span className="text-xs font-normal text-muted-foreground">/100</span>
@@ -379,9 +379,9 @@ function ReportDetailPage() {
 
                 {/* OSM Category */}
                 <div className="bg-secondary/15 p-4 rounded-xl border border-border/40 text-center">
-                  <p className="text-[10px] text-muted-foreground uppercase font-bold tracking-wider">Kategori OSM</p>
+                  <p className="text-[10px] text-muted-foreground uppercase font-bold tracking-wider">Klasifikasi Jalan (OSM)</p>
                   <p className="text-lg font-bold text-foreground mt-2 capitalize truncate">
-                    {aiData.detail[0]?.kategori_pelaporan_osm || "Ringan"}
+                    {aiData.detail[0]?.kategori_pelaporan_osm || "Tidak Terpetakan"}
                   </p>
                   <p className="text-[9px] text-muted-foreground mt-1">Saran Penanganan</p>
                 </div>
@@ -425,7 +425,7 @@ function ReportDetailPage() {
                     <Wrench className="h-3.5 w-3.5" />
                   </div>
                   <div>
-                    <p className="font-bold text-muted-foreground">Rekomendasi Penanganan</p>
+                    <p className="font-bold text-muted-foreground">Rekomendasi Instansi Penanggung Jawab</p>
                     <p className="font-medium text-foreground mt-0.5">{aiData.detail[0]?.petugas_penanganan || "Dinas PUPR"}</p>
                   </div>
                 </div>
@@ -435,7 +435,7 @@ function ReportDetailPage() {
                     <Clock className="h-3.5 w-3.5" />
                   </div>
                   <div>
-                    <p className="font-bold text-muted-foreground">Estimasi Waktu Respon</p>
+                    <p className="font-bold text-muted-foreground">Estimasi Waktu Respon Penanganan</p>
                     <p className="font-medium text-foreground mt-0.5">{aiData.detail[0]?.estimasi_waktu_penanganan || "24 Jam"}</p>
                   </div>
                 </div>
