@@ -324,6 +324,28 @@ function ReportDetailPage() {
               </div>
             </div>
 
+            {/* Quick Details Table/Grid to fill empty space */}
+            <div className="grid grid-cols-2 gap-x-6 gap-y-3.5 text-xs border-t border-b border-border/60 py-4 my-2">
+              <div className="flex items-center gap-2">
+                <span className="text-muted-foreground font-semibold w-24 shrink-0">Nama Pelapor:</span>
+                <span className="font-bold text-foreground truncate">{report.name || "Anonim"}</span>
+              </div>
+              <div className="flex items-center gap-2">
+                <span className="text-muted-foreground font-semibold w-24 shrink-0">Kontak WA:</span>
+                <span className="font-bold text-foreground">{report.no_hp}</span>
+              </div>
+              <div className="flex items-center gap-2">
+                <span className="text-muted-foreground font-semibold w-24 shrink-0">Koordinat GPS:</span>
+                <span className="font-mono text-foreground font-semibold">
+                  {report.latitude.toFixed(5)}, {report.longitude.toFixed(5)}
+                </span>
+              </div>
+              <div className="flex items-center gap-2">
+                <span className="text-muted-foreground font-semibold w-24 shrink-0">Instansi Terkait:</span>
+                <span className="font-bold text-foreground truncate">{aiData?.detail[0]?.petugas_penanganan || "Dinas PUPR"}</span>
+              </div>
+            </div>
+
             {/* Bottom row: Time and ID */}
             <div className="border-t border-border/60 pt-4 grid grid-cols-2 gap-4 text-xs">
               <div className="space-y-1.5">
