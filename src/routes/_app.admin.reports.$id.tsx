@@ -3,6 +3,7 @@ import { useEffect, useState, lazy, Suspense } from "react";
 import {
   ArrowLeft, Camera, MapPin, Calendar, Loader2, ExternalLink, Clock, AlertTriangle, Tag,
   Sparkles, Wrench, Building2, ShieldAlert, CheckCircle2, ClipboardList, Activity,
+  User, Phone, Mail,
 } from "lucide-react";
 import { toast } from "sonner";
 import { formatDistanceToNow } from "date-fns";
@@ -252,109 +253,131 @@ function ReportDetailPage() {
       <Button
         variant="ghost"
         onClick={() => navigate({ to: "/admin" })}
-        className="gap-2 text-muted-foreground hover:text-foreground -ml-2"
+        className="gap-2 text-muted-foreground hover:text-primary -ml-2 transition-colors font-semibold"
       >
         <ArrowLeft className="h-4 w-4" />
         Kembali ke Dashboard
       </Button>
 
-      {/* Hero Section with Photo */}
-      <div className="relative overflow-hidden rounded-2xl shadow-elev">
-        <div className="relative aspect-[21/9] w-full overflow-hidden bg-secondary/30">
-          {photoUrl && !photoError ? (
-            <>
-              {/* Blurred background fill */}
-              <img
-                src={photoUrl}
-                alt=""
-                aria-hidden="true"
-                className="absolute inset-0 h-full w-full object-cover scale-110 blur-2xl opacity-60"
-                onError={() => setPhotoError(true)}
-              />
-              {/* Main photo */}
+      {/* Split Header Panel (Photo & Core Info) */}
+      <Card className="overflow-hidden border border-border/80 shadow-soft bg-card p-6 rounded-2xl">
+        <div className="grid gap-6 md:grid-cols-12">
+          {/* Left side: Photo */}
+          <div className="md:col-span-5 relative group overflow-hidden rounded-xl bg-secondary/20 border border-border/40 aspect-[4/3] flex items-center justify-center">
+            {photoUrl && !photoError ? (
               <img
                 src={photoUrl}
                 alt={report.name}
                 onLoad={() => setPhotoLoaded(true)}
                 onError={() => setPhotoError(true)}
-                className={`relative z-10 h-full w-full object-contain transition-all duration-700 ${photoLoaded ? "opacity-100 scale-100" : "opacity-0 scale-105"}`}
+                className={`h-full w-full object-cover transition-all duration-500 group-hover:scale-[1.03] ${
+                  photoLoaded ? "opacity-100" : "opacity-0"
+                }`}
               />
-            </>
-          ) : (
-            <div className="flex h-full w-full flex-col items-center justify-center gap-3 text-muted-foreground bg-gradient-to-br from-secondary/40 to-secondary/10">
-              <div className="rounded-2xl bg-secondary/60 p-6">
-                <Camera className="h-16 w-16 opacity-30" />
+            ) : (
+              <div className="flex flex-col items-center justify-center gap-3 text-muted-foreground p-6">
+                <div className="p-4 bg-background rounded-full border border-border/50 shadow-sm">
+                  <Camera className="h-8 w-8 text-muted-foreground/40" />
+                </div>
+                <p className="text-xs font-semibold italic opacity-60">Tidak ada foto bukti dilampirkan</p>
               </div>
-              <p className="text-sm font-medium italic opacity-60">Tidak ada foto bukti dilampirkan</p>
-            </div>
-          )}
+            )}
+          </div>
 
-          {/* Gradient overlay at bottom */}
-          <div className="absolute inset-x-0 bottom-0 z-20 h-1/2 bg-gradient-to-t from-black/80 via-black/40 to-transparent" />
+          {/* Right side: Core Info */}
+          <div className="md:col-span-7 flex flex-col justify-between py-1 space-y-4">
+            <div className="space-y-4">
+              {/* Badges */}
+              <div className="flex flex-wrap items-center gap-2">
+                <Badge className="bg-primary/10 text-primary hover:bg-primary/15 border-transparent gap-1.5 py-1 px-2.5 rounded-lg text-xs font-semibold">
+                  <CategoryIcon className="h-3.5 w-3.5" />
+                  {CATEGORY_LABEL[report.category as keyof typeof CATEGORY_LABEL]}
+                </Badge>
+                <Badge
+                  className="text-white border-transparent gap-1.5 py-1 px-2.5 rounded-lg text-xs font-semibold"
+                  style={{ backgroundColor: urgencyColor }}
+                >
+                  <AlertTriangle className="h-3.5 w-3.5" />
+                  {URGENCY_LABEL[urgencyKey]}
+                </Badge>
+                <Badge className={`border-transparent py-1 px-2.5 rounded-lg text-xs font-semibold ${
+                  report.status_pelaporan === 'progress' 
+                    ? STATUS_TONE.in_progress 
+                    : (STATUS_TONE[report.status_pelaporan as keyof typeof STATUS_TONE] || 'bg-secondary text-secondary-foreground')
+                }`}>
+                  {report.status_pelaporan === 'progress' 
+                    ? 'Dikerjakan' 
+                    : (STATUS_LABEL[report.status_pelaporan as keyof typeof STATUS_LABEL] || report.status_pelaporan)}
+                </Badge>
+              </div>
 
-          {/* Title overlay */}
-          <div className="absolute bottom-0 left-0 right-0 z-30 p-8">
-            <div className="flex items-center gap-2 mb-3">
-              <Badge className="bg-white/20 text-white backdrop-blur-sm border-white/20 gap-1.5">
-                <CategoryIcon className="h-3.5 w-3.5" />
-                {CATEGORY_LABEL[report.category as keyof typeof CATEGORY_LABEL]}
-              </Badge>
-              <Badge
-                className="backdrop-blur-sm border-white/20 text-white"
-                style={{ backgroundColor: urgencyColor + "CC" }}
-              >
-                <AlertTriangle className="h-3 w-3 mr-1" />
-                {URGENCY_LABEL[urgencyKey]}
-              </Badge>
-              <Badge className={`backdrop-blur-sm ${report.status_pelaporan === 'progress' ? STATUS_TONE.in_progress : (STATUS_TONE[report.status_pelaporan as keyof typeof STATUS_TONE] || 'bg-secondary text-secondary-foreground')}`}>
-                {report.status_pelaporan === 'progress' ? 'Dikerjakan' : (STATUS_LABEL[report.status_pelaporan as keyof typeof STATUS_LABEL] || report.status_pelaporan)}
-              </Badge>
+              {/* Title & Ticket ID */}
+              <div>
+                <span className="text-[10px] font-bold text-primary tracking-wider uppercase">TIKET LAPORAN</span>
+                <h1 className="text-2xl md:text-3xl font-extrabold text-foreground tracking-tight leading-tight mt-0.5">
+                  #AURA-{report.id.slice(0, 8).toUpperCase()}
+                </h1>
+                <p className="text-muted-foreground text-sm flex items-start gap-1.5 mt-2.5 leading-snug">
+                  <MapPin className="h-4.5 w-4.5 shrink-0 text-primary mt-0.5" />
+                  <span>{report.address || "Alamat tidak terdeteksi"}</span>
+                </p>
+              </div>
             </div>
-            <h1 className="text-3xl md:text-4xl font-bold text-white tracking-tight drop-shadow-lg">
-              {report.name} - {report.no_hp}
-            </h1>
-            <div className="flex items-center gap-4 mt-3 text-white/70 text-sm">
-              <span className="flex items-center gap-1.5">
-                <Calendar className="h-3.5 w-3.5" />
-                {createdDate.toLocaleDateString('id-ID', { day: 'numeric', month: 'long', year: 'numeric' })}
-              </span>
-              <span className="flex items-center gap-1.5">
-                <Clock className="h-3.5 w-3.5" />
-                {formatDistanceToNow(createdDate, { addSuffix: true, locale: idLocale })}
-              </span>
+
+            {/* Bottom row: Time and ID */}
+            <div className="border-t border-border/60 pt-4 grid grid-cols-2 gap-4 text-xs">
+              <div className="space-y-1.5">
+                <span className="font-bold block uppercase tracking-wider text-[10px] text-muted-foreground/80">TANGGAL LAPORAN</span>
+                <span className="text-foreground font-semibold flex items-center gap-1.5">
+                  <Calendar className="h-3.5 w-3.5 text-primary/70" />
+                  {createdDate.toLocaleDateString('id-ID', { day: 'numeric', month: 'long', year: 'numeric' })}
+                </span>
+              </div>
+              <div className="space-y-1.5">
+                <span className="font-bold block uppercase tracking-wider text-[10px] text-muted-foreground/80">WAKTU PEMBUATAN</span>
+                <span className="text-foreground font-semibold flex items-center gap-1.5">
+                  <Clock className="h-3.5 w-3.5 text-primary/70" />
+                  {formatDistanceToNow(createdDate, { addSuffix: true, locale: idLocale })}
+                </span>
+              </div>
             </div>
           </div>
         </div>
-      </div>
+      </Card>
 
       {/* Content Grid */}
-      <div className="grid gap-6 lg:grid-cols-[1fr_380px]">
-        {/* Left: Detail Info */}
+      <div className="grid gap-6 lg:grid-cols-[1fr_360px]">
+        {/* Left Column: Details */}
         <div className="space-y-6">
           {/* Reporter (Identitas Pelapor) */}
-          <Card className="p-6 shadow-soft">
-            <h3 className="text-xs font-bold uppercase text-primary/60 tracking-wider mb-4">
+          <Card className="p-6 border border-border/80 shadow-soft bg-card rounded-2xl">
+            <h3 className="text-xs font-bold uppercase text-primary/80 tracking-wider mb-4 flex items-center gap-2 border-b border-border/50 pb-2">
+              <User className="h-4 w-4 text-primary" />
               Identitas Pelapor
             </h3>
-            <div className="space-y-3.5 text-sm">
+            
+            <div className="flex flex-col sm:flex-row sm:items-center justify-between gap-4">
               <div className="flex items-center gap-3">
-                <div className="h-10 w-10 rounded-full bg-leaf-gradient flex items-center justify-center text-primary-foreground font-bold text-sm animate-pulse-slow">
+                <div className="h-11 w-11 rounded-xl bg-leaf-gradient flex items-center justify-center text-primary-foreground font-extrabold text-base shadow-soft shrink-0">
                   {(report.name || "?")[0].toUpperCase()}
                 </div>
                 <div>
-                  <p className="font-semibold text-base">{report.name || "Anonim"}</p>
-                  <p className="text-[10px] text-muted-foreground">Pelapor Mandiri</p>
+                  <p className="font-bold text-base text-foreground">{report.name || "Anonim"}</p>
+                  <Badge variant="secondary" className="text-[10px] font-medium py-0.5 px-2 bg-secondary/60 text-secondary-foreground border border-border/30 mt-0.5">
+                    Pelapor Mandiri (Warga)
+                  </Badge>
                 </div>
               </div>
-              <div className="border-t border-border pt-4 grid gap-3 sm:grid-cols-2 text-sm">
-                <div className="flex items-center gap-3 bg-secondary/15 px-4 py-2.5 rounded-xl border border-border/40">
-                  <span className="text-xs text-muted-foreground font-semibold w-28 shrink-0">No. HP / WhatsApp</span>
-                  <span className="font-bold text-sm text-foreground">{report.no_hp}</span>
+              
+              <div className="flex flex-col sm:flex-row gap-2.5 text-sm shrink-0">
+                <div className="flex items-center gap-2 bg-secondary/10 hover:bg-secondary/15 px-3 py-2 rounded-xl border border-border/40 transition-colors">
+                  <Phone className="h-4 w-4 text-primary shrink-0" />
+                  <span className="font-bold text-foreground">{report.no_hp}</span>
                 </div>
                 {report.email && (
-                  <div className="flex items-center gap-3 bg-secondary/15 px-4 py-2.5 rounded-xl border border-border/40">
-                    <span className="text-xs text-muted-foreground font-semibold w-16 shrink-0">Email</span>
-                    <span className="font-medium text-xs text-foreground truncate">{report.email}</span>
+                  <div className="flex items-center gap-2 bg-secondary/10 hover:bg-secondary/15 px-3 py-2 rounded-xl border border-border/40 transition-colors">
+                    <Mail className="h-4 w-4 text-primary shrink-0" />
+                    <span className="font-medium text-foreground truncate max-w-[180px]">{report.email}</span>
                   </div>
                 )}
               </div>
@@ -362,13 +385,13 @@ function ReportDetailPage() {
           </Card>
 
           {/* Description */}
-          <Card className="p-6 shadow-soft">
-            <h3 className="text-xs font-bold uppercase text-primary/60 tracking-wider mb-4 flex items-center gap-2">
-              <Tag className="h-3.5 w-3.5" />
-              Detail Laporan
+          <Card className="p-6 border border-border/80 shadow-soft bg-card rounded-2xl">
+            <h3 className="text-xs font-bold uppercase text-primary/80 tracking-wider mb-4 flex items-center gap-2 border-b border-border/50 pb-2">
+              <Tag className="h-4 w-4 text-primary" />
+              Deskripsi Laporan
             </h3>
-            <div className="bg-secondary/10 p-5 rounded-xl border border-border/50">
-              <p className="text-base text-foreground/90 leading-relaxed italic">
+            <div className="bg-primary/[0.02] border-l-4 border-primary p-5 rounded-r-xl rounded-l-sm bg-gradient-to-r from-primary/[0.03] to-transparent">
+              <p className="text-base text-foreground/90 leading-relaxed italic font-medium font-serif">
                 "{report.detail_laporan}"
               </p>
             </div>
@@ -376,111 +399,126 @@ function ReportDetailPage() {
 
           {/* AI Analysis Result */}
           {aiData && (
-            <Card className="p-6 shadow-soft border-t-4 border-t-primary bg-gradient-to-b from-primary/5 via-card to-card">
-              <div className="flex items-center justify-between mb-6 pb-4 border-b border-border/50">
-                <div className="flex items-center gap-2">
-                  <span className="flex h-8 w-8 items-center justify-center rounded-lg bg-primary/10 text-primary">
-                    <ClipboardList className="h-4 w-4" />
-                  </span>
+            <Card className="p-6 border border-border/80 shadow-soft bg-card rounded-2xl relative overflow-hidden">
+              <div className="absolute top-0 left-0 right-0 h-1 bg-primary" />
+              
+              <div className="flex items-center justify-between mb-6 pb-3 border-b border-border/50">
+                <div className="flex items-center gap-2.5">
+                  <div className="flex h-9 w-9 items-center justify-center rounded-xl bg-primary/10 text-primary border border-primary/20 shadow-sm">
+                    <Sparkles className="h-4.5 w-4.5" />
+                  </div>
                   <div>
-                    <h3 className="font-bold text-base text-foreground">Analisis Teknis Kerusakan Jalan</h3>
-                    <p className="text-[10px] text-muted-foreground">Sistem Pemindaian Citra & Pengukuran Geospasial</p>
+                    <h3 className="font-bold text-base text-foreground">AURA AI Engine™ Analysis</h3>
+                    <p className="text-[10px] text-muted-foreground font-medium">Pengukuran Otomatis Kerusakan & Klasifikasi Citra</p>
                   </div>
                 </div>
-                <Badge variant="outline" className="bg-primary/10 text-primary border-primary/20 text-[10px] font-semibold tracking-wider uppercase px-2 py-0.5">
-                  Terverifikasi Sistem
+                <Badge variant="outline" className="bg-primary/5 text-primary border-primary/20 text-[9px] font-bold tracking-wider uppercase px-2.5 py-1">
+                  AI TERVERIFIKASI
                 </Badge>
               </div>
 
+              {/* 3 Core metrics */}
               <div className="grid gap-4 sm:grid-cols-3 mb-6">
-                {/* Total Potholes */}
-                <div className="bg-secondary/15 p-4 rounded-xl border border-border/40 text-center flex flex-col justify-between min-h-[110px]">
-                  <p className="text-[10px] text-muted-foreground uppercase font-bold tracking-wider">Total Lubang</p>
-                  <p className="text-2xl font-extrabold text-foreground mt-2">
+                <div className="bg-secondary/5 hover:bg-secondary/10 px-4 py-4 rounded-xl border border-border/30 text-center flex flex-col justify-between min-h-[110px] transition-all duration-300">
+                  <span className="text-[10px] text-muted-foreground uppercase font-bold tracking-wider">Total Lubang</span>
+                  <p className="text-3xl font-extrabold text-foreground tracking-tight my-1">
                     {aiData.laporan?.total_lubang_terdeteksi ?? 0}
                   </p>
-                  <p className="text-[9px] text-muted-foreground mt-1 font-semibold">Terdeteksi visual</p>
+                  <span className="text-[10px] text-muted-foreground/80 font-semibold">Terdeteksi pada foto</span>
                 </div>
 
-                {/* Fasilitas Radius 300m */}
-                <div className="bg-secondary/15 p-4 rounded-xl border border-border/40 text-center flex flex-col justify-between min-h-[110px]">
-                  <p className="text-[10px] text-muted-foreground uppercase font-bold tracking-wider">Fasilitas Sekitar (300m)</p>
-                  {aiData.fasilitas.length > 0 ? (
-                    <div className="my-1.5 max-h-[50px] overflow-y-auto pr-1 flex flex-wrap gap-1 justify-center scrollbar-thin">
-                      {aiData.fasilitas.map((f) => (
-                        <Badge key={f.id} variant="secondary" className="text-[9px] px-1.5 py-0 rounded bg-background/50 border border-border/20 max-w-full truncate font-medium">
-                          {f.nama_fasilitas}
-                        </Badge>
-                      ))}
-                    </div>
-                  ) : (
-                    <p className="text-xs text-muted-foreground italic mt-2">Tidak Terdeteksi</p>
-                  )}
-                  <p className="text-[9px] text-muted-foreground font-semibold">
-                    {aiData.fasilitas.length} Fasilitas Sekitar
+                <div className="bg-secondary/5 hover:bg-secondary/10 px-4 py-4 rounded-xl border border-border/30 text-center flex flex-col justify-between min-h-[110px] transition-all duration-300">
+                  <span className="text-[10px] text-muted-foreground uppercase font-bold tracking-wider">Fasilitas Sekitar (300m)</span>
+                  <p className="text-3xl font-extrabold text-foreground tracking-tight my-1">
+                    {aiData.fasilitas.length}
                   </p>
+                  <span className="text-[10px] text-muted-foreground/80 font-semibold">Dalam radius pemetaan</span>
                 </div>
 
-                {/* OSM Category */}
-                <div className="bg-secondary/15 p-4 rounded-xl border border-border/40 text-center flex flex-col justify-between min-h-[110px]">
-                  <p className="text-[10px] text-muted-foreground uppercase font-bold tracking-wider">Klasifikasi Jalan (OSM)</p>
-                  <p className="text-lg font-bold text-foreground mt-2 capitalize truncate">
+                <div className="bg-secondary/5 hover:bg-secondary/10 px-4 py-4 rounded-xl border border-border/30 text-center flex flex-col justify-between min-h-[110px] transition-all duration-300">
+                  <span className="text-[10px] text-muted-foreground uppercase font-bold tracking-wider">Klasifikasi Jalan (OSM)</span>
+                  <p className="text-base font-extrabold text-foreground truncate my-1.5 capitalize">
                     {aiData.detail[0]?.kategori_pelaporan_osm || "Tidak Terpetakan"}
                   </p>
-                  <p className="text-[9px] text-muted-foreground mt-1 font-semibold">Saran Penanganan</p>
+                  <span className="text-[10px] text-muted-foreground/80 font-semibold">Tipe perkerasan jalan</span>
                 </div>
               </div>
 
-              {/* Progress Bars for Damage and Depth */}
+              {/* Severity Indicators */}
               {aiData.detail[0] && (
-                <div className="space-y-4 mb-6 border-b border-border/40 pb-5">
-                  <div className="space-y-1.5">
-                    <div className="flex justify-between text-xs">
-                      <span className="font-semibold text-muted-foreground">Persentase Kerusakan Visual</span>
-                      <span className="font-bold text-foreground">{aiData.detail[0].persentase_kerusakan}%</span>
+                <div className="space-y-4 mb-6 bg-secondary/5 border border-border/30 p-5 rounded-xl">
+                  <h4 className="text-xs font-bold text-foreground uppercase tracking-wider mb-2">Metrik Tingkat Keparahan</h4>
+                  <div className="space-y-3.5">
+                    <div className="space-y-1.5">
+                      <div className="flex justify-between text-xs font-semibold">
+                        <span className="text-muted-foreground">Persentase Kerusakan Area</span>
+                        <span className="text-destructive font-bold">{aiData.detail[0].persentase_kerusakan}%</span>
+                      </div>
+                      <div className="h-2.5 w-full bg-secondary/20 rounded-full overflow-hidden border border-border/20">
+                        <div 
+                          className="h-full bg-destructive transition-all duration-500 rounded-full" 
+                          style={{ width: `${aiData.detail[0].persentase_kerusakan}%` }}
+                        />
+                      </div>
                     </div>
-                    <div className="h-2 w-full bg-secondary/35 rounded-full overflow-hidden">
-                      <div 
-                        className="h-full bg-destructive transition-all duration-500" 
-                        style={{ width: `${aiData.detail[0].persentase_kerusakan}%` }}
-                      />
-                    </div>
-                  </div>
 
-                  <div className="space-y-1.5">
-                    <div className="flex justify-between text-xs">
-                      <span className="font-semibold text-muted-foreground">Persentase Estimasi Kedalaman</span>
-                      <span className="font-bold text-foreground">{aiData.detail[0].persentase_kedalaman}%</span>
-                    </div>
-                    <div className="h-2 w-full bg-secondary/35 rounded-full overflow-hidden">
-                      <div 
-                        className="h-full bg-amber-500 transition-all duration-500" 
-                        style={{ width: `${aiData.detail[0].persentase_kedalaman}%` }}
-                      />
+                    <div className="space-y-1.5">
+                      <div className="flex justify-between text-xs font-semibold">
+                        <span className="text-muted-foreground">Estimasi Kedalaman Lubang</span>
+                        <span className="text-amber-500 font-bold">{aiData.detail[0].persentase_kedalaman}%</span>
+                      </div>
+                      <div className="h-2.5 w-full bg-secondary/20 rounded-full overflow-hidden border border-border/20">
+                        <div 
+                          className="h-full bg-amber-500 transition-all duration-500 rounded-full" 
+                          style={{ width: `${aiData.detail[0].persentase_kedalaman}%` }}
+                        />
+                      </div>
                     </div>
                   </div>
                 </div>
               )}
 
-              {/* Recommended Handler & Est Time */}
-              <div className="grid gap-4 sm:grid-cols-2 mb-2">
-                <div className="flex gap-2.5 items-start text-xs">
-                  <div className="p-2 bg-primary/10 rounded-lg text-primary">
-                    <Wrench className="h-3.5 w-3.5" />
+              {/* Radius facilities list - clean flow */}
+              <div className="mb-6 space-y-2">
+                <h4 className="text-xs font-bold text-foreground uppercase tracking-wider flex items-center gap-1.5">
+                  <Building2 className="h-3.5 w-3.5 text-primary" />
+                  Fasilitas Umum Terdekat dalam 300 Meter
+                </h4>
+                {aiData.fasilitas.length > 0 ? (
+                  <div className="flex flex-wrap gap-2 pt-1">
+                    {aiData.fasilitas.map((f) => (
+                      <Badge key={f.id} variant="secondary" className="text-xs px-2.5 py-1 rounded-lg bg-secondary/20 border border-border/40 text-foreground font-semibold flex items-center gap-1">
+                        <span className="h-1.5 w-1.5 rounded-full bg-primary" />
+                        {f.nama_fasilitas}
+                      </Badge>
+                    ))}
+                  </div>
+                ) : (
+                  <p className="text-xs text-muted-foreground italic pl-1 bg-secondary/5 py-3 rounded-lg border border-dashed border-border/60 text-center">
+                    Tidak ada fasilitas penting terdeteksi di database terdekat.
+                  </p>
+                )}
+              </div>
+
+              {/* SLA & Handler Recommendation */}
+              <div className="border-t border-border/50 pt-5 grid gap-4 sm:grid-cols-2">
+                <div className="flex gap-3 items-center text-sm bg-secondary/5 px-4 py-3 rounded-xl border border-border/30">
+                  <div className="p-2 bg-primary/10 rounded-lg text-primary border border-primary/20 shrink-0">
+                    <Wrench className="h-4 w-4" />
                   </div>
                   <div>
-                    <p className="font-bold text-muted-foreground">Rekomendasi Instansi Penanggung Jawab</p>
-                    <p className="font-medium text-foreground mt-0.5">{aiData.detail[0]?.petugas_penanganan || "Dinas PUPR"}</p>
+                    <p className="text-[10px] font-bold text-muted-foreground uppercase tracking-wider">Rekomendasi Dinas</p>
+                    <p className="font-extrabold text-foreground mt-0.5">{aiData.detail[0]?.petugas_penanganan || "Dinas Pekerjaan Umum (PUPR)"}</p>
                   </div>
                 </div>
 
-                <div className="flex gap-2.5 items-start text-xs">
-                  <div className="p-2 bg-primary/10 rounded-lg text-primary">
-                    <Clock className="h-3.5 w-3.5" />
+                <div className="flex gap-3 items-center text-sm bg-secondary/5 px-4 py-3 rounded-xl border border-border/30">
+                  <div className="p-2 bg-primary/10 rounded-lg text-primary border border-primary/20 shrink-0">
+                    <Clock className="h-4 w-4" />
                   </div>
                   <div>
-                    <p className="font-bold text-muted-foreground">Estimasi Waktu Respon Penanganan</p>
-                    <p className="font-medium text-foreground mt-0.5">{aiData.detail[0]?.estimasi_waktu_penanganan || "24 Jam"}</p>
+                    <p className="text-[10px] font-bold text-muted-foreground uppercase tracking-wider">Target Waktu Respon SLA</p>
+                    <p className="font-extrabold text-foreground mt-0.5">{aiData.detail[0]?.estimasi_waktu_penanganan || "24 Jam Kerja"}</p>
                   </div>
                 </div>
               </div>
@@ -488,110 +526,139 @@ function ReportDetailPage() {
           )}
 
           {/* Location */}
-          <Card className="p-6 shadow-soft">
-            <h3 className="text-xs font-bold uppercase text-primary/60 tracking-wider mb-4 flex items-center gap-2">
-              <MapPin className="h-3.5 w-3.5" />
-              Lokasi Kejadian
+          <Card className="p-6 border border-border/80 shadow-soft bg-card rounded-2xl">
+            <h3 className="text-xs font-bold uppercase text-primary/80 tracking-wider mb-4 flex items-center gap-2 border-b border-border/50 pb-2">
+              <MapPin className="h-4 w-4 text-primary" />
+              Lokasi & Geospasial
             </h3>
-            <div className="flex items-start gap-4 bg-secondary/10 p-5 rounded-xl border border-border/50">
-              <div className="p-3 bg-primary/10 rounded-xl text-primary shrink-0">
-                <MapPin className="h-6 w-6" />
-              </div>
-              <div className="flex-1 min-w-0">
-                <p className="text-base font-medium">{report.address || "Lokasi GPS"}</p>
-                <p className="text-sm text-muted-foreground mt-1">
-                  {report.latitude.toFixed(6)}, {report.longitude.toFixed(6)}
-                </p>
+            
+            <div className="flex flex-col md:flex-row gap-5 items-stretch">
+              {/* Map placeholder with clean styling */}
+              <div className="flex-1 bg-secondary/15 rounded-xl border border-border/50 p-4 flex flex-col justify-between space-y-4">
+                <div className="flex items-start gap-3">
+                  <div className="p-2.5 bg-primary/10 rounded-xl text-primary border border-primary/20 shrink-0">
+                    <MapPin className="h-5 w-5" />
+                  </div>
+                  <div className="min-w-0">
+                    <p className="font-bold text-sm text-foreground">{report.address || "Detail koordinat lokasi"}</p>
+                    <p className="text-xs font-semibold text-muted-foreground mt-1">
+                      Latitude: {report.latitude.toFixed(6)} | Longitude: {report.longitude.toFixed(6)}
+                    </p>
+                  </div>
+                </div>
+
                 <a
                   href={`https://www.openstreetmap.org/?mlat=${report.latitude}&mlon=${report.longitude}#map=18/${report.latitude}/${report.longitude}`}
                   target="_blank"
                   rel="noreferrer"
-                  className="inline-flex items-center gap-1.5 mt-3 text-sm text-primary hover:underline font-medium"
+                  className="inline-flex items-center justify-center gap-2 px-4 py-2.5 w-full bg-background border border-border hover:bg-secondary/40 text-sm text-foreground hover:text-primary font-bold rounded-xl shadow-sm transition-all active:scale-[0.985]"
                 >
-                  <ExternalLink className="h-3.5 w-3.5" />
-                  Buka di OpenStreetMap
+                  <ExternalLink className="h-4 w-4" />
+                  Buka Peta OpenStreetMap
                 </a>
+              </div>
+
+              {/* Right coordinates info block */}
+              <div className="w-full md:w-[220px] shrink-0 bg-primary/[0.02] border border-primary/20 rounded-xl p-4 flex flex-col justify-between text-xs">
+                <div>
+                  <span className="text-[10px] font-bold text-primary uppercase tracking-wider block mb-2">Presisi Geospasial</span>
+                  <p className="text-muted-foreground leading-relaxed">
+                    Koordinat didapatkan secara realtime dari sensor GPS perangkat pelapor saat mengisi formulir pengaduan.
+                  </p>
+                </div>
+                <div className="pt-3 border-t border-border/40 mt-3 font-semibold text-foreground/80 flex items-center justify-between">
+                  <span>Status Pemetaan</span>
+                  <Badge className="bg-primary/20 text-primary border-none text-[9px] py-0.5 px-2">AKTIF</Badge>
+                </div>
               </div>
             </div>
           </Card>
         </div>
 
-        {/* Right: Admin Actions */}
+        {/* Right Column: Unified Actions Panel */}
         <div className="space-y-6">
-          {/* Status Control */}
-          <Card className="p-6 shadow-soft">
-            <h3 className="text-xs font-bold uppercase text-primary/60 tracking-wider mb-4">
-              Update Status
-            </h3>
-            <Select
-              value={report.status_pelaporan}
-              onValueChange={(v) => updateStatus(v)}
-            >
-              <SelectTrigger className={`h-12 text-sm font-semibold rounded-xl ${report.status_pelaporan === 'progress' ? STATUS_TONE.in_progress : (STATUS_TONE[report.status_pelaporan as keyof typeof STATUS_TONE] || 'bg-secondary text-secondary-foreground')}`}>
-                <SelectValue />
-              </SelectTrigger>
-              <SelectContent>
-                {Object.entries(STATUS_LABEL).map(([k, v]) => (
-                  <SelectItem key={k} value={k}>{v}</SelectItem>
-                ))}
-              </SelectContent>
-            </Select>
-          </Card>
-
-          {/* Urgency Control */}
-          <Card className="p-6 shadow-soft">
-            <h3 className="text-xs font-bold uppercase text-primary/60 tracking-wider mb-4">
-              Tingkat Urgensi
-            </h3>
-            <Select
-              value={report.kategori_pelaporan}
-              onValueChange={(v) => updateUrgency(v)}
-            >
-              <SelectTrigger className={`h-12 text-sm font-semibold rounded-xl ${report.kategori_pelaporan === 'ringan' ? URGENCY_TONE.low : (URGENCY_TONE[report.kategori_pelaporan as keyof typeof URGENCY_TONE] || 'bg-secondary text-secondary-foreground')}`}>
-                <SelectValue />
-              </SelectTrigger>
-              <SelectContent>
-                {Object.entries(URGENCY_LABEL).map(([k, v]) => (
-                  <SelectItem key={k} value={k}>{v}</SelectItem>
-                ))}
-              </SelectContent>
-            </Select>
-          </Card>
-
-          {/* Assign Petugas */}
-          <Card className="p-6 shadow-soft">
-            <h3 className="text-xs font-bold uppercase text-primary/60 tracking-wider mb-4">
-              Tugaskan Petugas
-            </h3>
-            <Select onValueChange={(v) => assignPetugas(v)}>
-              <SelectTrigger className="h-12 text-sm bg-secondary/50 border-dashed rounded-xl">
-                <SelectValue placeholder="Pilih Petugas…" />
-              </SelectTrigger>
-              <SelectContent>
-                {petugas.map((p) => (
-                  <SelectItem key={p.id} value={p.id}>{p.full_name}</SelectItem>
-                ))}
-              </SelectContent>
-            </Select>
-          </Card>
-
-          {/* Metadata */}
-          <Card className="p-6 shadow-soft bg-secondary/20">
-            <h3 className="text-xs font-bold uppercase text-primary/60 tracking-wider mb-4">
-              Metadata
-            </h3>
-            <div className="space-y-3 text-sm">
-              <div className="flex justify-between">
-                <span className="text-muted-foreground">ID Laporan</span>
-                <span className="font-mono text-xs">{report.id.slice(0, 8)}…</span>
+          <Card className="border border-border/80 shadow-soft bg-card rounded-2xl relative overflow-hidden">
+            {/* Top decorative line */}
+            <div className="absolute top-0 left-0 right-0 h-1 bg-gradient-to-r from-primary/60 to-primary" />
+            
+            <div className="p-6 space-y-6">
+              <div>
+                <h3 className="font-extrabold text-base text-foreground">Panel Tindakan</h3>
+                <p className="text-xs text-muted-foreground mt-0.5">Penanganan dan penugasan laporan</p>
               </div>
-              <div className="flex justify-between">
-                <span className="text-muted-foreground">Dibuat</span>
-                <span>{createdDate.toLocaleString('id-ID')}</span>
+
+              {/* Status Control */}
+              <div className="space-y-2">
+                <label className="text-[10px] font-bold uppercase text-muted-foreground/90 tracking-wider">Update Status Laporan</label>
+                <Select
+                  value={report.status_pelaporan}
+                  onValueChange={(v) => updateStatus(v)}
+                >
+                  <SelectTrigger className={`h-11 text-xs font-bold rounded-xl border border-border/80 transition-all ${
+                    report.status_pelaporan === 'progress' 
+                      ? STATUS_TONE.in_progress 
+                      : (STATUS_TONE[report.status_pelaporan as keyof typeof STATUS_TONE] || 'bg-secondary text-secondary-foreground')
+                  }`}>
+                    <SelectValue />
+                  </SelectTrigger>
+                  <SelectContent>
+                    {Object.entries(STATUS_LABEL).map(([k, v]) => (
+                      <SelectItem key={k} value={k} className="text-xs font-semibold">{v}</SelectItem>
+                    ))}
+                  </SelectContent>
+                </Select>
               </div>
-              <div className="flex justify-between">
-                <span className="text-muted-foreground">Koordinat</span>
-                <span className="font-mono text-xs">{report.latitude.toFixed(4)}, {report.longitude.toFixed(4)}</span>
+
+              {/* Urgency Control */}
+              <div className="space-y-2">
+                <label className="text-[10px] font-bold uppercase text-muted-foreground/90 tracking-wider">Tingkat Urgensi</label>
+                <Select
+                  value={report.kategori_pelaporan}
+                  onValueChange={(v) => updateUrgency(v)}
+                >
+                  <SelectTrigger className={`h-11 text-xs font-bold rounded-xl border border-border/80 transition-all ${
+                    report.kategori_pelaporan === 'ringan' 
+                      ? URGENCY_TONE.low 
+                      : (URGENCY_TONE[report.kategori_pelaporan as keyof typeof URGENCY_TONE] || 'bg-secondary text-secondary-foreground')
+                  }`}>
+                    <SelectValue />
+                  </SelectTrigger>
+                  <SelectContent>
+                    {Object.entries(URGENCY_LABEL).map(([k, v]) => (
+                      <SelectItem key={k} value={k} className="text-xs font-semibold">{v}</SelectItem>
+                    ))}
+                  </SelectContent>
+                </Select>
+              </div>
+
+              {/* Assign Petugas */}
+              <div className="space-y-2">
+                <label className="text-[10px] font-bold uppercase text-muted-foreground/90 tracking-wider">Tugaskan Petugas Lapangan</label>
+                <Select onValueChange={(v) => assignPetugas(v)}>
+                  <SelectTrigger className="h-11 text-xs bg-background border border-border/80 rounded-xl font-medium">
+                    <SelectValue placeholder="Pilih Petugas Lapangan..." />
+                  </SelectTrigger>
+                  <SelectContent>
+                    {petugas.map((p) => (
+                      <SelectItem key={p.id} value={p.id} className="text-xs font-medium">{p.full_name}</SelectItem>
+                    ))}
+                  </SelectContent>
+                </Select>
+              </div>
+
+              {/* Metadata Footer */}
+              <div className="border-t border-border/60 pt-5 space-y-3.5 text-xs">
+                <h4 className="text-[10px] font-bold uppercase text-muted-foreground/90 tracking-wider mb-1">Informasi Sistem</h4>
+                
+                <div className="flex justify-between items-center bg-secondary/5 px-3 py-2 rounded-lg border border-border/30">
+                  <span className="text-muted-foreground">ID Laporan</span>
+                  <span className="font-mono text-[10px] font-semibold bg-background border border-border px-1.5 py-0.5 rounded text-foreground">{report.id.slice(0, 13)}...</span>
+                </div>
+                
+                <div className="flex justify-between items-center bg-secondary/5 px-3 py-2 rounded-lg border border-border/30">
+                  <span className="text-muted-foreground">Status Autentikasi</span>
+                  <Badge className="bg-primary/10 text-primary border-none text-[9px] py-0.5 px-2 font-bold uppercase">TERVERIFIKASI</Badge>
+                </div>
               </div>
             </div>
           </Card>
