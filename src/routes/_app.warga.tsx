@@ -156,7 +156,7 @@ function ReportForm() {
   const [locating, setLocating] = useState(false);
   const [ipStatus, setIpStatus] = useState<"loading" | "ok" | "blocked" | "error">("loading");
   const [userIp, setUserIp] = useState<string | null>(null);
-  const [remainingReports, setRemainingReports] = useState(3);
+  const [remainingReports, setRemainingReports] = useState(5);
   const ipFetched = useRef(false);
   const [activeCategories, setActiveCategories] = useState<{
     jalan_berlubang: boolean;
@@ -199,7 +199,7 @@ function ReportForm() {
       // DEV MODE: bypass IP fetch & RPC check agar bisa ditest tanpa migration SQL
       if (import.meta.env.DEV) {
         setUserIp("dev-mode");
-        setRemainingReports(3);
+        setRemainingReports(5);
         setIpStatus("ok");
         return;
       }
@@ -219,9 +219,9 @@ function ReportForm() {
       }
 
       const count = (data as number) ?? 0;
-      const remaining = Math.max(0, 3 - count);
+      const remaining = Math.max(0, 5 - count);
       setRemainingReports(remaining);
-      setIpStatus(count >= 3 ? "blocked" : "ok");
+      setIpStatus(count >= 5 ? "blocked" : "ok");
     })();
   }, []);
 
@@ -266,7 +266,7 @@ function ReportForm() {
 
     // Double-check cooldown di detik terakhir (security layer ke-2)
     const { data: freshCount } = await supabase.rpc("count_reports_by_ip", { _ip: userIp });
-    if (((freshCount as number) ?? 0) >= 3) {
+    if (((freshCount as number) ?? 0) >= 5) {
       setSubmitting(false);
       setIpStatus("blocked");
       setRemainingReports(0);
@@ -517,7 +517,7 @@ function ReportForm() {
           IP terdeteksi: <code className="font-mono">{userIp}</code>
         </span>
         <span className="font-semibold text-green-700 dark:text-green-400">
-          Sisa kuota: {remainingReports}/3
+          Sisa kuota: {remainingReports}/5
         </span>
       </div>
     );
@@ -531,7 +531,7 @@ function ReportForm() {
         </span>
         <div>
           <h2 className="text-lg font-semibold">Buat laporan baru</h2>
-          <p className="text-xs text-muted-foreground">Tanpa akun · Maks. 3 laporan per hari per perangkat.</p>
+          <p className="text-xs text-muted-foreground">Tanpa akun · Maks. 5 laporan per hari per perangkat.</p>
         </div>
       </div>
 
