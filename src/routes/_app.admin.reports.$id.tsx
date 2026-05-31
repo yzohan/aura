@@ -406,23 +406,21 @@ function ReportDetailPage() {
             </Card>
           </div>
 
-          {/* AI Analysis Result */}
+          {/* Technical Analysis Result */}
           {aiData && (
-            <Card className="p-6 border border-border/80 shadow-soft bg-card rounded-2xl relative overflow-hidden">
-              <div className="absolute top-0 left-0 right-0 h-1 bg-primary" />
-              
+            <Card className="p-6 border border-border/80 shadow-soft bg-card rounded-2xl">
               <div className="flex items-center justify-between mb-6 pb-3 border-b border-border/50">
                 <div className="flex items-center gap-2.5">
-                  <div className="flex h-9 w-9 items-center justify-center rounded-xl bg-primary/10 text-primary border border-primary/20 shadow-sm">
-                    <Sparkles className="h-4.5 w-4.5" />
+                  <div className="flex h-9 w-9 items-center justify-center rounded-xl bg-secondary/20 text-foreground border border-border/40 shadow-sm">
+                    <ClipboardList className="h-4.5 w-4.5 text-muted-foreground" />
                   </div>
                   <div>
-                    <h3 className="font-bold text-base text-foreground">AURA AI Engine™ Analysis</h3>
-                    <p className="text-[10px] text-muted-foreground font-medium">Pengukuran Otomatis Kerusakan & Klasifikasi Citra</p>
+                    <h3 className="font-bold text-base text-foreground">Analisis Teknis Laporan</h3>
+                    <p className="text-[10px] text-muted-foreground font-medium">Hasil pengukuran kerusakan dan klasifikasi koordinat wilayah</p>
                   </div>
                 </div>
-                <Badge variant="outline" className="bg-primary/5 text-primary border-primary/20 text-[9px] font-bold tracking-wider uppercase px-2.5 py-1">
-                  AI TERVERIFIKASI
+                <Badge variant="outline" className="bg-secondary/30 text-muted-foreground border-border/50 text-[9px] font-bold tracking-wider uppercase px-2.5 py-1">
+                  SISTEM
                 </Badge>
               </div>
 
@@ -497,14 +495,14 @@ function ReportDetailPage() {
                   {/* Facilities */}
                   <div className="space-y-2">
                     <h4 className="text-[10px] font-bold text-foreground uppercase tracking-wider flex items-center gap-1.5">
-                      <Building2 className="h-3.5 w-3.5 text-primary" />
+                      <Building2 className="h-3.5 w-3.5 text-muted-foreground" />
                       Fasilitas Sekitar (300m)
                     </h4>
                     {aiData.fasilitas.length > 0 ? (
                       <div className="flex flex-wrap gap-1.5 max-h-[120px] overflow-y-auto pr-1">
                         {aiData.fasilitas.map((f) => (
                           <Badge key={f.id} variant="secondary" className="text-[10px] px-2 py-0.5 rounded-md bg-secondary/25 border border-border/30 text-foreground font-semibold flex items-center gap-1">
-                            <span className="h-1 w-1 rounded-full bg-primary" />
+                            <span className="h-1 w-1 rounded-full bg-muted-foreground/60" />
                             {f.nama_fasilitas}
                           </Badge>
                         ))}
@@ -518,23 +516,23 @@ function ReportDetailPage() {
 
                   {/* Recommendations */}
                   <div className="space-y-2.5 pt-4 border-t border-border/40">
-                    <div className="flex gap-2.5 items-center text-xs bg-secondary/5 px-3.5 py-2.5 rounded-xl border border-border/30">
-                      <div className="p-1.5 bg-primary/10 rounded-lg text-primary border border-primary/20 shrink-0">
-                        <Wrench className="h-3.5 w-3.5" />
+                    <div className="flex gap-2.5 items-center text-xs bg-secondary/15 px-3.5 py-2.5 rounded-xl border border-border/30">
+                      <div className="p-1.5 bg-secondary/35 rounded-lg text-foreground border border-border/50 shrink-0">
+                        <Wrench className="h-3.5 w-3.5 text-muted-foreground" />
                       </div>
                       <div className="min-w-0">
-                        <p className="text-[9px] font-bold text-muted-foreground uppercase tracking-wider">Rekomendasi Dinas</p>
-                        <p className="font-extrabold text-foreground truncate mt-0.5">{aiData.detail[0]?.petugas_penanganan || "Dinas PUPR"}</p>
+                        <p className="text-[9px] font-bold text-muted-foreground uppercase tracking-wider">Instansi Penanganan</p>
+                        <p className="font-semibold text-foreground truncate mt-0.5">{aiData.detail[0]?.petugas_penanganan || "Dinas PUPR"}</p>
                       </div>
                     </div>
 
-                    <div className="flex gap-2.5 items-center text-xs bg-secondary/5 px-3.5 py-2.5 rounded-xl border border-border/30">
-                      <div className="p-1.5 bg-primary/10 rounded-lg text-primary border border-primary/20 shrink-0">
-                        <Clock className="h-3.5 w-3.5" />
+                    <div className="flex gap-2.5 items-center text-xs bg-secondary/15 px-3.5 py-2.5 rounded-xl border border-border/30">
+                      <div className="p-1.5 bg-secondary/35 rounded-lg text-foreground border border-border/50 shrink-0">
+                        <Clock className="h-3.5 w-3.5 text-muted-foreground" />
                       </div>
                       <div className="min-w-0">
-                        <p className="text-[9px] font-bold text-muted-foreground uppercase tracking-wider">Target SLA</p>
-                        <p className="font-extrabold text-foreground truncate mt-0.5">{aiData.detail[0]?.estimasi_waktu_penanganan || "24 Jam"}</p>
+                        <p className="text-[9px] font-bold text-muted-foreground uppercase tracking-wider">Target Waktu Respon SLA</p>
+                        <p className="font-semibold text-foreground truncate mt-0.5">{aiData.detail[0]?.estimasi_waktu_penanganan || "24 Jam"}</p>
                       </div>
                     </div>
                   </div>
@@ -547,61 +545,41 @@ function ReportDetailPage() {
           <Card className="p-6 border border-border/80 shadow-soft bg-card rounded-2xl">
             <h3 className="text-xs font-bold uppercase text-primary/80 tracking-wider mb-4 flex items-center gap-2 border-b border-border/50 pb-2">
               <MapPin className="h-4 w-4 text-primary" />
-              Lokasi & Geospasial
+              Lokasi & Koordinat Geospasial
             </h3>
             
-            <div className="grid gap-6 md:grid-cols-12 items-stretch">
-              {/* Address detail - Span 7 */}
-              <div className="md:col-span-7 bg-secondary/15 rounded-xl border border-border/50 p-4 flex flex-col justify-between space-y-4">
-                <div className="flex items-start gap-3">
-                  <div className="p-2 bg-primary/10 rounded-lg text-primary border border-primary/20 shrink-0">
-                    <MapPin className="h-4.5 w-4.5" />
-                  </div>
-                  <div className="min-w-0">
-                    <p className="font-bold text-sm text-foreground leading-snug">{report.address || "Detail koordinat lokasi"}</p>
-                    <p className="text-xs font-semibold text-muted-foreground mt-1">
-                      Latitude: {report.latitude.toFixed(6)} | Longitude: {report.longitude.toFixed(6)}
-                    </p>
-                  </div>
+            <div className="flex flex-col md:flex-row gap-4 items-center justify-between bg-secondary/10 p-4 rounded-xl border border-border/40">
+              <div className="flex items-start gap-3 min-w-0">
+                <div className="p-2 bg-secondary/20 rounded-lg border border-border/50 shrink-0">
+                  <MapPin className="h-4.5 w-4.5 text-foreground" />
                 </div>
-
-                <a
-                  href={`https://www.openstreetmap.org/?mlat=${report.latitude}&mlon=${report.longitude}#map=18/${report.latitude}/${report.longitude}`}
-                  target="_blank"
-                  rel="noreferrer"
-                  className="inline-flex items-center justify-center gap-2 px-4 py-2.5 w-full bg-background border border-border hover:bg-secondary/40 text-xs text-foreground hover:text-primary font-bold rounded-xl shadow-sm transition-all active:scale-[0.985]"
-                >
-                  <ExternalLink className="h-3.5 w-3.5" />
-                  Buka Peta OpenStreetMap
-                </a>
-              </div>
-
-              {/* GPS Info block - Span 5 */}
-              <div className="md:col-span-5 bg-primary/[0.02] border border-primary/20 rounded-xl p-4 flex flex-col justify-between text-xs space-y-4">
-                <div>
-                  <span className="text-[10px] font-bold text-primary uppercase tracking-wider block mb-2">Presisi Geospasial</span>
-                  <p className="text-muted-foreground leading-relaxed text-[11px]">
-                    Koordinat didapatkan secara realtime dari sensor GPS perangkat pelapor saat mengisi formulir pengaduan.
+                <div className="min-w-0">
+                  <p className="font-bold text-sm text-foreground leading-snug">{report.address || "Alamat tidak terdeteksi"}</p>
+                  <p className="text-xs text-muted-foreground mt-0.5">
+                    Latitude: {report.latitude.toFixed(6)} | Longitude: {report.longitude.toFixed(6)}
                   </p>
                 </div>
-                <div className="pt-3 border-t border-border/40 font-semibold text-foreground/80 flex items-center justify-between">
-                  <span>Status Pemetaan</span>
-                  <Badge className="bg-primary/20 text-primary border-none text-[9px] py-0.5 px-2 font-bold">AKTIF</Badge>
-                </div>
               </div>
+
+              <a
+                href={`https://www.openstreetmap.org/?mlat=${report.latitude}&mlon=${report.longitude}#map=18/${report.latitude}/${report.longitude}`}
+                target="_blank"
+                rel="noreferrer"
+                className="inline-flex items-center justify-center gap-2 px-4 py-2.5 bg-background border border-border hover:bg-secondary/40 text-xs text-foreground font-bold rounded-xl shadow-sm transition-all active:scale-[0.985] shrink-0"
+              >
+                <ExternalLink className="h-3.5 w-3.5" />
+                Buka Peta OpenStreetMap
+              </a>
             </div>
           </Card>
         </div>
 
         {/* Right Column: Unified Actions Panel */}
         <div className="space-y-6">
-          <Card className="border border-border/80 shadow-soft bg-card rounded-2xl relative overflow-hidden">
-            {/* Top decorative line */}
-            <div className="absolute top-0 left-0 right-0 h-1 bg-gradient-to-r from-primary/60 to-primary" />
-            
+          <Card className="border border-border/80 shadow-soft bg-card rounded-2xl overflow-hidden">
             <div className="p-6 space-y-6">
               <div>
-                <h3 className="font-extrabold text-base text-foreground">Panel Tindakan</h3>
+                <h3 className="font-bold text-base text-foreground">Panel Tindakan</h3>
                 <p className="text-xs text-muted-foreground mt-0.5">Penanganan dan penugasan laporan</p>
               </div>
 
@@ -674,8 +652,8 @@ function ReportDetailPage() {
                 </div>
                 
                 <div className="flex justify-between items-center bg-secondary/5 px-3 py-2 rounded-lg border border-border/30">
-                  <span className="text-muted-foreground">Status Autentikasi</span>
-                  <Badge className="bg-primary/10 text-primary border-none text-[9px] py-0.5 px-2 font-bold uppercase">TERVERIFIKASI</Badge>
+                  <span className="text-muted-foreground">Status Laporan</span>
+                  <Badge variant="outline" className="bg-secondary/40 text-muted-foreground border-border/50 text-[9px] font-bold uppercase">VALID</Badge>
                 </div>
               </div>
             </div>
