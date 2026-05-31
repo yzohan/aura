@@ -248,7 +248,7 @@ function ReportDetailPage() {
   const createdDate = new Date(report.created_at);
 
   return (
-    <div className="max-w-6xl mx-auto space-y-3 px-4 md:px-0 pt-0 pb-6 animate-in fade-in duration-500 w-full">
+    <div className="w-full space-y-4 pt-0 pb-6 animate-in fade-in duration-500">
       {/* Back button */}
       <div className="-mb-1">
         <Button
@@ -261,360 +261,57 @@ function ReportDetailPage() {
         </Button>
       </div>
 
-      {/* Split Header Panel (Photo & Core Info) */}
-      <Card className="overflow-hidden border border-border/80 shadow-soft bg-card p-6 rounded-2xl">
-        <div className="grid gap-6 md:grid-cols-12">
-          {/* Left side: Photo */}
-          <div className="md:col-span-5 relative group overflow-hidden rounded-xl bg-secondary/20 border border-border/40 aspect-[4/3] flex items-center justify-center">
-            {photoUrl && !photoError ? (
-              <img
-                src={photoUrl}
-                alt={report.name}
-                onLoad={() => setPhotoLoaded(true)}
-                onError={() => setPhotoError(true)}
-                className={`h-full w-full object-cover transition-all duration-500 group-hover:scale-[1.03] ${
-                  photoLoaded ? "opacity-100" : "opacity-0"
-                }`}
-              />
-            ) : (
-              <div className="flex flex-col items-center justify-center gap-3 text-muted-foreground p-6">
-                <div className="p-4 bg-background rounded-full border border-border/50 shadow-sm">
-                  <Camera className="h-8 w-8 text-muted-foreground/40" />
-                </div>
-                <p className="text-xs font-semibold italic opacity-60">Tidak ada foto bukti dilampirkan</p>
-              </div>
-            )}
-          </div>
-
-          {/* Right side: Core Info */}
-          <div className="md:col-span-7 flex flex-col justify-between py-1 space-y-4">
-            <div className="space-y-4">
-              {/* Badges */}
-              <div className="flex flex-wrap items-center gap-2">
-                <Badge className="bg-primary/10 text-primary hover:bg-primary/15 border-transparent gap-1.5 py-1 px-2.5 rounded-lg text-xs font-semibold">
-                  <CategoryIcon className="h-3.5 w-3.5" />
-                  {CATEGORY_LABEL[report.category as keyof typeof CATEGORY_LABEL]}
-                </Badge>
-                <Badge
-                  className="text-white border-transparent gap-1.5 py-1 px-2.5 rounded-lg text-xs font-semibold"
-                  style={{ backgroundColor: urgencyColor }}
-                >
-                  <AlertTriangle className="h-3.5 w-3.5" />
-                  {URGENCY_LABEL[urgencyKey]}
-                </Badge>
-                <Badge className={`border-transparent py-1 px-2.5 rounded-lg text-xs font-semibold ${
-                  report.status_pelaporan === 'progress' 
-                    ? STATUS_TONE.in_progress 
-                    : (STATUS_TONE[report.status_pelaporan as keyof typeof STATUS_TONE] || 'bg-secondary text-secondary-foreground')
-                }`}>
-                  {report.status_pelaporan === 'progress' 
-                    ? 'Dikerjakan' 
-                    : (STATUS_LABEL[report.status_pelaporan as keyof typeof STATUS_LABEL] || report.status_pelaporan)}
-                </Badge>
-              </div>
-
-              {/* Title & Ticket ID */}
-              <div>
-                <span className="text-[10px] font-bold text-primary tracking-wider uppercase">TIKET LAPORAN</span>
-                <h1 className="text-2xl md:text-3xl font-extrabold text-foreground tracking-tight leading-tight mt-0.5">
-                  #AURA-{report.id.slice(0, 8).toUpperCase()}
-                </h1>
-                <p className="text-muted-foreground text-sm flex items-start gap-1.5 mt-2.5 leading-snug">
-                  <MapPin className="h-4.5 w-4.5 shrink-0 text-primary mt-0.5" />
-                  <span>{report.address || "Alamat tidak terdeteksi"}</span>
-                </p>
-              </div>
-            </div>
-
-            {/* Quick Details Table/Grid to fill empty space */}
-            <div className="grid grid-cols-2 gap-x-6 gap-y-3.5 text-xs border-t border-b border-border/60 py-4 my-2">
-              <div className="flex items-center gap-2">
-                <span className="text-muted-foreground font-semibold w-24 shrink-0">Nama Pelapor:</span>
-                <span className="font-bold text-foreground truncate">{report.name || "Anonim"}</span>
-              </div>
-              <div className="flex items-center gap-2">
-                <span className="text-muted-foreground font-semibold w-24 shrink-0">Kontak WA:</span>
-                <span className="font-bold text-foreground">{report.no_hp}</span>
-              </div>
-              <div className="flex items-center gap-2">
-                <span className="text-muted-foreground font-semibold w-24 shrink-0">Koordinat GPS:</span>
-                <span className="font-mono text-foreground font-semibold">
-                  {report.latitude.toFixed(5)}, {report.longitude.toFixed(5)}
-                </span>
-              </div>
-              <div className="flex items-center gap-2">
-                <span className="text-muted-foreground font-semibold w-24 shrink-0">Instansi Terkait:</span>
-                <span className="font-bold text-foreground truncate">{aiData?.detail[0]?.petugas_penanganan || "Dinas PUPR"}</span>
-              </div>
-            </div>
-
-            {/* Bottom row: Time and ID */}
-            <div className="border-t border-border/60 pt-4 grid grid-cols-2 gap-4 text-xs">
-              <div className="space-y-1.5">
-                <span className="font-bold block uppercase tracking-wider text-[10px] text-muted-foreground/80">TANGGAL LAPORAN</span>
-                <span className="text-foreground font-semibold flex items-center gap-1.5">
-                  <Calendar className="h-3.5 w-3.5 text-primary/70" />
-                  {createdDate.toLocaleDateString('id-ID', { day: 'numeric', month: 'long', year: 'numeric' })}
-                </span>
-              </div>
-              <div className="space-y-1.5">
-                <span className="font-bold block uppercase tracking-wider text-[10px] text-muted-foreground/80">WAKTU PEMBUATAN</span>
-                <span className="text-foreground font-semibold flex items-center gap-1.5">
-                  <Clock className="h-3.5 w-3.5 text-primary/70" />
-                  {formatDistanceToNow(createdDate, { addSuffix: true, locale: idLocale })}
-                </span>
-              </div>
-            </div>
-          </div>
-        </div>
-      </Card>
-
-      {/* Content Grid */}
-      <div className="grid gap-6 lg:grid-cols-[1fr_360px]">
-        {/* Left Column: Details */}
-        <div className="space-y-6">
-          {/* Row 1: Reporter & Description Side-by-Side */}
-          <div className="grid gap-6 md:grid-cols-2">
-            {/* Reporter (Identitas Pelapor) */}
-            <Card className="p-6 border border-border/80 shadow-soft bg-card rounded-2xl flex flex-col justify-between">
-              <div>
-                <h3 className="text-xs font-bold uppercase text-primary/80 tracking-wider mb-4 flex items-center gap-2 border-b border-border/50 pb-2">
-                  <User className="h-4 w-4 text-primary" />
-                  Identitas Pelapor
-                </h3>
-                
-                <div className="flex items-center gap-3 mb-4">
-                  <div className="h-11 w-11 rounded-xl bg-leaf-gradient flex items-center justify-center text-primary-foreground font-extrabold text-base shadow-soft shrink-0">
-                    {(report.name || "?")[0].toUpperCase()}
-                  </div>
-                  <div>
-                    <p className="font-bold text-base text-foreground">{report.name || "Anonim"}</p>
-                    <Badge variant="secondary" className="text-[10px] font-medium py-0.5 px-2 bg-secondary/60 text-secondary-foreground border border-border/30 mt-0.5">
-                      Pelapor Warga
-                    </Badge>
-                  </div>
-                </div>
-              </div>
-
-              <div className="space-y-2 text-sm pt-2 border-t border-border/40">
-                <div className="flex items-center justify-between bg-secondary/10 px-3 py-2 rounded-xl border border-border/40">
-                  <span className="text-xs text-muted-foreground font-semibold">No. HP / WA</span>
-                  <span className="font-bold text-foreground flex items-center gap-1.5">
-                    <Phone className="h-3.5 w-3.5 text-primary" />
-                    {report.no_hp}
-                  </span>
-                </div>
-                {report.email && (
-                  <div className="flex items-center justify-between bg-secondary/10 px-3 py-2 rounded-xl border border-border/40">
-                    <span className="text-xs text-muted-foreground font-semibold">Email</span>
-                    <span className="font-medium text-foreground truncate max-w-[150px] flex items-center gap-1.5">
-                      <Mail className="h-3.5 w-3.5 text-primary" />
-                      {report.email}
-                    </span>
-                  </div>
-                )}
-              </div>
-            </Card>
-
-            {/* Description */}
-            <Card className="p-6 border border-border/80 shadow-soft bg-card rounded-2xl flex flex-col">
-              <h3 className="text-xs font-bold uppercase text-primary/80 tracking-wider mb-4 flex items-center gap-2 border-b border-border/50 pb-2">
-                <Tag className="h-4 w-4 text-primary" />
-                Deskripsi Laporan
-              </h3>
-              <div className="flex-1 flex items-center bg-primary/[0.02] border-l-4 border-primary p-4 rounded-r-xl rounded-l-sm bg-gradient-to-r from-primary/[0.03] to-transparent">
-                <p className="text-sm md:text-base text-foreground/90 leading-relaxed italic font-medium font-serif">
-                  "{report.detail_laporan}"
-                </p>
-              </div>
-            </Card>
-          </div>
-
-          {/* Technical Analysis Result */}
-          {aiData && (
-            <Card className="p-6 border border-border/80 shadow-soft bg-card rounded-2xl">
-              <div className="flex items-center justify-between mb-6 pb-3 border-b border-border/50">
-                <div className="flex items-center gap-2.5">
-                  <div className="flex h-9 w-9 items-center justify-center rounded-xl bg-secondary/20 text-foreground border border-border/40 shadow-sm">
-                    <ClipboardList className="h-4.5 w-4.5 text-muted-foreground" />
-                  </div>
-                  <div>
-                    <h3 className="font-bold text-base text-foreground">Analisis Teknis Laporan</h3>
-                    <p className="text-[10px] text-muted-foreground font-medium">Hasil pengukuran kerusakan dan klasifikasi koordinat wilayah</p>
-                  </div>
-                </div>
-                <Badge variant="outline" className="bg-secondary/30 text-muted-foreground border-border/50 text-[9px] font-bold tracking-wider uppercase px-2.5 py-1">
-                  SISTEM
-                </Badge>
-              </div>
-
-              {/* Internal layout divided to resolve empty space */}
-              <div className="grid gap-6 md:grid-cols-12">
-                {/* Left inside grid: metrics & severity - Span 7 */}
-                <div className="md:col-span-7 space-y-6">
-                  {/* 3 Core metrics */}
-                  <div className="grid gap-3 grid-cols-3">
-                    <div className="bg-secondary/5 hover:bg-secondary/10 px-3 py-3.5 rounded-xl border border-border/30 text-center flex flex-col justify-between min-h-[100px] transition-all duration-300">
-                      <span className="text-[9px] text-muted-foreground uppercase font-bold tracking-wider">Total Lubang</span>
-                      <p className="text-2xl font-extrabold text-foreground tracking-tight my-1">
-                        {aiData.laporan?.total_lubang_terdeteksi ?? 0}
-                      </p>
-                      <span className="text-[9px] text-muted-foreground/80 font-semibold">Lubang</span>
-                    </div>
-
-                    <div className="bg-secondary/5 hover:bg-secondary/10 px-3 py-3.5 rounded-xl border border-border/30 text-center flex flex-col justify-between min-h-[100px] transition-all duration-300">
-                      <span className="text-[9px] text-muted-foreground uppercase font-bold tracking-wider">Fasilitas Radius</span>
-                      <p className="text-2xl font-extrabold text-foreground tracking-tight my-1">
-                        {aiData.fasilitas.length}
-                      </p>
-                      <span className="text-[9px] text-muted-foreground/80 font-semibold">Terdeteksi</span>
-                    </div>
-
-                    <div className="bg-secondary/5 hover:bg-secondary/10 px-3 py-3.5 rounded-xl border border-border/30 text-center flex flex-col justify-between min-h-[100px] transition-all duration-300">
-                      <span className="text-[9px] text-muted-foreground uppercase font-bold tracking-wider">Kelas Jalan</span>
-                      <p className="text-xs font-extrabold text-foreground truncate my-2.5 capitalize">
-                        {aiData.detail[0]?.kategori_pelaporan_osm || "Tidak Terpetakan"}
-                      </p>
-                      <span className="text-[9px] text-muted-foreground/80 font-semibold">OSM</span>
-                    </div>
-                  </div>
-
-                  {/* Severity Indicator Progress Bars */}
-                  {aiData.detail[0] && (
-                    <div className="space-y-4 bg-secondary/5 border border-border/30 p-4.5 rounded-xl">
-                      <h4 className="text-[10px] font-bold text-foreground uppercase tracking-wider">Metrik Tingkat Keparahan</h4>
-                      <div className="space-y-3.5">
-                        <div className="space-y-1.5">
-                          <div className="flex justify-between text-xs font-semibold">
-                            <span className="text-muted-foreground text-[11px]">Persentase Kerusakan Area</span>
-                            <span className="text-destructive font-bold">{aiData.detail[0].persentase_kerusakan}%</span>
-                          </div>
-                          <div className="h-2 w-full bg-secondary/20 rounded-full overflow-hidden border border-border/20">
-                            <div 
-                              className="h-full bg-destructive transition-all duration-500 rounded-full" 
-                              style={{ width: `${aiData.detail[0].persentase_kerusakan}%` }}
-                            />
-                          </div>
-                        </div>
-
-                        <div className="space-y-1.5">
-                          <div className="flex justify-between text-xs font-semibold">
-                            <span className="text-muted-foreground text-[11px]">Estimasi Kedalaman Lubang</span>
-                            <span className="text-amber-500 font-bold">{aiData.detail[0].persentase_kedalaman}%</span>
-                          </div>
-                          <div className="h-2 w-full bg-secondary/20 rounded-full overflow-hidden border border-border/20">
-                            <div 
-                              className="h-full bg-amber-500 transition-all duration-500 rounded-full" 
-                              style={{ width: `${aiData.detail[0].persentase_kedalaman}%` }}
-                            />
-                          </div>
-                        </div>
-                      </div>
-                    </div>
-                  )}
-                </div>
-
-                {/* Right inside grid: facilities and SLA - Span 5 */}
-                <div className="md:col-span-5 flex flex-col justify-between space-y-4">
-                  {/* Facilities */}
-                  <div className="space-y-2">
-                    <h4 className="text-[10px] font-bold text-foreground uppercase tracking-wider flex items-center gap-1.5">
-                      <Building2 className="h-3.5 w-3.5 text-muted-foreground" />
-                      Fasilitas Sekitar (300m)
-                    </h4>
-                    {aiData.fasilitas.length > 0 ? (
-                      <div className="flex flex-wrap gap-1.5 max-h-[120px] overflow-y-auto pr-1">
-                        {aiData.fasilitas.map((f) => (
-                          <Badge key={f.id} variant="secondary" className="text-[10px] px-2 py-0.5 rounded-md bg-secondary/25 border border-border/30 text-foreground font-semibold flex items-center gap-1">
-                            <span className="h-1 w-1 rounded-full bg-muted-foreground/60" />
-                            {f.nama_fasilitas}
-                          </Badge>
-                        ))}
-                      </div>
-                    ) : (
-                      <div className="text-[11px] text-muted-foreground italic p-3 rounded-lg border border-dashed border-border/60 text-center bg-secondary/5">
-                        Tidak ada fasilitas terdeteksi.
-                      </div>
-                    )}
-                  </div>
-
-                  {/* Recommendations */}
-                  <div className="space-y-2.5 pt-4 border-t border-border/40">
-                    <div className="flex gap-2.5 items-center text-xs bg-secondary/15 px-3.5 py-2.5 rounded-xl border border-border/30">
-                      <div className="p-1.5 bg-secondary/35 rounded-lg text-foreground border border-border/50 shrink-0">
-                        <Wrench className="h-3.5 w-3.5 text-muted-foreground" />
-                      </div>
-                      <div className="min-w-0">
-                        <p className="text-[9px] font-bold text-muted-foreground uppercase tracking-wider">Instansi Penanganan</p>
-                        <p className="font-semibold text-foreground truncate mt-0.5">{aiData.detail[0]?.petugas_penanganan || "Dinas PUPR"}</p>
-                      </div>
-                    </div>
-
-                    <div className="flex gap-2.5 items-center text-xs bg-secondary/15 px-3.5 py-2.5 rounded-xl border border-border/30">
-                      <div className="p-1.5 bg-secondary/35 rounded-lg text-foreground border border-border/50 shrink-0">
-                        <Clock className="h-3.5 w-3.5 text-muted-foreground" />
-                      </div>
-                      <div className="min-w-0">
-                        <p className="text-[9px] font-bold text-muted-foreground uppercase tracking-wider">Target Waktu Respon SLA</p>
-                        <p className="font-semibold text-foreground truncate mt-0.5">{aiData.detail[0]?.estimasi_waktu_penanganan || "24 Jam"}</p>
-                      </div>
-                    </div>
-                  </div>
-                </div>
-              </div>
-            </Card>
-          )}
-
-          {/* Location */}
-          <Card className="p-6 border border-border/80 shadow-soft bg-card rounded-2xl">
-            <h3 className="text-xs font-bold uppercase text-primary/80 tracking-wider mb-4 flex items-center gap-2 border-b border-border/50 pb-2">
-              <MapPin className="h-4 w-4 text-primary" />
-              Lokasi & Koordinat Geospasial
+      {/* Dense Dashboard Grid */}
+      <div className="grid gap-4 lg:grid-cols-12 w-full items-start">
+        {/* Left Column: Media & Actions (col-span-4) */}
+        <div className="lg:col-span-4 space-y-4">
+          {/* Card 1: Bukti Foto */}
+          <Card className="overflow-hidden border border-border/80 shadow-soft bg-card p-4 rounded-xl">
+            <h3 className="text-xs font-bold uppercase text-primary/80 tracking-wider mb-3 flex items-center gap-2 border-b border-border/50 pb-2">
+              <Camera className="h-4 w-4 text-primary" />
+              Bukti Foto Laporan
             </h3>
-            
-            <div className="flex flex-col md:flex-row gap-4 items-center justify-between bg-secondary/10 p-4 rounded-xl border border-border/40">
-              <div className="flex items-start gap-3 min-w-0">
-                <div className="p-2 bg-secondary/20 rounded-lg border border-border/50 shrink-0">
-                  <MapPin className="h-4.5 w-4.5 text-foreground" />
+            <div className="w-full h-[220px] relative group overflow-hidden rounded-lg bg-secondary/20 border border-border/40 flex items-center justify-center">
+              {photoUrl && !photoError ? (
+                <img
+                  src={photoUrl}
+                  alt={report.name}
+                  onLoad={() => setPhotoLoaded(true)}
+                  onError={() => setPhotoError(true)}
+                  className={`h-full w-full object-cover transition-all duration-500 group-hover:scale-[1.03] ${
+                    photoLoaded ? "opacity-100" : "opacity-0"
+                  }`}
+                />
+              ) : (
+                <div className="flex flex-col items-center justify-center gap-3 text-muted-foreground p-6">
+                  <div className="p-3 bg-background rounded-full border border-border/50 shadow-sm">
+                    <Camera className="h-6 w-6 text-muted-foreground/40" />
+                  </div>
+                  <p className="text-[10px] font-semibold italic opacity-60">Tidak ada foto bukti dilampirkan</p>
                 </div>
-                <div className="min-w-0">
-                  <p className="font-bold text-sm text-foreground leading-snug">{report.address || "Alamat tidak terdeteksi"}</p>
-                  <p className="text-xs text-muted-foreground mt-0.5">
-                    Latitude: {report.latitude.toFixed(6)} | Longitude: {report.longitude.toFixed(6)}
-                  </p>
-                </div>
-              </div>
-
-              <a
-                href={`https://www.openstreetmap.org/?mlat=${report.latitude}&mlon=${report.longitude}#map=18/${report.latitude}/${report.longitude}`}
-                target="_blank"
-                rel="noreferrer"
-                className="inline-flex items-center justify-center gap-2 px-4 py-2.5 bg-background border border-border hover:bg-secondary/40 text-xs text-foreground font-bold rounded-xl shadow-sm transition-all active:scale-[0.985] shrink-0"
-              >
-                <ExternalLink className="h-3.5 w-3.5" />
-                Buka Peta OpenStreetMap
-              </a>
+              )}
             </div>
           </Card>
-        </div>
 
-        {/* Right Column: Unified Actions Panel */}
-        <div className="space-y-6">
-          <Card className="border border-border/80 shadow-soft bg-card rounded-2xl overflow-hidden">
-            <div className="p-6 space-y-6">
+          {/* Card 2: Panel Tindakan */}
+          <Card className="border border-border/80 shadow-soft bg-card rounded-xl overflow-hidden">
+            <div className="p-4 space-y-4">
               <div>
-                <h3 className="font-bold text-base text-foreground">Panel Tindakan</h3>
-                <p className="text-xs text-muted-foreground mt-0.5">Penanganan dan penugasan laporan</p>
+                <h3 className="font-bold text-sm text-foreground flex items-center gap-2">
+                  <Activity className="h-4 w-4 text-primary" />
+                  Panel Tindakan
+                </h3>
+                <p className="text-[10px] text-muted-foreground mt-0.5">Penanganan dan penugasan laporan</p>
               </div>
 
               {/* Status Control */}
-              <div className="space-y-2">
-                <label className="text-[10px] font-bold uppercase text-muted-foreground/90 tracking-wider">Update Status Laporan</label>
+              <div className="space-y-1.5">
+                <label className="text-[9px] font-bold uppercase text-muted-foreground/90 tracking-wider">Update Status Laporan</label>
                 <Select
                   value={report.status_pelaporan}
                   onValueChange={(v) => updateStatus(v)}
                 >
-                  <SelectTrigger className={`h-11 text-xs font-bold rounded-xl border border-border/80 transition-all ${
+                  <SelectTrigger className={`h-9 text-xs font-bold rounded-lg border border-border/80 transition-all ${
                     report.status_pelaporan === 'progress' 
                       ? STATUS_TONE.in_progress 
                       : (STATUS_TONE[report.status_pelaporan as keyof typeof STATUS_TONE] || 'bg-secondary text-secondary-foreground')
@@ -630,13 +327,13 @@ function ReportDetailPage() {
               </div>
 
               {/* Urgency Control */}
-              <div className="space-y-2">
-                <label className="text-[10px] font-bold uppercase text-muted-foreground/90 tracking-wider">Tingkat Urgensi</label>
+              <div className="space-y-1.5">
+                <label className="text-[9px] font-bold uppercase text-muted-foreground/90 tracking-wider">Tingkat Urgensi</label>
                 <Select
                   value={report.kategori_pelaporan}
                   onValueChange={(v) => updateUrgency(v)}
                 >
-                  <SelectTrigger className={`h-11 text-xs font-bold rounded-xl border border-border/80 transition-all ${
+                  <SelectTrigger className={`h-9 text-xs font-bold rounded-lg border border-border/80 transition-all ${
                     report.kategori_pelaporan === 'ringan' 
                       ? URGENCY_TONE.low 
                       : (URGENCY_TONE[report.kategori_pelaporan as keyof typeof URGENCY_TONE] || 'bg-secondary text-secondary-foreground')
@@ -652,10 +349,10 @@ function ReportDetailPage() {
               </div>
 
               {/* Assign Petugas */}
-              <div className="space-y-2">
-                <label className="text-[10px] font-bold uppercase text-muted-foreground/90 tracking-wider">Tugaskan Petugas Lapangan</label>
+              <div className="space-y-1.5">
+                <label className="text-[9px] font-bold uppercase text-muted-foreground/90 tracking-wider">Tugaskan Petugas Lapangan</label>
                 <Select onValueChange={(v) => assignPetugas(v)}>
-                  <SelectTrigger className="h-11 text-xs bg-background border border-border/80 rounded-xl font-medium">
+                  <SelectTrigger className="h-9 text-xs bg-background border border-border/80 rounded-lg font-medium">
                     <SelectValue placeholder="Pilih Petugas Lapangan..." />
                   </SelectTrigger>
                   <SelectContent>
@@ -667,21 +364,305 @@ function ReportDetailPage() {
               </div>
 
               {/* Metadata Footer */}
-              <div className="border-t border-border/60 pt-5 space-y-3.5 text-xs">
-                <h4 className="text-[10px] font-bold uppercase text-muted-foreground/90 tracking-wider mb-1">Informasi Sistem</h4>
+              <div className="border-t border-border/60 pt-4 space-y-2 text-xs">
+                <h4 className="text-[9px] font-bold uppercase text-muted-foreground/90 tracking-wider mb-1">Informasi Sistem</h4>
                 
-                <div className="flex justify-between items-center bg-secondary/5 px-3 py-2 rounded-lg border border-border/30">
-                  <span className="text-muted-foreground">ID Laporan</span>
-                  <span className="font-mono text-[10px] font-semibold bg-background border border-border px-1.5 py-0.5 rounded text-foreground">{report.id.slice(0, 13)}...</span>
+                <div className="flex justify-between items-center bg-secondary/5 px-2.5 py-1.5 rounded-lg border border-border/30">
+                  <span className="text-muted-foreground text-[10px]">ID Laporan</span>
+                  <span className="font-mono text-[9px] font-semibold bg-background border border-border px-1.5 py-0.5 rounded text-foreground">{report.id.slice(0, 13)}...</span>
                 </div>
                 
-                <div className="flex justify-between items-center bg-secondary/5 px-3 py-2 rounded-lg border border-border/30">
-                  <span className="text-muted-foreground">Status Laporan</span>
-                  <Badge variant="outline" className="bg-secondary/40 text-muted-foreground border-border/50 text-[9px] font-bold uppercase">VALID</Badge>
+                <div className="flex justify-between items-center bg-secondary/5 px-2.5 py-1.5 rounded-lg border border-border/30">
+                  <span className="text-muted-foreground text-[10px]">Status Laporan</span>
+                  <Badge variant="outline" className="bg-secondary/40 text-muted-foreground border-border/50 text-[8px] font-bold uppercase py-0 px-1.5">VALID</Badge>
                 </div>
               </div>
             </div>
           </Card>
+        </div>
+
+        {/* Right Column: Info & Analytics (col-span-8) */}
+        <div className="lg:col-span-8 space-y-4">
+          {/* Card 1: Detail Laporan & Informasi Tiket */}
+          <Card className="border border-border/80 shadow-soft bg-card p-4 rounded-xl">
+            <div className="flex flex-col sm:flex-row sm:items-center sm:justify-between gap-3 border-b border-border/50 pb-3 mb-3">
+              <div>
+                <span className="text-[9px] font-bold text-primary tracking-wider uppercase">TIKET LAPORAN</span>
+                <h1 className="text-xl font-extrabold text-foreground tracking-tight leading-none mt-0.5">
+                  #AURA-{report.id.slice(0, 8).toUpperCase()}
+                </h1>
+              </div>
+              {/* Badges */}
+              <div className="flex flex-wrap items-center gap-1.5">
+                <Badge className="bg-primary/10 text-primary hover:bg-primary/15 border-transparent gap-1 py-0.5 px-2 rounded text-[10px] font-semibold">
+                  <CategoryIcon className="h-3 w-3" />
+                  {CATEGORY_LABEL[report.category as keyof typeof CATEGORY_LABEL]}
+                </Badge>
+                <Badge
+                  className="text-white border-transparent gap-1 py-0.5 px-2 rounded text-[10px] font-semibold"
+                  style={{ backgroundColor: urgencyColor }}
+                >
+                  <AlertTriangle className="h-3 w-3" />
+                  {URGENCY_LABEL[urgencyKey]}
+                </Badge>
+                <Badge className={`border-transparent py-0.5 px-2 rounded text-[10px] font-semibold ${
+                  report.status_pelaporan === 'progress' 
+                    ? STATUS_TONE.in_progress 
+                    : (STATUS_TONE[report.status_pelaporan as keyof typeof STATUS_TONE] || 'bg-secondary text-secondary-foreground')
+                }`}>
+                  {report.status_pelaporan === 'progress' 
+                    ? 'Dikerjakan' 
+                    : (STATUS_LABEL[report.status_pelaporan as keyof typeof STATUS_LABEL] || report.status_pelaporan)}
+                </Badge>
+              </div>
+            </div>
+
+            {/* Address bar */}
+            <div className="bg-secondary/10 px-3 py-2 rounded-lg border border-border/40 mb-3 flex items-start gap-1.5">
+              <MapPin className="h-4 w-4 shrink-0 text-primary mt-0.5" />
+              <div className="text-xs text-foreground font-semibold leading-snug">
+                {report.address || "Alamat tidak terdeteksi"}
+              </div>
+            </div>
+
+            {/* Quick Details Table/Grid */}
+            <div className="grid grid-cols-1 sm:grid-cols-2 gap-x-4 gap-y-2 text-xs border-b border-border/60 pb-3 mb-3">
+              <div className="flex items-center gap-2">
+                <span className="text-muted-foreground font-semibold w-24 shrink-0">Nama Pelapor:</span>
+                <span className="font-bold text-foreground truncate">{report.name || "Anonim"}</span>
+              </div>
+              <div className="flex items-center gap-2">
+                <span className="text-muted-foreground font-semibold w-24 shrink-0">Kontak WA:</span>
+                <span className="font-bold text-foreground">{report.no_hp}</span>
+              </div>
+              <div className="flex items-center gap-2 justify-between sm:col-span-1">
+                <div className="flex items-center gap-2">
+                  <span className="text-muted-foreground font-semibold w-24 shrink-0">Koordinat GPS:</span>
+                  <span className="font-mono text-foreground font-semibold">
+                    {report.latitude.toFixed(5)}, {report.longitude.toFixed(5)}
+                  </span>
+                </div>
+              </div>
+              <div className="flex items-center gap-2 justify-between sm:col-span-1">
+                <div className="flex items-center gap-2">
+                  <span className="text-muted-foreground font-semibold w-24 shrink-0">Peta Wilayah:</span>
+                </div>
+                <a
+                  href={`https://www.openstreetmap.org/?mlat=${report.latitude}&mlon=${report.longitude}#map=18/${report.latitude}/${report.longitude}`}
+                  target="_blank"
+                  rel="noreferrer"
+                  className="text-xs text-primary hover:underline flex items-center gap-1 font-bold shrink-0 mr-auto sm:mr-0"
+                >
+                  Buka OpenStreetMap <ExternalLink className="h-3 w-3" />
+                </a>
+              </div>
+            </div>
+
+            {/* Dates row */}
+            <div className="grid grid-cols-2 gap-4 text-[10px]">
+              <div className="flex items-center gap-2 bg-secondary/5 px-2 py-1.5 rounded border border-border/30">
+                <span className="font-bold text-muted-foreground uppercase">TANGGAL:</span>
+                <span className="text-foreground font-bold flex items-center gap-1">
+                  <Calendar className="h-3 w-3 text-primary/70" />
+                  {createdDate.toLocaleDateString('id-ID', { day: 'numeric', month: 'long', year: 'numeric' })}
+                </span>
+              </div>
+              <div className="flex items-center gap-2 bg-secondary/5 px-2 py-1.5 rounded border border-border/30">
+                <span className="font-bold text-muted-foreground uppercase">WAKTU:</span>
+                <span className="text-foreground font-bold flex items-center gap-1">
+                  <Clock className="h-3 w-3 text-primary/70" />
+                  {formatDistanceToNow(createdDate, { addSuffix: true, locale: idLocale })}
+                </span>
+              </div>
+            </div>
+          </Card>
+
+          {/* Card 2: Informasi Pelapor & Deskripsi Laporan (Laporan Warga) */}
+          <Card className="p-4 border border-border/80 shadow-soft bg-card rounded-xl">
+            <h3 className="text-xs font-bold uppercase text-primary/80 tracking-wider mb-3 flex items-center gap-2 border-b border-border/50 pb-2">
+              <User className="h-4 w-4 text-primary" />
+              Detail Laporan Warga
+            </h3>
+            <div className="grid gap-4 md:grid-cols-12">
+              {/* Left side: Reporter Profile */}
+              <div className="md:col-span-5 md:border-r md:border-border/40 md:pr-4 flex flex-col justify-center space-y-2">
+                <div className="flex items-center gap-3">
+                  <div className="h-10 w-10 rounded-lg bg-leaf-gradient flex items-center justify-center text-primary-foreground font-extrabold text-sm shadow-soft shrink-0">
+                    {(report.name || "?")[0].toUpperCase()}
+                  </div>
+                  <div>
+                    <p className="font-bold text-sm text-foreground leading-tight">{report.name || "Anonim"}</p>
+                    <Badge variant="secondary" className="text-[9px] font-medium py-0 px-1.5 bg-secondary/60 text-secondary-foreground border border-border/30 mt-0.5">
+                      Pelapor Warga
+                    </Badge>
+                  </div>
+                </div>
+
+                <div className="space-y-1.5 text-xs pt-1">
+                  <div className="flex items-center justify-between bg-secondary/10 px-2 py-1 rounded-md border border-border/30">
+                    <span className="text-[10px] text-muted-foreground font-semibold">No. HP</span>
+                    <span className="font-bold text-foreground flex items-center gap-1 text-[11px]">
+                      <Phone className="h-3 w-3 text-primary" />
+                      {report.no_hp}
+                    </span>
+                  </div>
+                  {report.email && (
+                    <div className="flex items-center justify-between bg-secondary/10 px-2 py-1 rounded-md border border-border/30">
+                      <span className="text-[10px] text-muted-foreground font-semibold">Email</span>
+                      <span className="font-medium text-foreground truncate max-w-[120px] flex items-center gap-1 text-[11px]">
+                        <Mail className="h-3 w-3 text-primary" />
+                        {report.email}
+                      </span>
+                    </div>
+                  )}
+                </div>
+              </div>
+
+              {/* Right side: Description */}
+              <div className="md:col-span-7 md:pl-2 flex flex-col justify-center">
+                <div className="h-full flex items-center bg-primary/[0.02] border-l-4 border-primary p-3 rounded-r-lg rounded-l-sm bg-gradient-to-r from-primary/[0.03] to-transparent">
+                  <p className="text-xs md:text-sm text-foreground/90 leading-relaxed italic font-medium font-serif">
+                    "{report.detail_laporan}"
+                  </p>
+                </div>
+              </div>
+            </div>
+          </Card>
+
+          {/* Card 3: Analisis Teknis Laporan (AI & Geospatial) */}
+          {aiData && (
+            <Card className="p-4 border border-border/80 shadow-soft bg-card rounded-xl">
+              <div className="flex items-center justify-between mb-3 pb-2 border-b border-border/50">
+                <div className="flex items-center gap-2">
+                  <div className="flex h-7 w-7 items-center justify-center rounded-lg bg-secondary/20 text-foreground border border-border/40 shadow-sm">
+                    <ClipboardList className="h-4 w-4 text-muted-foreground" />
+                  </div>
+                  <div>
+                    <h3 className="font-bold text-sm text-foreground">Analisis Teknis Laporan</h3>
+                    <p className="text-[9px] text-muted-foreground font-medium">Hasil pengukuran kerusakan dan klasifikasi koordinat wilayah</p>
+                  </div>
+                </div>
+                <Badge variant="outline" className="bg-secondary/30 text-muted-foreground border-border/50 text-[8px] font-bold tracking-wider uppercase px-2 py-0.5">
+                  SISTEM
+                </Badge>
+              </div>
+
+              {/* Internal layout divided to resolve empty space */}
+              <div className="grid gap-4 md:grid-cols-12">
+                {/* Left inside grid: metrics & severity - Span 7 */}
+                <div className="md:col-span-7 space-y-3.5">
+                  {/* 3 Core metrics */}
+                  <div className="grid gap-2 grid-cols-3">
+                    <div className="bg-secondary/5 hover:bg-secondary/10 px-2 py-2 rounded-lg border border-border/30 text-center flex flex-col justify-between min-h-[72px] transition-all duration-300">
+                      <span className="text-[8px] text-muted-foreground uppercase font-bold tracking-wider">Total Lubang</span>
+                      <p className="text-lg font-extrabold text-foreground tracking-tight my-0.5">
+                        {aiData.laporan?.total_lubang_terdeteksi ?? 0}
+                      </p>
+                      <span className="text-[8px] text-muted-foreground/80 font-semibold">Lubang</span>
+                    </div>
+
+                    <div className="bg-secondary/5 hover:bg-secondary/10 px-2 py-2 rounded-lg border border-border/30 text-center flex flex-col justify-between min-h-[72px] transition-all duration-300">
+                      <span className="text-[8px] text-muted-foreground uppercase font-bold tracking-wider">Fasilitas Radius</span>
+                      <p className="text-lg font-extrabold text-foreground tracking-tight my-0.5">
+                        {aiData.fasilitas.length}
+                      </p>
+                      <span className="text-[8px] text-muted-foreground/80 font-semibold">Terdeteksi</span>
+                    </div>
+
+                    <div className="bg-secondary/5 hover:bg-secondary/10 px-2 py-2 rounded-lg border border-border/30 text-center flex flex-col justify-between min-h-[72px] transition-all duration-300">
+                      <span className="text-[8px] text-muted-foreground uppercase font-bold tracking-wider">Kelas Jalan</span>
+                      <p className="text-[10px] font-extrabold text-foreground truncate my-1.5 capitalize">
+                        {aiData.detail[0]?.kategori_pelaporan_osm || "Tidak Terpetakan"}
+                      </p>
+                      <span className="text-[8px] text-muted-foreground/80 font-semibold">OSM</span>
+                    </div>
+                  </div>
+
+                  {/* Severity Indicator Progress Bars */}
+                  {aiData.detail[0] && (
+                    <div className="space-y-2.5 bg-secondary/5 border border-border/30 p-3 rounded-lg">
+                      <h4 className="text-[9px] font-bold text-foreground uppercase tracking-wider">Metrik Tingkat Keparahan</h4>
+                      <div className="space-y-2">
+                        <div className="space-y-1">
+                          <div className="flex justify-between text-[10px] font-semibold">
+                            <span className="text-muted-foreground">Persentase Kerusakan Area</span>
+                            <span className="text-destructive font-bold">{aiData.detail[0].persentase_kerusakan}%</span>
+                          </div>
+                          <div className="h-1.5 w-full bg-secondary/20 rounded-full overflow-hidden border border-border/20">
+                            <div 
+                              className="h-full bg-destructive transition-all duration-500 rounded-full" 
+                              style={{ width: `${aiData.detail[0].persentase_kerusakan}%` }}
+                            />
+                          </div>
+                        </div>
+
+                        <div className="space-y-1">
+                          <div className="flex justify-between text-[10px] font-semibold">
+                            <span className="text-muted-foreground">Estimasi Kedalaman Lubang</span>
+                            <span className="text-amber-500 font-bold">{aiData.detail[0].persentase_kedalaman}%</span>
+                          </div>
+                          <div className="h-1.5 w-full bg-secondary/20 rounded-full overflow-hidden border border-border/20">
+                            <div 
+                              className="h-full bg-amber-500 transition-all duration-500 rounded-full" 
+                              style={{ width: `${aiData.detail[0].persentase_kedalaman}%` }}
+                            />
+                          </div>
+                        </div>
+                      </div>
+                    </div>
+                  )}
+                </div>
+
+                {/* Right inside grid: facilities and SLA - Span 5 */}
+                <div className="md:col-span-5 flex flex-col justify-between space-y-3">
+                  {/* Facilities */}
+                  <div className="space-y-1.5">
+                    <h4 className="text-[9px] font-bold text-foreground uppercase tracking-wider flex items-center gap-1">
+                      <Building2 className="h-3 w-3 text-muted-foreground" />
+                      Fasilitas Sekitar (300m)
+                    </h4>
+                    {aiData.fasilitas.length > 0 ? (
+                      <div className="flex flex-wrap gap-1 max-h-[84px] overflow-y-auto pr-1">
+                        {aiData.fasilitas.map((f) => (
+                          <Badge key={f.id} variant="secondary" className="text-[9px] px-1.5 py-0 rounded bg-secondary/25 border border-border/30 text-foreground font-semibold flex items-center gap-0.5">
+                            <span className="h-1 w-1 rounded-full bg-muted-foreground/60" />
+                            {f.nama_fasilitas}
+                          </Badge>
+                        ))}
+                      </div>
+                    ) : (
+                      <div className="text-[10px] text-muted-foreground italic p-2 rounded border border-dashed border-border/60 text-center bg-secondary/5">
+                        Tidak ada fasilitas terdeteksi.
+                      </div>
+                    )}
+                  </div>
+
+                  {/* Recommendations */}
+                  <div className="space-y-1.5 pt-2 border-t border-border/40">
+                    <div className="flex gap-2 items-center text-xs bg-secondary/15 px-2.5 py-1.5 rounded-lg border border-border/30">
+                      <div className="p-1 bg-secondary/35 rounded text-foreground border border-border/50 shrink-0">
+                        <Wrench className="h-3 w-3 text-muted-foreground" />
+                      </div>
+                      <div className="min-w-0">
+                        <p className="text-[8px] font-bold text-muted-foreground uppercase tracking-wider">Instansi Penanganan</p>
+                        <p className="font-semibold text-foreground truncate text-[11px] mt-0.5">{aiData.detail[0]?.petugas_penanganan || "Dinas PUPR"}</p>
+                      </div>
+                    </div>
+
+                    <div className="flex gap-2 items-center text-xs bg-secondary/15 px-2.5 py-1.5 rounded-lg border border-border/30">
+                      <div className="p-1 bg-secondary/35 rounded text-foreground border border-border/50 shrink-0">
+                        <Clock className="h-3 w-3 text-muted-foreground" />
+                      </div>
+                      <div className="min-w-0">
+                        <p className="text-[8px] font-bold text-muted-foreground uppercase tracking-wider">Target Respon SLA</p>
+                        <p className="font-semibold text-foreground truncate text-[11px] mt-0.5">{aiData.detail[0]?.estimasi_waktu_penanganan || "24 Jam"}</p>
+                      </div>
+                    </div>
+                  </div>
+                </div>
+              </div>
+            </Card>
+          )}
         </div>
       </div>
     </div>
