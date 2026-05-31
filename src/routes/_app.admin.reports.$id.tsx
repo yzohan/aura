@@ -331,6 +331,36 @@ function ReportDetailPage() {
       <div className="grid gap-6 lg:grid-cols-[1fr_380px]">
         {/* Left: Detail Info */}
         <div className="space-y-6">
+          {/* Reporter (Identitas Pelapor) */}
+          <Card className="p-6 shadow-soft">
+            <h3 className="text-xs font-bold uppercase text-primary/60 tracking-wider mb-4">
+              Identitas Pelapor
+            </h3>
+            <div className="space-y-3.5 text-sm">
+              <div className="flex items-center gap-3">
+                <div className="h-10 w-10 rounded-full bg-leaf-gradient flex items-center justify-center text-primary-foreground font-bold text-sm animate-pulse-slow">
+                  {(report.name || "?")[0].toUpperCase()}
+                </div>
+                <div>
+                  <p className="font-semibold text-base">{report.name || "Anonim"}</p>
+                  <p className="text-[10px] text-muted-foreground">Pelapor Mandiri</p>
+                </div>
+              </div>
+              <div className="border-t border-border pt-3 space-y-2">
+                <div className="flex justify-between items-center py-1">
+                  <span className="text-xs text-muted-foreground">No. HP / WhatsApp</span>
+                  <span className="font-semibold text-sm text-foreground">{report.no_hp}</span>
+                </div>
+                {report.email && (
+                  <div className="flex justify-between items-center py-1">
+                    <span className="text-xs text-muted-foreground">Email</span>
+                    <span className="font-medium text-xs text-foreground">{report.email}</span>
+                  </div>
+                )}
+              </div>
+            </div>
+          </Card>
+
           {/* Description */}
           <Card className="p-6 shadow-soft">
             <h3 className="text-xs font-bold uppercase text-primary/60 tracking-wider mb-4 flex items-center gap-2">
@@ -481,36 +511,6 @@ function ReportDetailPage() {
                   <ExternalLink className="h-3.5 w-3.5" />
                   Buka di OpenStreetMap
                 </a>
-              </div>
-            </div>
-          </Card>
-
-          {/* Reporter (Identitas Pelapor) */}
-          <Card className="p-6 shadow-soft">
-            <h3 className="text-xs font-bold uppercase text-primary/60 tracking-wider mb-4">
-              Identitas Pelapor
-            </h3>
-            <div className="space-y-3.5 text-sm">
-              <div className="flex items-center gap-3">
-                <div className="h-10 w-10 rounded-full bg-leaf-gradient flex items-center justify-center text-primary-foreground font-bold text-sm animate-pulse-slow">
-                  {(report.name || "?")[0].toUpperCase()}
-                </div>
-                <div>
-                  <p className="font-semibold text-base">{report.name || "Anonim"}</p>
-                  <p className="text-[10px] text-muted-foreground">Pelapor Mandiri</p>
-                </div>
-              </div>
-              <div className="border-t border-border pt-3 space-y-2">
-                <div className="flex justify-between items-center py-1">
-                  <span className="text-xs text-muted-foreground">No. HP / WhatsApp</span>
-                  <span className="font-semibold text-sm text-foreground">{report.no_hp}</span>
-                </div>
-                {report.email && (
-                  <div className="flex justify-between items-center py-1">
-                    <span className="text-xs text-muted-foreground">Email</span>
-                    <span className="font-medium text-xs text-foreground">{report.email}</span>
-                  </div>
-                )}
               </div>
             </div>
           </Card>
