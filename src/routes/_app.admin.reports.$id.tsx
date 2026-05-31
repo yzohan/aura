@@ -248,16 +248,18 @@ function ReportDetailPage() {
   const createdDate = new Date(report.created_at);
 
   return (
-    <div className="max-w-6xl mx-auto space-y-6 px-4 md:px-0 py-4 animate-in fade-in duration-500 w-full">
+    <div className="max-w-6xl mx-auto space-y-3 px-4 md:px-0 pt-0 pb-6 animate-in fade-in duration-500 w-full">
       {/* Back button */}
-      <Button
-        variant="ghost"
-        onClick={() => navigate({ to: "/admin" })}
-        className="gap-2 text-muted-foreground hover:text-primary -ml-2 transition-colors font-semibold"
-      >
-        <ArrowLeft className="h-4 w-4" />
-        Kembali ke Dashboard
-      </Button>
+      <div className="-mb-1">
+        <Button
+          variant="ghost"
+          onClick={() => navigate({ to: "/admin" })}
+          className="gap-1.5 text-muted-foreground hover:text-primary -ml-2 transition-colors font-semibold h-8 text-xs px-2.5"
+        >
+          <ArrowLeft className="h-3.5 w-3.5" />
+          Kembali ke Dashboard
+        </Button>
+      </div>
 
       {/* Split Header Panel (Photo & Core Info) */}
       <Card className="overflow-hidden border border-border/80 shadow-soft bg-card p-6 rounded-2xl">
