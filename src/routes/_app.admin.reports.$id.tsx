@@ -2,6 +2,7 @@ import { createFileRoute, useNavigate } from "@tanstack/react-router";
 import { useEffect, useState, lazy, Suspense } from "react";
 import {
   ArrowLeft, Camera, MapPin, Calendar, Loader2, ExternalLink, Clock, AlertTriangle, Tag,
+  Sparkles, Wrench, Building2, ShieldAlert, CheckCircle2,
 } from "lucide-react";
 import { toast } from "sonner";
 import { formatDistanceToNow } from "date-fns";
@@ -51,6 +52,34 @@ interface ReporterProfile {
   avatar_url: string | null;
 }
 
+interface AiAnalysisData {
+  laporan: {
+    id: number;
+    image_file: string;
+    total_lubang_terdeteksi: number | null;
+    latitude: number;
+    longitude: number;
+    detail_lokasi: string | null;
+  } | null;
+  fasilitas: {
+    id: number;
+    laporan_id: number;
+    nama_fasilitas: string;
+  }[];
+  detail: {
+    id: number;
+    laporan_id: number;
+    severity_visual: string;
+    persentase_kerusakan: number;
+    persentase_kedalaman: number;
+    kategori_pelaporan_osm: string;
+    nilai_score: number;
+    status_score: string;
+    petugas_penanganan: string | null;
+    estimasi_waktu_penanganan: string | null;
+  }[];
+}
+
 function ReportDetailPage() {
   const { user } = useAuth();
   const navigate = useNavigate();
@@ -59,6 +88,7 @@ function ReportDetailPage() {
   const [report, setReport] = useState<Report | null>(null);
   const [petugas, setPetugas] = useState<Petugas[]>([]);
   const [reporter, setReporter] = useState<ReporterProfile | null>(null);
+  const [aiData, setAiData] = useState<AiAnalysisData | null>(null);
   const [loading, setLoading] = useState(true);
   const [photoLoaded, setPhotoLoaded] = useState(false);
   const [photoUrl, setPhotoUrl] = useState<string | null>(null);
@@ -113,6 +143,28 @@ function ReportDetailPage() {
       if (ids.length) {
         const { data: profs } = await supabase.from("profiles").select("id, full_name").in("id", ids);
         setPetugas((profs ?? []) as Petugas[]);
+      }
+
+      // Load AI analysis data if photo_url exists
+      if (reportData.photo_url) {
+        const { data: jalanData } = await supabase
+          .from("laporan_jalan")
+          .select("*")
+          .eq("image_file", reportData.photo_url)
+          .maybeSingle();
+
+        if (jalanData) {
+          const [{ data: fasData }, { data: detData }] = await Promise.all([
+            supabase.from("fasilitas_radius").select("*").eq("laporan_id", jalanData.id),
+            supabase.from("detail_lubang").select("*").eq("laporan_id", jalanData.id),
+          ]);
+
+          setAiData({
+            laporan: jalanData,
+            fasilitas: (fasData || []) as any[],
+            detail: (detData || []) as any[],
+          });
+        }
       }
 
       setLoading(false);
@@ -278,6 +330,135 @@ function ReportDetailPage() {
               </p>
             </div>
           </Card>
+
+          {/* AI Analysis Result */}
+          {aiData && (
+            <Card className="p-6 shadow-soft border-t-4 border-t-primary bg-gradient-to-b from-primary/5 via-card to-card">
+              <div className="flex items-center justify-between mb-6 pb-4 border-b border-border/50">
+                <div className="flex items-center gap-2">
+                  <span className="flex h-8 w-8 items-center justify-center rounded-lg bg-primary/10 text-primary">
+                    <Sparkles className="h-4 w-4" />
+                  </span>
+                  <div>
+                    <h3 className="font-bold text-base text-foreground">Hasil Analisis AI AURA</h3>
+                    <p className="text-[10px] text-muted-foreground">Kecerdasan Buatan · Deteksi Real-Time</p>
+                  </div>
+                </div>
+                <Badge variant="outline" className="bg-primary/10 text-primary border-primary/20 text-[10px] font-semibold tracking-wider uppercase px-2 py-0.5">
+                  AI Verified
+                </Badge>
+              </div>
+
+              <div className="grid gap-4 sm:grid-cols-3 mb-6">
+                {/* Total Potholes */}
+                <div className="bg-secondary/15 p-4 rounded-xl border border-border/40 text-center">
+                  <p className="text-[10px] text-muted-foreground uppercase font-bold tracking-wider">Total Lubang</p>
+                  <p className="text-2xl font-extrabold text-foreground mt-1">
+                    {aiData.laporan?.total_lubang_terdeteksi ?? 0}
+                  </p>
+                  <p className="text-[9px] text-muted-foreground mt-0.5">Terdeteksi visual</p>
+                </div>
+
+                {/* Score */}
+                <div className="bg-secondary/15 p-4 rounded-xl border border-border/40 text-center">
+                  <p className="text-[10px] text-muted-foreground uppercase font-bold tracking-wider">Skor Kelayakan</p>
+                  <p className="text-2xl font-extrabold text-primary mt-1">
+                    {aiData.detail[0]?.nilai_score ?? 0}
+                    <span className="text-xs font-normal text-muted-foreground">/100</span>
+                  </p>
+                  <Badge variant="outline" className={`mt-1 text-[9px] px-1.5 py-0 ${
+                    (aiData.detail[0]?.status_score || "").toLowerCase() === "baik" 
+                      ? "bg-green-500/10 text-green-600 border-green-500/20" 
+                      : (aiData.detail[0]?.status_score || "").toLowerCase() === "sedang"
+                      ? "bg-yellow-500/10 text-yellow-600 border-yellow-500/20"
+                      : "bg-red-500/10 text-red-600 border-red-500/20"
+                  }`}>
+                    {aiData.detail[0]?.status_score || "Baik"}
+                  </Badge>
+                </div>
+
+                {/* OSM Category */}
+                <div className="bg-secondary/15 p-4 rounded-xl border border-border/40 text-center">
+                  <p className="text-[10px] text-muted-foreground uppercase font-bold tracking-wider">Kategori OSM</p>
+                  <p className="text-lg font-bold text-foreground mt-2 capitalize truncate">
+                    {aiData.detail[0]?.kategori_pelaporan_osm || "Ringan"}
+                  </p>
+                  <p className="text-[9px] text-muted-foreground mt-1">Saran Penanganan</p>
+                </div>
+              </div>
+
+              {/* Progress Bars for Damage and Depth */}
+              {aiData.detail[0] && (
+                <div className="space-y-4 mb-6 border-b border-border/40 pb-5">
+                  <div className="space-y-1.5">
+                    <div className="flex justify-between text-xs">
+                      <span className="font-semibold text-muted-foreground">Persentase Kerusakan Visual</span>
+                      <span className="font-bold text-foreground">{aiData.detail[0].persentase_kerusakan}%</span>
+                    </div>
+                    <div className="h-2 w-full bg-secondary/35 rounded-full overflow-hidden">
+                      <div 
+                        className="h-full bg-destructive transition-all duration-500" 
+                        style={{ width: `${aiData.detail[0].persentase_kerusakan}%` }}
+                      />
+                    </div>
+                  </div>
+
+                  <div className="space-y-1.5">
+                    <div className="flex justify-between text-xs">
+                      <span className="font-semibold text-muted-foreground">Persentase Estimasi Kedalaman</span>
+                      <span className="font-bold text-foreground">{aiData.detail[0].persentase_kedalaman}%</span>
+                    </div>
+                    <div className="h-2 w-full bg-secondary/35 rounded-full overflow-hidden">
+                      <div 
+                        className="h-full bg-amber-500 transition-all duration-500" 
+                        style={{ width: `${aiData.detail[0].persentase_kedalaman}%` }}
+                      />
+                    </div>
+                  </div>
+                </div>
+              )}
+
+              {/* Recommended Handler & Est Time */}
+              <div className="grid gap-4 sm:grid-cols-2 mb-5">
+                <div className="flex gap-2.5 items-start text-xs">
+                  <div className="p-2 bg-primary/10 rounded-lg text-primary">
+                    <Wrench className="h-3.5 w-3.5" />
+                  </div>
+                  <div>
+                    <p className="font-bold text-muted-foreground">Rekomendasi Penanganan</p>
+                    <p className="font-medium text-foreground mt-0.5">{aiData.detail[0]?.petugas_penanganan || "Dinas PUPR"}</p>
+                  </div>
+                </div>
+
+                <div className="flex gap-2.5 items-start text-xs">
+                  <div className="p-2 bg-primary/10 rounded-lg text-primary">
+                    <Clock className="h-3.5 w-3.5" />
+                  </div>
+                  <div>
+                    <p className="font-bold text-muted-foreground">Estimasi Waktu Respon</p>
+                    <p className="font-medium text-foreground mt-0.5">{aiData.detail[0]?.estimasi_waktu_penanganan || "24 Jam"}</p>
+                  </div>
+                </div>
+              </div>
+
+              {/* Surrounding Facilities (Fasilitas Radius 300m) */}
+              {aiData.fasilitas.length > 0 && (
+                <div className="border-t border-border/40 pt-4 mt-4">
+                  <p className="text-xs font-bold text-muted-foreground uppercase tracking-wider mb-2.5 flex items-center gap-1.5">
+                    <Building2 className="h-3.5 w-3.5" />
+                    Fasilitas Umum Sekitar (Radius 300m)
+                  </p>
+                  <div className="flex flex-wrap gap-2">
+                    {aiData.fasilitas.map((f) => (
+                      <Badge key={f.id} variant="secondary" className="bg-secondary/40 border border-border/30 text-xs px-2.5 py-0.5 rounded-full font-medium">
+                        {f.nama_fasilitas}
+                      </Badge>
+                    ))}
+                  </div>
+                </div>
+              )}
+            </Card>
+          )}
 
           {/* Location */}
           <Card className="p-6 shadow-soft">
