@@ -31,6 +31,18 @@ interface Report {
   photo_url: string | null;
 }
 
+const getUrgencyKey = (val: string): "low" | "medium" | "high" | "critical" => {
+  const norm = (val || "").toLowerCase();
+  if (norm === "low" || norm === "medium" || norm === "high" || norm === "critical") {
+    return norm;
+  }
+  if (norm.includes("ringan") || norm.includes("kecil") || norm.includes("low")) return "low";
+  if (norm.includes("sedang") || norm.includes("medium")) return "medium";
+  if (norm.includes("tinggi") || norm.includes("berat") || norm.includes("high") || norm.includes("parah")) return "high";
+  if (norm.includes("kritis") || norm.includes("critical") || norm.includes("sangat parah")) return "critical";
+  return "medium";
+};
+
 function AdminReportsPage() {
   const navigate = useNavigate();
   const [reports, setReports] = useState<Report[]>([]);
@@ -123,66 +135,92 @@ function AdminReportsPage() {
           Tidak ada laporan ditemukan.
         </Card>
       ) : (
-        <div className="space-y-3">
+        <div className="space-y-3.5">
           {filtered.map((r) => {
             const Icon = CATEGORY_ICON[r.category as keyof typeof CATEGORY_ICON] || ImageIcon;
             const date = new Date(r.created_at).toLocaleDateString("id-ID", {
               day: "numeric", month: "short", year: "numeric",
             });
             const photoUrl = getPhotoUrl(r.photo_url);
+            const urgencyKey = getUrgencyKey(r.kategori_pelaporan);
 
             return (
               <Card
                 key={r.id}
-                className="group flex cursor-pointer items-start gap-4 border border-border/80 p-3 transition-all hover:bg-secondary/15 hover:shadow-soft hover:border-primary/20 active:scale-[0.995] md:p-4 rounded-xl"
+                className="group relative flex flex-col md:flex-row cursor-pointer items-stretch gap-4 border border-border/80 p-4 transition-all hover:bg-secondary/10 hover:shadow-soft hover:border-primary/30 active:scale-[0.998] rounded-xl bg-card"
                 onClick={() => navigate({ to: "/admin/reports/$id", params: { id: r.id } })}
               >
                 {/* Thumbnail Image */}
-                <div className="relative h-20 w-20 md:h-24 md:w-24 shrink-0 overflow-hidden rounded-lg bg-secondary/40 border border-border/50">
+                <div className="relative h-24 w-full md:w-28 shrink-0 overflow-hidden rounded-lg bg-secondary/40 border border-border/50">
                   {photoUrl ? (
                     <img
                       src={photoUrl}
                       alt={r.name}
-                      className="h-full w-full object-cover transition-transform duration-300 group-hover:scale-105"
+                      className="h-full w-full object-cover transition-transform duration-500 group-hover:scale-105"
                       loading="lazy"
                     />
                   ) : (
-                    <div className="flex h-full w-full items-center justify-center bg-gradient-to-br from-secondary/30 to-secondary/10 text-muted-foreground">
+                    <div className="flex h-full w-full items-center justify-center bg-gradient-to-br from-secondary/35 to-secondary/15 text-muted-foreground">
                       <Icon className="h-6 w-6 opacity-60" />
                     </div>
                   )}
-                </div>
-
-                {/* Content */}
-                <div className="min-w-0 flex-1 py-0.5">
-                  <div className="flex flex-wrap items-center gap-x-2 gap-y-1">
-                    <p className="font-semibold text-sm md:text-base text-foreground group-hover:text-primary transition-colors leading-tight">
-                      {r.name} - {r.no_hp}
-                    </p>
-                    <Badge variant="outline" className={`shrink-0 text-[10px] px-2 py-0.5 rounded-full border-none font-semibold ${r.status_pelaporan === 'progress' ? STATUS_TONE.in_progress : (STATUS_TONE[r.status_pelaporan as keyof typeof STATUS_TONE] || 'bg-secondary text-secondary-foreground')}`}>
+                  {/* Status Indicator over image */}
+                  <div className="absolute top-1.5 left-1.5 z-10">
+                    <Badge className={`text-[9px] px-2 py-0.5 rounded shadow-sm border-none font-semibold ${
+                      r.status_pelaporan === 'progress' ? STATUS_TONE.in_progress : (STATUS_TONE[r.status_pelaporan as keyof typeof STATUS_TONE] || 'bg-secondary text-secondary-foreground')
+                    }`}>
                       {r.status_pelaporan === 'progress' ? 'Dikerjakan' : (STATUS_LABEL[r.status_pelaporan as keyof typeof STATUS_LABEL] || r.status_pelaporan)}
                     </Badge>
                   </div>
-                  <p className="mt-1 line-clamp-2 text-xs md:text-sm text-muted-foreground leading-relaxed">
-                    {r.detail_laporan}
-                  </p>
-                  <div className="mt-2.5 flex flex-wrap items-center gap-x-3 gap-y-1.5 text-[10px] md:text-xs text-muted-foreground">
-                    <span className="flex items-center gap-1 font-medium max-w-[200px] truncate">
+                </div>
+
+                {/* Content info */}
+                <div className="flex-1 min-w-0 flex flex-col justify-between py-0.5">
+                  <div>
+                    <div className="flex items-start justify-between gap-3">
+                      <div>
+                        <h3 className="font-bold text-sm md:text-base text-foreground group-hover:text-primary transition-colors flex items-center gap-1.5">
+                          <Icon className="h-4.5 w-4.5 text-primary shrink-0" />
+                          {CATEGORY_LABEL[r.category as keyof typeof CATEGORY_LABEL] || r.category}
+                        </h3>
+                        <p className="text-[10px] text-muted-foreground mt-0.5 font-medium">
+                          Pelapor: <span className="text-foreground font-semibold">{r.name}</span> ({r.no_hp})
+                        </p>
+                      </div>
+
+                      {/* Urgency Badge in Top Right */}
+                      <Badge variant="outline" className={`shrink-0 text-[10px] rounded-full border px-2.5 py-0.5 font-semibold ${
+                        urgencyKey === 'low' ? URGENCY_TONE.low : (URGENCY_TONE[urgencyKey as keyof typeof URGENCY_TONE] || 'bg-secondary text-secondary-foreground')
+                      }`}>
+                        {URGENCY_LABEL[urgencyKey] || urgencyKey}
+                      </Badge>
+                    </div>
+
+                    {/* Report Description */}
+                    <p className="mt-2 line-clamp-2 text-xs md:text-sm text-muted-foreground leading-relaxed">
+                      "{r.detail_laporan}"
+                    </p>
+                  </div>
+
+                  {/* Metadata footer */}
+                  <div className="mt-4 flex flex-wrap items-center gap-x-4 gap-y-1.5 text-[10px] md:text-xs text-muted-foreground border-t border-border/40 pt-2.5">
+                    <span className="flex items-center gap-1 max-w-[250px] truncate font-medium">
                       <MapPin className="h-3.5 w-3.5 text-primary/60 shrink-0" />
                       {r.address || "Lokasi GPS"}
                     </span>
-                    <span className="flex items-center gap-1 shrink-0">
+                    <span className="flex items-center gap-1 shrink-0 font-medium">
                       <CalendarDays className="h-3.5 w-3.5 text-primary/60 shrink-0" />
                       {date}
                     </span>
-                    <Badge variant="outline" className={`shrink-0 text-[10px] rounded-full border px-2 font-normal ${r.kategori_pelaporan === 'ringan' ? URGENCY_TONE.low : (URGENCY_TONE[r.kategori_pelaporan as keyof typeof URGENCY_TONE] || 'bg-secondary text-secondary-foreground')}`}>
-                      {r.kategori_pelaporan === 'ringan' ? 'Ringan' : (URGENCY_LABEL[r.kategori_pelaporan as keyof typeof URGENCY_LABEL] || r.kategori_pelaporan)}
-                    </Badge>
+                    <span className="ml-auto text-[9px] font-mono text-muted-foreground/60 group-hover:text-primary/60 transition-colors">
+                      ID: {r.id.slice(0, 8)}
+                    </span>
                   </div>
                 </div>
 
-                <div className="self-center p-1 rounded-full group-hover:bg-primary/5 transition-colors">
-                  <ChevronRight className="h-5 w-5 text-muted-foreground group-hover:text-primary transition-colors shrink-0" />
+                {/* Right Arrow indicator */}
+                <div className="hidden md:flex items-center justify-center pl-2 shrink-0 border-l border-border/30 group-hover:bg-primary/5 transition-colors self-stretch rounded-r-xl px-2">
+                  <ChevronRight className="h-5 w-5 text-muted-foreground group-hover:text-primary transition-all duration-300 transform group-hover:translate-x-0.5" />
                 </div>
               </Card>
             );
