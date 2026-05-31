@@ -3,7 +3,7 @@ import { useEffect, useState, lazy, Suspense } from "react";
 import {
   ArrowLeft, Camera, MapPin, Calendar, Loader2, ExternalLink, Clock, AlertTriangle, Tag,
   Sparkles, Wrench, Building2, ShieldAlert, CheckCircle2, ClipboardList, Activity,
-  User, Phone, Mail,
+  User, Phone, Mail, Map,
 } from "lucide-react";
 import { toast } from "sonner";
 import { formatDistanceToNow } from "date-fns";
@@ -269,8 +269,8 @@ function ReportDetailPage() {
           <Card className="border border-border/80 shadow-soft bg-card p-4 rounded-xl shrink-0">
             <div className="flex flex-col sm:flex-row sm:items-center sm:justify-between gap-3 border-b border-border/50 pb-3 mb-3 shrink-0">
               <div>
-                <span className="text-xs font-bold text-primary tracking-wider uppercase">TIKET LAPORAN</span>
-                <h1 className="text-xl font-extrabold text-foreground tracking-tight leading-none mt-0.5">
+                <span className="text-[10px] font-bold text-primary tracking-widest uppercase">TIKET LAPORAN</span>
+                <h1 className="text-2xl font-extrabold text-foreground tracking-tight leading-none mt-1 font-display">
                   #AURA-{report.id.slice(0, 8).toUpperCase()}
                 </h1>
               </div>
@@ -299,25 +299,53 @@ function ReportDetailPage() {
               </div>
             </div>
 
-            {/* Quick Details Table/Grid */}
-            <div className="grid grid-cols-1 sm:grid-cols-2 gap-x-4 gap-y-2.5 text-sm border-b border-border/60 pb-3 mb-3">
-              <div className="flex items-center gap-2">
-                <span className="text-muted-foreground font-semibold w-28 shrink-0">Nama Pelapor:</span>
-                <span className="font-bold text-foreground truncate">{report.name || "Anonim"}</span>
+            {/* Quick Details Modern Grid */}
+            <div className="grid grid-cols-2 sm:grid-cols-3 gap-x-6 gap-y-4 py-2 text-sm shrink-0">
+              {/* Nama Pelapor */}
+              <div className="flex flex-col justify-center min-w-0">
+                <span className="text-[10px] font-bold text-muted-foreground uppercase tracking-widest font-sans">Nama Pelapor</span>
+                <span className="font-bold text-foreground text-sm sm:text-base mt-1 truncate font-display tracking-tight">{report.name || "Anonim"}</span>
               </div>
-              <div className="flex items-center gap-2">
-                <span className="text-muted-foreground font-semibold w-28 shrink-0">Kontak WA:</span>
-                <span className="font-bold text-foreground">{report.no_hp}</span>
+
+              {/* Kontak WA */}
+              <div className="flex flex-col justify-center min-w-0">
+                <span className="text-[10px] font-bold text-muted-foreground uppercase tracking-widest font-sans">Kontak WA</span>
+                <span className="font-bold text-foreground text-sm sm:text-base mt-1 font-display tracking-tight">{report.no_hp}</span>
               </div>
-              <div className="flex items-center gap-2 sm:col-span-2">
-                <span className="text-muted-foreground font-semibold w-28 shrink-0">Koordinat GPS:</span>
-                <span className="font-mono text-foreground font-bold">
+
+              {/* Tanggal Laporan */}
+              <div className="flex flex-col justify-center min-w-0">
+                <span className="text-[10px] font-bold text-muted-foreground uppercase tracking-widest font-sans">Tanggal Laporan</span>
+                <span className="font-bold text-foreground text-sm sm:text-base mt-1 font-display tracking-tight flex items-center gap-1.5">
+                  <Calendar className="h-3.5 w-3.5 text-primary/70 shrink-0" />
+                  {createdDate.toLocaleDateString('id-ID', { day: 'numeric', month: 'long', year: 'numeric' })}
+                </span>
+              </div>
+
+              {/* Koordinat GPS */}
+              <div className="flex flex-col justify-center min-w-0">
+                <span className="text-[10px] font-bold text-muted-foreground uppercase tracking-widest font-sans">Koordinat GPS</span>
+                <span className="font-mono font-bold text-foreground text-xs sm:text-sm mt-1 tracking-tight">
                   {report.latitude.toFixed(5)}, {report.longitude.toFixed(5)}
                 </span>
               </div>
-              <div className="flex items-start gap-2 sm:col-span-2">
-                <span className="text-muted-foreground font-semibold w-28 shrink-0 mt-0.5">Peta & Alamat:</span>
-                <div className="flex flex-wrap items-center gap-x-2 gap-y-1.5 text-foreground font-bold flex-1 min-w-0">
+
+              {/* Waktu Laporan */}
+              <div className="flex flex-col justify-center min-w-0">
+                <span className="text-[10px] font-bold text-muted-foreground uppercase tracking-widest font-sans">Waktu Laporan</span>
+                <span className="font-bold text-foreground text-sm sm:text-base mt-1 font-display tracking-tight flex items-center gap-1.5">
+                  <Clock className="h-3.5 w-3.5 text-primary/70 shrink-0" />
+                  {formatDistanceToNow(createdDate, { addSuffix: true, locale: idLocale })}
+                </span>
+              </div>
+
+              {/* Empty slot to balance 3 columns */}
+              <div className="hidden sm:block"></div>
+
+              {/* Alamat & Peta Wilayah */}
+              <div className="flex flex-col justify-center min-w-0 col-span-2 sm:col-span-3 border-t border-border/30 pt-3.5 mt-1">
+                <span className="text-[10px] font-bold text-muted-foreground uppercase tracking-widest font-sans">Peta & Alamat Laporan</span>
+                <div className="flex flex-wrap items-center gap-x-2 gap-y-1.5 mt-1 text-sm sm:text-base font-bold text-foreground font-display tracking-tight">
                   <span className="break-words">{report.address || "Alamat tidak terdeteksi"}</span>
                   <a
                     href={`https://www.openstreetmap.org/?mlat=${report.latitude}&mlon=${report.longitude}#map=18/${report.latitude}/${report.longitude}`}
@@ -328,24 +356,6 @@ function ReportDetailPage() {
                     Buka OpenStreetMap <ExternalLink className="h-3 w-3" />
                   </a>
                 </div>
-              </div>
-            </div>
-
-            {/* Dates row */}
-            <div className="grid grid-cols-2 gap-4 text-sm shrink-0">
-              <div className="flex items-center gap-2 bg-secondary/5 px-2.5 py-1.5 rounded border border-border/30">
-                <span className="font-bold text-muted-foreground uppercase text-xs">TANGGAL:</span>
-                <span className="text-foreground font-bold flex items-center gap-1">
-                  <Calendar className="h-3.5 w-3.5 text-primary/70" />
-                  {createdDate.toLocaleDateString('id-ID', { day: 'numeric', month: 'long', year: 'numeric' })}
-                </span>
-              </div>
-              <div className="flex items-center gap-2 bg-secondary/5 px-2.5 py-1.5 rounded border border-border/30">
-                <span className="font-bold text-muted-foreground uppercase text-xs">WAKTU:</span>
-                <span className="text-foreground font-bold flex items-center gap-1">
-                  <Clock className="h-3.5 w-3.5 text-primary/70" />
-                  {formatDistanceToNow(createdDate, { addSuffix: true, locale: idLocale })}
-                </span>
               </div>
             </div>
           </Card>
