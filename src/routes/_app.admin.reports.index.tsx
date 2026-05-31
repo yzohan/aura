@@ -50,6 +50,7 @@ function AdminReportsPage() {
   const [search, setSearch] = useState("");
   const [filterStatus, setFilterStatus] = useState("all");
   const [filterCategory, setFilterCategory] = useState("all");
+  const [signedUrls, setSignedUrls] = useState<Record<string, string>>({});
 
   const fetch = async () => {
     const { data, error } = await supabase
@@ -58,6 +59,24 @@ function AdminReportsPage() {
       .order("created_at", { ascending: false });
     if (error) return;
     setReports((data ?? []) as Report[]);
+
+    // Batch load signed URLs for private photos
+    const paths = (data ?? []).map((r) => r.photo_url).filter(Boolean) as string[];
+    if (paths.length > 0) {
+      const { data: signedData, error: signedErr } = await supabase.storage
+        .from("reports")
+        .createSignedUrls(paths, 3600);
+      if (!signedErr && signedData) {
+        const urlsMap: Record<string, string> = {};
+        signedData.forEach((item) => {
+          if (item.error === null && item.signedUrl) {
+            urlsMap[item.path] = item.signedUrl;
+          }
+        });
+        setSignedUrls(urlsMap);
+      }
+    }
+
     setLoading(false);
   };
 
@@ -83,7 +102,7 @@ function AdminReportsPage() {
 
   const getPhotoUrl = (photoPath: string | null) => {
     if (!photoPath) return null;
-    return supabase.storage.from("reports").getPublicUrl(photoPath).data.publicUrl;
+    return signedUrls[photoPath] || supabase.storage.from("reports").getPublicUrl(photoPath).data.publicUrl;
   };
 
   return (

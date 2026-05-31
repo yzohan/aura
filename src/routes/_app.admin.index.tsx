@@ -80,6 +80,7 @@ function AdminPage() {
   const [loadingData, setLoadingData] = useState(true);
   const [filterStatus, setFilterStatus] = useState<string>("all");
   const [filterCategory, setFilterCategory] = useState<string>("all");
+  const [signedUrls, setSignedUrls] = useState<Record<string, string>>({});
 
   const loadData = async () => {
     const [{ data: rep }, { data: roleRows }, { data: aliData }] = await Promise.all([
@@ -88,6 +89,24 @@ function AdminPage() {
       supabase.from("metadata_ali").select("total_index_ali").eq("id", 1).maybeSingle(),
     ]);
     setReports((rep ?? []) as Report[]);
+
+    // Batch load signed URLs for private photos
+    const paths = (rep ?? []).map((r) => r.photo_url).filter(Boolean) as string[];
+    if (paths.length > 0) {
+      const { data: signedData, error: signedErr } = await supabase.storage
+        .from("reports")
+        .createSignedUrls(paths, 3600);
+      if (!signedErr && signedData) {
+        const urlsMap: Record<string, string> = {};
+        signedData.forEach((item) => {
+          if (item.error === null && item.signedUrl) {
+            urlsMap[item.path] = item.signedUrl;
+          }
+        });
+        setSignedUrls(urlsMap);
+      }
+    }
+
     const ids = (roleRows ?? []).map((r) => r.user_id);
     if (ids.length) {
       const { data: profs } = await supabase.from("profiles").select("id, full_name").in("id", ids);
@@ -436,7 +455,7 @@ function AdminPage() {
             {filtered.map((r) => {
               const Icon = CATEGORY_ICON[r.category as keyof typeof CATEGORY_ICON] || MapPin;
               const photoUrl = r.photo_url 
-                ? supabase.storage.from("reports").getPublicUrl(r.photo_url).data.publicUrl
+                ? (signedUrls[r.photo_url] || supabase.storage.from("reports").getPublicUrl(r.photo_url).data.publicUrl)
                 : null;
               return (
                 <div
