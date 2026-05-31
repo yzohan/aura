@@ -299,14 +299,6 @@ function ReportDetailPage() {
               </div>
             </div>
 
-            {/* Address bar */}
-            <div className="bg-secondary/10 px-3 py-2.5 rounded-lg border border-border/40 mb-3 flex items-start gap-1.5 shrink-0">
-              <MapPin className="h-4.5 w-4.5 shrink-0 text-primary mt-0.5" />
-              <div className="text-sm text-foreground font-semibold leading-snug">
-                {report.address || "Alamat tidak terdeteksi"}
-              </div>
-            </div>
-
             {/* Quick Details Table/Grid */}
             <div className="grid grid-cols-1 sm:grid-cols-2 gap-x-4 gap-y-2.5 text-sm border-b border-border/60 pb-3 mb-3">
               <div className="flex items-center gap-2">
@@ -317,26 +309,25 @@ function ReportDetailPage() {
                 <span className="text-muted-foreground font-semibold w-28 shrink-0">Kontak WA:</span>
                 <span className="font-bold text-foreground">{report.no_hp}</span>
               </div>
-              <div className="flex items-center gap-2 justify-between sm:col-span-1">
-                <div className="flex items-center gap-2">
-                  <span className="text-muted-foreground font-semibold w-28 shrink-0">Koordinat GPS:</span>
-                  <span className="font-mono text-foreground font-bold">
-                    {report.latitude.toFixed(5)}, {report.longitude.toFixed(5)}
-                  </span>
-                </div>
+              <div className="flex items-center gap-2 sm:col-span-2">
+                <span className="text-muted-foreground font-semibold w-28 shrink-0">Koordinat GPS:</span>
+                <span className="font-mono text-foreground font-bold">
+                  {report.latitude.toFixed(5)}, {report.longitude.toFixed(5)}
+                </span>
               </div>
-              <div className="flex items-center gap-2 justify-between sm:col-span-1">
-                <div className="flex items-center gap-2">
-                  <span className="text-muted-foreground font-semibold w-28 shrink-0">Peta Wilayah:</span>
+              <div className="flex items-start gap-2 sm:col-span-2">
+                <span className="text-muted-foreground font-semibold w-28 shrink-0 mt-0.5">Peta & Alamat:</span>
+                <div className="flex flex-wrap items-center gap-x-2 gap-y-1.5 text-foreground font-bold flex-1 min-w-0">
+                  <span className="break-words">{report.address || "Alamat tidak terdeteksi"}</span>
+                  <a
+                    href={`https://www.openstreetmap.org/?mlat=${report.latitude}&mlon=${report.longitude}#map=18/${report.latitude}/${report.longitude}`}
+                    target="_blank"
+                    rel="noreferrer"
+                    className="inline-flex items-center gap-1 text-xs text-primary hover:text-primary-hover font-extrabold bg-primary/10 hover:bg-primary/20 border border-primary/20 px-2 py-0.5 rounded transition-all shrink-0"
+                  >
+                    Buka OpenStreetMap <ExternalLink className="h-3 w-3" />
+                  </a>
                 </div>
-                <a
-                  href={`https://www.openstreetmap.org/?mlat=${report.latitude}&mlon=${report.longitude}#map=18/${report.latitude}/${report.longitude}`}
-                  target="_blank"
-                  rel="noreferrer"
-                  className="text-sm text-primary hover:underline flex items-center gap-1 font-bold shrink-0 mr-auto sm:mr-0"
-                >
-                  Buka OpenStreetMap <ExternalLink className="h-3.5 w-3.5" />
-                </a>
               </div>
             </div>
 
