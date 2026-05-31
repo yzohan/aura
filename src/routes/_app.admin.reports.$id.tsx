@@ -262,130 +262,11 @@ function ReportDetailPage() {
       </div>
 
       {/* Dense Dashboard Grid */}
-      <div className="grid gap-4 lg:grid-cols-12 w-full items-start">
-        {/* Left Column: Media & Actions (col-span-4) */}
-        <div className="lg:col-span-4 space-y-4">
-          {/* Card 1: Bukti Foto */}
-          <Card className="overflow-hidden border border-border/80 shadow-soft bg-card p-4 rounded-xl">
-            <h3 className="text-xs font-bold uppercase text-primary/80 tracking-wider mb-3 flex items-center gap-2 border-b border-border/50 pb-2">
-              <Camera className="h-4 w-4 text-primary" />
-              Bukti Foto Laporan
-            </h3>
-            <div className="w-full h-[220px] relative group overflow-hidden rounded-lg bg-secondary/20 border border-border/40 flex items-center justify-center">
-              {photoUrl && !photoError ? (
-                <img
-                  src={photoUrl}
-                  alt={report.name}
-                  onLoad={() => setPhotoLoaded(true)}
-                  onError={() => setPhotoError(true)}
-                  className={`h-full w-full object-cover transition-all duration-500 group-hover:scale-[1.03] ${
-                    photoLoaded ? "opacity-100" : "opacity-0"
-                  }`}
-                />
-              ) : (
-                <div className="flex flex-col items-center justify-center gap-3 text-muted-foreground p-6">
-                  <div className="p-3 bg-background rounded-full border border-border/50 shadow-sm">
-                    <Camera className="h-6 w-6 text-muted-foreground/40" />
-                  </div>
-                  <p className="text-[10px] font-semibold italic opacity-60">Tidak ada foto bukti dilampirkan</p>
-                </div>
-              )}
-            </div>
-          </Card>
-
-          {/* Card 2: Panel Tindakan */}
-          <Card className="border border-border/80 shadow-soft bg-card rounded-xl overflow-hidden">
-            <div className="p-4 space-y-4">
-              <div>
-                <h3 className="font-bold text-sm text-foreground flex items-center gap-2">
-                  <Activity className="h-4 w-4 text-primary" />
-                  Panel Tindakan
-                </h3>
-                <p className="text-[10px] text-muted-foreground mt-0.5">Penanganan dan penugasan laporan</p>
-              </div>
-
-              {/* Status Control */}
-              <div className="space-y-1.5">
-                <label className="text-[9px] font-bold uppercase text-muted-foreground/90 tracking-wider">Update Status Laporan</label>
-                <Select
-                  value={report.status_pelaporan}
-                  onValueChange={(v) => updateStatus(v)}
-                >
-                  <SelectTrigger className={`h-9 text-xs font-bold rounded-lg border border-border/80 transition-all ${
-                    report.status_pelaporan === 'progress' 
-                      ? STATUS_TONE.in_progress 
-                      : (STATUS_TONE[report.status_pelaporan as keyof typeof STATUS_TONE] || 'bg-secondary text-secondary-foreground')
-                  }`}>
-                    <SelectValue />
-                  </SelectTrigger>
-                  <SelectContent>
-                    {Object.entries(STATUS_LABEL).map(([k, v]) => (
-                      <SelectItem key={k} value={k} className="text-xs font-semibold">{v}</SelectItem>
-                    ))}
-                  </SelectContent>
-                </Select>
-              </div>
-
-              {/* Urgency Control */}
-              <div className="space-y-1.5">
-                <label className="text-[9px] font-bold uppercase text-muted-foreground/90 tracking-wider">Tingkat Urgensi</label>
-                <Select
-                  value={report.kategori_pelaporan}
-                  onValueChange={(v) => updateUrgency(v)}
-                >
-                  <SelectTrigger className={`h-9 text-xs font-bold rounded-lg border border-border/80 transition-all ${
-                    report.kategori_pelaporan === 'ringan' 
-                      ? URGENCY_TONE.low 
-                      : (URGENCY_TONE[report.kategori_pelaporan as keyof typeof URGENCY_TONE] || 'bg-secondary text-secondary-foreground')
-                  }`}>
-                    <SelectValue />
-                  </SelectTrigger>
-                  <SelectContent>
-                    {Object.entries(URGENCY_LABEL).map(([k, v]) => (
-                      <SelectItem key={k} value={k} className="text-xs font-semibold">{v}</SelectItem>
-                    ))}
-                  </SelectContent>
-                </Select>
-              </div>
-
-              {/* Assign Petugas */}
-              <div className="space-y-1.5">
-                <label className="text-[9px] font-bold uppercase text-muted-foreground/90 tracking-wider">Tugaskan Petugas Lapangan</label>
-                <Select onValueChange={(v) => assignPetugas(v)}>
-                  <SelectTrigger className="h-9 text-xs bg-background border border-border/80 rounded-lg font-medium">
-                    <SelectValue placeholder="Pilih Petugas Lapangan..." />
-                  </SelectTrigger>
-                  <SelectContent>
-                    {petugas.map((p) => (
-                      <SelectItem key={p.id} value={p.id} className="text-xs font-medium">{p.full_name}</SelectItem>
-                    ))}
-                  </SelectContent>
-                </Select>
-              </div>
-
-              {/* Metadata Footer */}
-              <div className="border-t border-border/60 pt-4 space-y-2 text-xs">
-                <h4 className="text-[9px] font-bold uppercase text-muted-foreground/90 tracking-wider mb-1">Informasi Sistem</h4>
-                
-                <div className="flex justify-between items-center bg-secondary/5 px-2.5 py-1.5 rounded-lg border border-border/30">
-                  <span className="text-muted-foreground text-[10px]">ID Laporan</span>
-                  <span className="font-mono text-[9px] font-semibold bg-background border border-border px-1.5 py-0.5 rounded text-foreground">{report.id.slice(0, 13)}...</span>
-                </div>
-                
-                <div className="flex justify-between items-center bg-secondary/5 px-2.5 py-1.5 rounded-lg border border-border/30">
-                  <span className="text-muted-foreground text-[10px]">Status Laporan</span>
-                  <Badge variant="outline" className="bg-secondary/40 text-muted-foreground border-border/50 text-[8px] font-bold uppercase py-0 px-1.5">VALID</Badge>
-                </div>
-              </div>
-            </div>
-          </Card>
-        </div>
-
-        {/* Right Column: Info & Analytics (col-span-8) */}
-        <div className="lg:col-span-8 space-y-4">
-          {/* Card 1: Detail Laporan & Informasi Tiket */}
-          <Card className="border border-border/80 shadow-soft bg-card p-4 rounded-xl">
-            <div className="flex flex-col sm:flex-row sm:items-center sm:justify-between gap-3 border-b border-border/50 pb-3 mb-3">
+      <div className="grid gap-4 grid-cols-12 w-full items-stretch">
+        {/* ROW 1: Detail Laporan & Bukti Foto */}
+        <div className="col-span-12 lg:col-span-8 flex flex-col">
+          <Card className="border border-border/80 shadow-soft bg-card p-4 rounded-xl h-full flex flex-col justify-between">
+            <div className="flex flex-col sm:flex-row sm:items-center sm:justify-between gap-3 border-b border-border/50 pb-3 mb-3 shrink-0">
               <div>
                 <span className="text-[9px] font-bold text-primary tracking-wider uppercase">TIKET LAPORAN</span>
                 <h1 className="text-xl font-extrabold text-foreground tracking-tight leading-none mt-0.5">
@@ -418,7 +299,7 @@ function ReportDetailPage() {
             </div>
 
             {/* Address bar */}
-            <div className="bg-secondary/10 px-3 py-2 rounded-lg border border-border/40 mb-3 flex items-start gap-1.5">
+            <div className="bg-secondary/10 px-3 py-2 rounded-lg border border-border/40 mb-3 flex items-start gap-1.5 shrink-0">
               <MapPin className="h-4 w-4 shrink-0 text-primary mt-0.5" />
               <div className="text-xs text-foreground font-semibold leading-snug">
                 {report.address || "Alamat tidak terdeteksi"}
@@ -426,7 +307,7 @@ function ReportDetailPage() {
             </div>
 
             {/* Quick Details Table/Grid */}
-            <div className="grid grid-cols-1 sm:grid-cols-2 gap-x-4 gap-y-2 text-xs border-b border-border/60 pb-3 mb-3">
+            <div className="grid grid-cols-1 sm:grid-cols-2 gap-x-4 gap-y-2 text-xs border-b border-border/60 pb-3 mb-3 flex-1 flex flex-col justify-center">
               <div className="flex items-center gap-2">
                 <span className="text-muted-foreground font-semibold w-24 shrink-0">Nama Pelapor:</span>
                 <span className="font-bold text-foreground truncate">{report.name || "Anonim"}</span>
@@ -459,7 +340,7 @@ function ReportDetailPage() {
             </div>
 
             {/* Dates row */}
-            <div className="grid grid-cols-2 gap-4 text-[10px]">
+            <div className="grid grid-cols-2 gap-4 text-[10px] shrink-0">
               <div className="flex items-center gap-2 bg-secondary/5 px-2 py-1.5 rounded border border-border/30">
                 <span className="font-bold text-muted-foreground uppercase">TANGGAL:</span>
                 <span className="text-foreground font-bold flex items-center gap-1">
@@ -476,14 +357,45 @@ function ReportDetailPage() {
               </div>
             </div>
           </Card>
+        </div>
 
-          {/* Card 2: Informasi Pelapor & Deskripsi Laporan (Laporan Warga) */}
-          <Card className="p-4 border border-border/80 shadow-soft bg-card rounded-xl">
-            <h3 className="text-xs font-bold uppercase text-primary/80 tracking-wider mb-3 flex items-center gap-2 border-b border-border/50 pb-2">
+        <div className="col-span-12 lg:col-span-4 flex flex-col">
+          <Card className="overflow-hidden border border-border/80 shadow-soft bg-card p-4 rounded-xl h-full flex flex-col">
+            <h3 className="text-xs font-bold uppercase text-primary/80 tracking-wider mb-3 flex items-center gap-2 border-b border-border/50 pb-2 shrink-0">
+              <Camera className="h-4 w-4 text-primary" />
+              Bukti Foto Laporan
+            </h3>
+            <div className="w-full flex-1 min-h-[200px] relative group overflow-hidden rounded-lg bg-secondary/20 border border-border/40 flex items-center justify-center">
+              {photoUrl && !photoError ? (
+                <img
+                  src={photoUrl}
+                  alt={report.name}
+                  onLoad={() => setPhotoLoaded(true)}
+                  onError={() => setPhotoError(true)}
+                  className={`absolute inset-0 h-full w-full object-cover transition-all duration-500 group-hover:scale-[1.03] ${
+                    photoLoaded ? "opacity-100" : "opacity-0"
+                  }`}
+                />
+              ) : (
+                <div className="flex flex-col items-center justify-center gap-3 text-muted-foreground p-6 absolute inset-0">
+                  <div className="p-3 bg-background rounded-full border border-border/50 shadow-sm">
+                    <Camera className="h-6 w-6 text-muted-foreground/40" />
+                  </div>
+                  <p className="text-[10px] font-semibold italic opacity-60">Tidak ada foto bukti dilampirkan</p>
+                </div>
+              )}
+            </div>
+          </Card>
+        </div>
+
+        {/* ROW 2: Detail Laporan Warga & Panel Tindakan */}
+        <div className="col-span-12 lg:col-span-8 flex flex-col">
+          <Card className="p-4 border border-border/80 shadow-soft bg-card rounded-xl h-full flex flex-col justify-between">
+            <h3 className="text-xs font-bold uppercase text-primary/80 tracking-wider mb-3 flex items-center gap-2 border-b border-border/50 pb-2 shrink-0">
               <User className="h-4 w-4 text-primary" />
               Detail Laporan Warga
             </h3>
-            <div className="grid gap-4 md:grid-cols-12">
+            <div className="grid gap-4 md:grid-cols-12 flex-1 items-stretch">
               {/* Left side: Reporter Profile */}
               <div className="md:col-span-5 md:border-r md:border-border/40 md:pr-4 flex flex-col justify-center space-y-2">
                 <div className="flex items-center gap-3">
@@ -519,7 +431,7 @@ function ReportDetailPage() {
               </div>
 
               {/* Right side: Description */}
-              <div className="md:col-span-7 md:pl-2 flex flex-col justify-center">
+              <div className="md:col-span-7 md:pl-2 flex flex-col justify-center h-full">
                 <div className="h-full flex items-center bg-primary/[0.02] border-l-4 border-primary p-3 rounded-r-lg rounded-l-sm bg-gradient-to-r from-primary/[0.03] to-transparent">
                   <p className="text-xs md:text-sm text-foreground/90 leading-relaxed italic font-medium font-serif">
                     "{report.detail_laporan}"
@@ -528,11 +440,103 @@ function ReportDetailPage() {
               </div>
             </div>
           </Card>
+        </div>
 
-          {/* Card 3: Analisis Teknis Laporan (AI & Geospatial) */}
-          {aiData && (
-            <Card className="p-4 border border-border/80 shadow-soft bg-card rounded-xl">
-              <div className="flex items-center justify-between mb-3 pb-2 border-b border-border/50">
+        <div className="col-span-12 lg:col-span-4 flex flex-col">
+          <Card className="border border-border/80 shadow-soft bg-card rounded-xl overflow-hidden h-full flex flex-col">
+            <div className="p-4 space-y-4 h-full flex flex-col justify-between flex-1">
+              <div className="space-y-4 flex-1">
+                <div>
+                  <h3 className="font-bold text-sm text-foreground flex items-center gap-2">
+                    <Activity className="h-4 w-4 text-primary" />
+                    Panel Tindakan
+                  </h3>
+                  <p className="text-[10px] text-muted-foreground mt-0.5">Penanganan dan penugasan laporan</p>
+                </div>
+
+                {/* Status Control */}
+                <div className="space-y-1.5">
+                  <label className="text-[9px] font-bold uppercase text-muted-foreground/90 tracking-wider">Update Status Laporan</label>
+                  <Select
+                    value={report.status_pelaporan}
+                    onValueChange={(v) => updateStatus(v)}
+                  >
+                    <SelectTrigger className={`h-9 text-xs font-bold rounded-lg border border-border/80 transition-all ${
+                      report.status_pelaporan === 'progress' 
+                        ? STATUS_TONE.in_progress 
+                        : (STATUS_TONE[report.status_pelaporan as keyof typeof STATUS_TONE] || 'bg-secondary text-secondary-foreground')
+                    }`}>
+                      <SelectValue />
+                    </SelectTrigger>
+                    <SelectContent>
+                      {Object.entries(STATUS_LABEL).map(([k, v]) => (
+                        <SelectItem key={k} value={k} className="text-xs font-semibold">{v}</SelectItem>
+                      ))}
+                    </SelectContent>
+                  </Select>
+                </div>
+
+                {/* Urgency Control */}
+                <div className="space-y-1.5">
+                  <label className="text-[9px] font-bold uppercase text-muted-foreground/90 tracking-wider">Tingkat Urgensi</label>
+                  <Select
+                    value={report.kategori_pelaporan}
+                    onValueChange={(v) => updateUrgency(v)}
+                  >
+                    <SelectTrigger className={`h-9 text-xs font-bold rounded-lg border border-border/80 transition-all ${
+                      report.kategori_pelaporan === 'ringan' 
+                        ? URGENCY_TONE.low 
+                        : (URGENCY_TONE[report.kategori_pelaporan as keyof typeof URGENCY_TONE] || 'bg-secondary text-secondary-foreground')
+                    }`}>
+                      <SelectValue />
+                    </SelectTrigger>
+                    <SelectContent>
+                      {Object.entries(URGENCY_LABEL).map(([k, v]) => (
+                        <SelectItem key={k} value={k} className="text-xs font-semibold">{v}</SelectItem>
+                      ))}
+                    </SelectContent>
+                  </Select>
+                </div>
+
+                {/* Assign Petugas */}
+                <div className="space-y-1.5">
+                  <label className="text-[9px] font-bold uppercase text-muted-foreground/90 tracking-wider">Tugaskan Petugas Lapangan</label>
+                  <Select onValueChange={(v) => assignPetugas(v)}>
+                    <SelectTrigger className="h-9 text-xs bg-background border border-border/80 rounded-lg font-medium">
+                      <SelectValue placeholder="Pilih Petugas Lapangan..." />
+                    </SelectTrigger>
+                    <SelectContent>
+                      {petugas.map((p) => (
+                        <SelectItem key={p.id} value={p.id} className="text-xs font-medium">{p.full_name}</SelectItem>
+                      ))}
+                    </SelectContent>
+                  </Select>
+                </div>
+              </div>
+
+              {/* Metadata Footer */}
+              <div className="border-t border-border/60 pt-4 space-y-2 text-xs shrink-0 mt-auto">
+                <h4 className="text-[9px] font-bold uppercase text-muted-foreground/90 tracking-wider mb-1">Informasi Sistem</h4>
+                
+                <div className="flex justify-between items-center bg-secondary/5 px-2.5 py-1.5 rounded-lg border border-border/30">
+                  <span className="text-muted-foreground text-[10px]">ID Laporan</span>
+                  <span className="font-mono text-[9px] font-semibold bg-background border border-border px-1.5 py-0.5 rounded text-foreground">{report.id.slice(0, 13)}...</span>
+                </div>
+                
+                <div className="flex justify-between items-center bg-secondary/5 px-2.5 py-1.5 rounded-lg border border-border/30">
+                  <span className="text-muted-foreground text-[10px]">Status Laporan</span>
+                  <Badge variant="outline" className="bg-secondary/40 text-muted-foreground border-border/50 text-[8px] font-bold uppercase py-0 px-1.5">VALID</Badge>
+                </div>
+              </div>
+            </div>
+          </Card>
+        </div>
+
+        {/* ROW 3: Analisis Teknis Laporan */}
+        {aiData && (
+          <div className="col-span-12 flex flex-col">
+            <Card className="p-4 border border-border/80 shadow-soft bg-card rounded-xl h-full flex flex-col justify-between">
+              <div className="flex items-center justify-between mb-3 pb-2 border-b border-border/50 shrink-0">
                 <div className="flex items-center gap-2">
                   <div className="flex h-7 w-7 items-center justify-center rounded-lg bg-secondary/20 text-foreground border border-border/40 shadow-sm">
                     <ClipboardList className="h-4 w-4 text-muted-foreground" />
@@ -548,11 +552,10 @@ function ReportDetailPage() {
               </div>
 
               {/* Internal layout divided to resolve empty space */}
-              <div className="grid gap-4 md:grid-cols-12">
+              <div className="grid gap-4 md:grid-cols-12 items-stretch flex-1">
                 {/* Left inside grid: metrics & severity - Span 7 */}
-                <div className="md:col-span-7 space-y-3.5">
-                  {/* 3 Core metrics */}
-                  <div className="grid gap-2 grid-cols-3">
+                <div className="md:col-span-7 flex flex-col justify-between space-y-3.5 h-full">
+                  <div className="grid gap-2 grid-cols-3 shrink-0">
                     <div className="bg-secondary/5 hover:bg-secondary/10 px-2 py-2 rounded-lg border border-border/30 text-center flex flex-col justify-between min-h-[72px] transition-all duration-300">
                       <span className="text-[8px] text-muted-foreground uppercase font-bold tracking-wider">Total Lubang</span>
                       <p className="text-lg font-extrabold text-foreground tracking-tight my-0.5">
@@ -580,7 +583,7 @@ function ReportDetailPage() {
 
                   {/* Severity Indicator Progress Bars */}
                   {aiData.detail[0] && (
-                    <div className="space-y-2.5 bg-secondary/5 border border-border/30 p-3 rounded-lg">
+                    <div className="space-y-2.5 bg-secondary/5 border border-border/30 p-3 rounded-lg flex-1 flex flex-col justify-center mt-auto">
                       <h4 className="text-[9px] font-bold text-foreground uppercase tracking-wider">Metrik Tingkat Keparahan</h4>
                       <div className="space-y-2">
                         <div className="space-y-1">
@@ -614,9 +617,9 @@ function ReportDetailPage() {
                 </div>
 
                 {/* Right inside grid: facilities and SLA - Span 5 */}
-                <div className="md:col-span-5 flex flex-col justify-between space-y-3">
+                <div className="md:col-span-5 flex flex-col justify-between space-y-3 h-full">
                   {/* Facilities */}
-                  <div className="space-y-1.5">
+                  <div className="space-y-1.5 flex-1">
                     <h4 className="text-[9px] font-bold text-foreground uppercase tracking-wider flex items-center gap-1">
                       <Building2 className="h-3 w-3 text-muted-foreground" />
                       Fasilitas Sekitar (300m)
@@ -638,7 +641,7 @@ function ReportDetailPage() {
                   </div>
 
                   {/* Recommendations */}
-                  <div className="space-y-1.5 pt-2 border-t border-border/40">
+                  <div className="space-y-1.5 pt-2 border-t border-border/40 shrink-0 mt-auto">
                     <div className="flex gap-2 items-center text-xs bg-secondary/15 px-2.5 py-1.5 rounded-lg border border-border/30">
                       <div className="p-1 bg-secondary/35 rounded text-foreground border border-border/50 shrink-0">
                         <Wrench className="h-3 w-3 text-muted-foreground" />
@@ -662,8 +665,8 @@ function ReportDetailPage() {
                 </div>
               </div>
             </Card>
-          )}
-        </div>
+          </div>
+        )}
       </div>
     </div>
   );
