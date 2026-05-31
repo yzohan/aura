@@ -349,53 +349,62 @@ function ReportDetailPage() {
       <div className="grid gap-6 lg:grid-cols-[1fr_360px]">
         {/* Left Column: Details */}
         <div className="space-y-6">
-          {/* Reporter (Identitas Pelapor) */}
-          <Card className="p-6 border border-border/80 shadow-soft bg-card rounded-2xl">
-            <h3 className="text-xs font-bold uppercase text-primary/80 tracking-wider mb-4 flex items-center gap-2 border-b border-border/50 pb-2">
-              <User className="h-4 w-4 text-primary" />
-              Identitas Pelapor
-            </h3>
-            
-            <div className="flex flex-col sm:flex-row sm:items-center justify-between gap-4">
-              <div className="flex items-center gap-3">
-                <div className="h-11 w-11 rounded-xl bg-leaf-gradient flex items-center justify-center text-primary-foreground font-extrabold text-base shadow-soft shrink-0">
-                  {(report.name || "?")[0].toUpperCase()}
-                </div>
-                <div>
-                  <p className="font-bold text-base text-foreground">{report.name || "Anonim"}</p>
-                  <Badge variant="secondary" className="text-[10px] font-medium py-0.5 px-2 bg-secondary/60 text-secondary-foreground border border-border/30 mt-0.5">
-                    Pelapor Mandiri (Warga)
-                  </Badge>
+          {/* Row 1: Reporter & Description Side-by-Side */}
+          <div className="grid gap-6 md:grid-cols-2">
+            {/* Reporter (Identitas Pelapor) */}
+            <Card className="p-6 border border-border/80 shadow-soft bg-card rounded-2xl flex flex-col justify-between">
+              <div>
+                <h3 className="text-xs font-bold uppercase text-primary/80 tracking-wider mb-4 flex items-center gap-2 border-b border-border/50 pb-2">
+                  <User className="h-4 w-4 text-primary" />
+                  Identitas Pelapor
+                </h3>
+                
+                <div className="flex items-center gap-3 mb-4">
+                  <div className="h-11 w-11 rounded-xl bg-leaf-gradient flex items-center justify-center text-primary-foreground font-extrabold text-base shadow-soft shrink-0">
+                    {(report.name || "?")[0].toUpperCase()}
+                  </div>
+                  <div>
+                    <p className="font-bold text-base text-foreground">{report.name || "Anonim"}</p>
+                    <Badge variant="secondary" className="text-[10px] font-medium py-0.5 px-2 bg-secondary/60 text-secondary-foreground border border-border/30 mt-0.5">
+                      Pelapor Warga
+                    </Badge>
+                  </div>
                 </div>
               </div>
-              
-              <div className="flex flex-col sm:flex-row gap-2.5 text-sm shrink-0">
-                <div className="flex items-center gap-2 bg-secondary/10 hover:bg-secondary/15 px-3 py-2 rounded-xl border border-border/40 transition-colors">
-                  <Phone className="h-4 w-4 text-primary shrink-0" />
-                  <span className="font-bold text-foreground">{report.no_hp}</span>
+
+              <div className="space-y-2 text-sm pt-2 border-t border-border/40">
+                <div className="flex items-center justify-between bg-secondary/10 px-3 py-2 rounded-xl border border-border/40">
+                  <span className="text-xs text-muted-foreground font-semibold">No. HP / WA</span>
+                  <span className="font-bold text-foreground flex items-center gap-1.5">
+                    <Phone className="h-3.5 w-3.5 text-primary" />
+                    {report.no_hp}
+                  </span>
                 </div>
                 {report.email && (
-                  <div className="flex items-center gap-2 bg-secondary/10 hover:bg-secondary/15 px-3 py-2 rounded-xl border border-border/40 transition-colors">
-                    <Mail className="h-4 w-4 text-primary shrink-0" />
-                    <span className="font-medium text-foreground truncate max-w-[180px]">{report.email}</span>
+                  <div className="flex items-center justify-between bg-secondary/10 px-3 py-2 rounded-xl border border-border/40">
+                    <span className="text-xs text-muted-foreground font-semibold">Email</span>
+                    <span className="font-medium text-foreground truncate max-w-[150px] flex items-center gap-1.5">
+                      <Mail className="h-3.5 w-3.5 text-primary" />
+                      {report.email}
+                    </span>
                   </div>
                 )}
               </div>
-            </div>
-          </Card>
+            </Card>
 
-          {/* Description */}
-          <Card className="p-6 border border-border/80 shadow-soft bg-card rounded-2xl">
-            <h3 className="text-xs font-bold uppercase text-primary/80 tracking-wider mb-4 flex items-center gap-2 border-b border-border/50 pb-2">
-              <Tag className="h-4 w-4 text-primary" />
-              Deskripsi Laporan
-            </h3>
-            <div className="bg-primary/[0.02] border-l-4 border-primary p-5 rounded-r-xl rounded-l-sm bg-gradient-to-r from-primary/[0.03] to-transparent">
-              <p className="text-base text-foreground/90 leading-relaxed italic font-medium font-serif">
-                "{report.detail_laporan}"
-              </p>
-            </div>
-          </Card>
+            {/* Description */}
+            <Card className="p-6 border border-border/80 shadow-soft bg-card rounded-2xl flex flex-col">
+              <h3 className="text-xs font-bold uppercase text-primary/80 tracking-wider mb-4 flex items-center gap-2 border-b border-border/50 pb-2">
+                <Tag className="h-4 w-4 text-primary" />
+                Deskripsi Laporan
+              </h3>
+              <div className="flex-1 flex items-center bg-primary/[0.02] border-l-4 border-primary p-4 rounded-r-xl rounded-l-sm bg-gradient-to-r from-primary/[0.03] to-transparent">
+                <p className="text-sm md:text-base text-foreground/90 leading-relaxed italic font-medium font-serif">
+                  "{report.detail_laporan}"
+                </p>
+              </div>
+            </Card>
+          </div>
 
           {/* AI Analysis Result */}
           {aiData && (
@@ -417,108 +426,117 @@ function ReportDetailPage() {
                 </Badge>
               </div>
 
-              {/* 3 Core metrics */}
-              <div className="grid gap-4 sm:grid-cols-3 mb-6">
-                <div className="bg-secondary/5 hover:bg-secondary/10 px-4 py-4 rounded-xl border border-border/30 text-center flex flex-col justify-between min-h-[110px] transition-all duration-300">
-                  <span className="text-[10px] text-muted-foreground uppercase font-bold tracking-wider">Total Lubang</span>
-                  <p className="text-3xl font-extrabold text-foreground tracking-tight my-1">
-                    {aiData.laporan?.total_lubang_terdeteksi ?? 0}
-                  </p>
-                  <span className="text-[10px] text-muted-foreground/80 font-semibold">Terdeteksi pada foto</span>
-                </div>
+              {/* Internal layout divided to resolve empty space */}
+              <div className="grid gap-6 md:grid-cols-12">
+                {/* Left inside grid: metrics & severity - Span 7 */}
+                <div className="md:col-span-7 space-y-6">
+                  {/* 3 Core metrics */}
+                  <div className="grid gap-3 grid-cols-3">
+                    <div className="bg-secondary/5 hover:bg-secondary/10 px-3 py-3.5 rounded-xl border border-border/30 text-center flex flex-col justify-between min-h-[100px] transition-all duration-300">
+                      <span className="text-[9px] text-muted-foreground uppercase font-bold tracking-wider">Total Lubang</span>
+                      <p className="text-2xl font-extrabold text-foreground tracking-tight my-1">
+                        {aiData.laporan?.total_lubang_terdeteksi ?? 0}
+                      </p>
+                      <span className="text-[9px] text-muted-foreground/80 font-semibold">Lubang</span>
+                    </div>
 
-                <div className="bg-secondary/5 hover:bg-secondary/10 px-4 py-4 rounded-xl border border-border/30 text-center flex flex-col justify-between min-h-[110px] transition-all duration-300">
-                  <span className="text-[10px] text-muted-foreground uppercase font-bold tracking-wider">Fasilitas Sekitar (300m)</span>
-                  <p className="text-3xl font-extrabold text-foreground tracking-tight my-1">
-                    {aiData.fasilitas.length}
-                  </p>
-                  <span className="text-[10px] text-muted-foreground/80 font-semibold">Dalam radius pemetaan</span>
-                </div>
+                    <div className="bg-secondary/5 hover:bg-secondary/10 px-3 py-3.5 rounded-xl border border-border/30 text-center flex flex-col justify-between min-h-[100px] transition-all duration-300">
+                      <span className="text-[9px] text-muted-foreground uppercase font-bold tracking-wider">Fasilitas Radius</span>
+                      <p className="text-2xl font-extrabold text-foreground tracking-tight my-1">
+                        {aiData.fasilitas.length}
+                      </p>
+                      <span className="text-[9px] text-muted-foreground/80 font-semibold">Terdeteksi</span>
+                    </div>
 
-                <div className="bg-secondary/5 hover:bg-secondary/10 px-4 py-4 rounded-xl border border-border/30 text-center flex flex-col justify-between min-h-[110px] transition-all duration-300">
-                  <span className="text-[10px] text-muted-foreground uppercase font-bold tracking-wider">Klasifikasi Jalan (OSM)</span>
-                  <p className="text-base font-extrabold text-foreground truncate my-1.5 capitalize">
-                    {aiData.detail[0]?.kategori_pelaporan_osm || "Tidak Terpetakan"}
-                  </p>
-                  <span className="text-[10px] text-muted-foreground/80 font-semibold">Tipe perkerasan jalan</span>
-                </div>
-              </div>
+                    <div className="bg-secondary/5 hover:bg-secondary/10 px-3 py-3.5 rounded-xl border border-border/30 text-center flex flex-col justify-between min-h-[100px] transition-all duration-300">
+                      <span className="text-[9px] text-muted-foreground uppercase font-bold tracking-wider">Kelas Jalan</span>
+                      <p className="text-xs font-extrabold text-foreground truncate my-2.5 capitalize">
+                        {aiData.detail[0]?.kategori_pelaporan_osm || "Tidak Terpetakan"}
+                      </p>
+                      <span className="text-[9px] text-muted-foreground/80 font-semibold">OSM</span>
+                    </div>
+                  </div>
 
-              {/* Severity Indicators */}
-              {aiData.detail[0] && (
-                <div className="space-y-4 mb-6 bg-secondary/5 border border-border/30 p-5 rounded-xl">
-                  <h4 className="text-xs font-bold text-foreground uppercase tracking-wider mb-2">Metrik Tingkat Keparahan</h4>
-                  <div className="space-y-3.5">
-                    <div className="space-y-1.5">
-                      <div className="flex justify-between text-xs font-semibold">
-                        <span className="text-muted-foreground">Persentase Kerusakan Area</span>
-                        <span className="text-destructive font-bold">{aiData.detail[0].persentase_kerusakan}%</span>
+                  {/* Severity Indicator Progress Bars */}
+                  {aiData.detail[0] && (
+                    <div className="space-y-4 bg-secondary/5 border border-border/30 p-4.5 rounded-xl">
+                      <h4 className="text-[10px] font-bold text-foreground uppercase tracking-wider">Metrik Tingkat Keparahan</h4>
+                      <div className="space-y-3.5">
+                        <div className="space-y-1.5">
+                          <div className="flex justify-between text-xs font-semibold">
+                            <span className="text-muted-foreground text-[11px]">Persentase Kerusakan Area</span>
+                            <span className="text-destructive font-bold">{aiData.detail[0].persentase_kerusakan}%</span>
+                          </div>
+                          <div className="h-2 w-full bg-secondary/20 rounded-full overflow-hidden border border-border/20">
+                            <div 
+                              className="h-full bg-destructive transition-all duration-500 rounded-full" 
+                              style={{ width: `${aiData.detail[0].persentase_kerusakan}%` }}
+                            />
+                          </div>
+                        </div>
+
+                        <div className="space-y-1.5">
+                          <div className="flex justify-between text-xs font-semibold">
+                            <span className="text-muted-foreground text-[11px]">Estimasi Kedalaman Lubang</span>
+                            <span className="text-amber-500 font-bold">{aiData.detail[0].persentase_kedalaman}%</span>
+                          </div>
+                          <div className="h-2 w-full bg-secondary/20 rounded-full overflow-hidden border border-border/20">
+                            <div 
+                              className="h-full bg-amber-500 transition-all duration-500 rounded-full" 
+                              style={{ width: `${aiData.detail[0].persentase_kedalaman}%` }}
+                            />
+                          </div>
+                        </div>
                       </div>
-                      <div className="h-2.5 w-full bg-secondary/20 rounded-full overflow-hidden border border-border/20">
-                        <div 
-                          className="h-full bg-destructive transition-all duration-500 rounded-full" 
-                          style={{ width: `${aiData.detail[0].persentase_kerusakan}%` }}
-                        />
+                    </div>
+                  )}
+                </div>
+
+                {/* Right inside grid: facilities and SLA - Span 5 */}
+                <div className="md:col-span-5 flex flex-col justify-between space-y-4">
+                  {/* Facilities */}
+                  <div className="space-y-2">
+                    <h4 className="text-[10px] font-bold text-foreground uppercase tracking-wider flex items-center gap-1.5">
+                      <Building2 className="h-3.5 w-3.5 text-primary" />
+                      Fasilitas Sekitar (300m)
+                    </h4>
+                    {aiData.fasilitas.length > 0 ? (
+                      <div className="flex flex-wrap gap-1.5 max-h-[120px] overflow-y-auto pr-1">
+                        {aiData.fasilitas.map((f) => (
+                          <Badge key={f.id} variant="secondary" className="text-[10px] px-2 py-0.5 rounded-md bg-secondary/25 border border-border/30 text-foreground font-semibold flex items-center gap-1">
+                            <span className="h-1 w-1 rounded-full bg-primary" />
+                            {f.nama_fasilitas}
+                          </Badge>
+                        ))}
+                      </div>
+                    ) : (
+                      <div className="text-[11px] text-muted-foreground italic p-3 rounded-lg border border-dashed border-border/60 text-center bg-secondary/5">
+                        Tidak ada fasilitas terdeteksi.
+                      </div>
+                    )}
+                  </div>
+
+                  {/* Recommendations */}
+                  <div className="space-y-2.5 pt-4 border-t border-border/40">
+                    <div className="flex gap-2.5 items-center text-xs bg-secondary/5 px-3.5 py-2.5 rounded-xl border border-border/30">
+                      <div className="p-1.5 bg-primary/10 rounded-lg text-primary border border-primary/20 shrink-0">
+                        <Wrench className="h-3.5 w-3.5" />
+                      </div>
+                      <div className="min-w-0">
+                        <p className="text-[9px] font-bold text-muted-foreground uppercase tracking-wider">Rekomendasi Dinas</p>
+                        <p className="font-extrabold text-foreground truncate mt-0.5">{aiData.detail[0]?.petugas_penanganan || "Dinas PUPR"}</p>
                       </div>
                     </div>
 
-                    <div className="space-y-1.5">
-                      <div className="flex justify-between text-xs font-semibold">
-                        <span className="text-muted-foreground">Estimasi Kedalaman Lubang</span>
-                        <span className="text-amber-500 font-bold">{aiData.detail[0].persentase_kedalaman}%</span>
+                    <div className="flex gap-2.5 items-center text-xs bg-secondary/5 px-3.5 py-2.5 rounded-xl border border-border/30">
+                      <div className="p-1.5 bg-primary/10 rounded-lg text-primary border border-primary/20 shrink-0">
+                        <Clock className="h-3.5 w-3.5" />
                       </div>
-                      <div className="h-2.5 w-full bg-secondary/20 rounded-full overflow-hidden border border-border/20">
-                        <div 
-                          className="h-full bg-amber-500 transition-all duration-500 rounded-full" 
-                          style={{ width: `${aiData.detail[0].persentase_kedalaman}%` }}
-                        />
+                      <div className="min-w-0">
+                        <p className="text-[9px] font-bold text-muted-foreground uppercase tracking-wider">Target SLA</p>
+                        <p className="font-extrabold text-foreground truncate mt-0.5">{aiData.detail[0]?.estimasi_waktu_penanganan || "24 Jam"}</p>
                       </div>
                     </div>
-                  </div>
-                </div>
-              )}
-
-              {/* Radius facilities list - clean flow */}
-              <div className="mb-6 space-y-2">
-                <h4 className="text-xs font-bold text-foreground uppercase tracking-wider flex items-center gap-1.5">
-                  <Building2 className="h-3.5 w-3.5 text-primary" />
-                  Fasilitas Umum Terdekat dalam 300 Meter
-                </h4>
-                {aiData.fasilitas.length > 0 ? (
-                  <div className="flex flex-wrap gap-2 pt-1">
-                    {aiData.fasilitas.map((f) => (
-                      <Badge key={f.id} variant="secondary" className="text-xs px-2.5 py-1 rounded-lg bg-secondary/20 border border-border/40 text-foreground font-semibold flex items-center gap-1">
-                        <span className="h-1.5 w-1.5 rounded-full bg-primary" />
-                        {f.nama_fasilitas}
-                      </Badge>
-                    ))}
-                  </div>
-                ) : (
-                  <p className="text-xs text-muted-foreground italic pl-1 bg-secondary/5 py-3 rounded-lg border border-dashed border-border/60 text-center">
-                    Tidak ada fasilitas penting terdeteksi di database terdekat.
-                  </p>
-                )}
-              </div>
-
-              {/* SLA & Handler Recommendation */}
-              <div className="border-t border-border/50 pt-5 grid gap-4 sm:grid-cols-2">
-                <div className="flex gap-3 items-center text-sm bg-secondary/5 px-4 py-3 rounded-xl border border-border/30">
-                  <div className="p-2 bg-primary/10 rounded-lg text-primary border border-primary/20 shrink-0">
-                    <Wrench className="h-4 w-4" />
-                  </div>
-                  <div>
-                    <p className="text-[10px] font-bold text-muted-foreground uppercase tracking-wider">Rekomendasi Dinas</p>
-                    <p className="font-extrabold text-foreground mt-0.5">{aiData.detail[0]?.petugas_penanganan || "Dinas Pekerjaan Umum (PUPR)"}</p>
-                  </div>
-                </div>
-
-                <div className="flex gap-3 items-center text-sm bg-secondary/5 px-4 py-3 rounded-xl border border-border/30">
-                  <div className="p-2 bg-primary/10 rounded-lg text-primary border border-primary/20 shrink-0">
-                    <Clock className="h-4 w-4" />
-                  </div>
-                  <div>
-                    <p className="text-[10px] font-bold text-muted-foreground uppercase tracking-wider">Target Waktu Respon SLA</p>
-                    <p className="font-extrabold text-foreground mt-0.5">{aiData.detail[0]?.estimasi_waktu_penanganan || "24 Jam Kerja"}</p>
                   </div>
                 </div>
               </div>
@@ -532,15 +550,15 @@ function ReportDetailPage() {
               Lokasi & Geospasial
             </h3>
             
-            <div className="flex flex-col md:flex-row gap-5 items-stretch">
-              {/* Map placeholder with clean styling */}
-              <div className="flex-1 bg-secondary/15 rounded-xl border border-border/50 p-4 flex flex-col justify-between space-y-4">
+            <div className="grid gap-6 md:grid-cols-12 items-stretch">
+              {/* Address detail - Span 7 */}
+              <div className="md:col-span-7 bg-secondary/15 rounded-xl border border-border/50 p-4 flex flex-col justify-between space-y-4">
                 <div className="flex items-start gap-3">
-                  <div className="p-2.5 bg-primary/10 rounded-xl text-primary border border-primary/20 shrink-0">
-                    <MapPin className="h-5 w-5" />
+                  <div className="p-2 bg-primary/10 rounded-lg text-primary border border-primary/20 shrink-0">
+                    <MapPin className="h-4.5 w-4.5" />
                   </div>
                   <div className="min-w-0">
-                    <p className="font-bold text-sm text-foreground">{report.address || "Detail koordinat lokasi"}</p>
+                    <p className="font-bold text-sm text-foreground leading-snug">{report.address || "Detail koordinat lokasi"}</p>
                     <p className="text-xs font-semibold text-muted-foreground mt-1">
                       Latitude: {report.latitude.toFixed(6)} | Longitude: {report.longitude.toFixed(6)}
                     </p>
@@ -551,24 +569,24 @@ function ReportDetailPage() {
                   href={`https://www.openstreetmap.org/?mlat=${report.latitude}&mlon=${report.longitude}#map=18/${report.latitude}/${report.longitude}`}
                   target="_blank"
                   rel="noreferrer"
-                  className="inline-flex items-center justify-center gap-2 px-4 py-2.5 w-full bg-background border border-border hover:bg-secondary/40 text-sm text-foreground hover:text-primary font-bold rounded-xl shadow-sm transition-all active:scale-[0.985]"
+                  className="inline-flex items-center justify-center gap-2 px-4 py-2.5 w-full bg-background border border-border hover:bg-secondary/40 text-xs text-foreground hover:text-primary font-bold rounded-xl shadow-sm transition-all active:scale-[0.985]"
                 >
-                  <ExternalLink className="h-4 w-4" />
+                  <ExternalLink className="h-3.5 w-3.5" />
                   Buka Peta OpenStreetMap
                 </a>
               </div>
 
-              {/* Right coordinates info block */}
-              <div className="w-full md:w-[220px] shrink-0 bg-primary/[0.02] border border-primary/20 rounded-xl p-4 flex flex-col justify-between text-xs">
+              {/* GPS Info block - Span 5 */}
+              <div className="md:col-span-5 bg-primary/[0.02] border border-primary/20 rounded-xl p-4 flex flex-col justify-between text-xs space-y-4">
                 <div>
                   <span className="text-[10px] font-bold text-primary uppercase tracking-wider block mb-2">Presisi Geospasial</span>
-                  <p className="text-muted-foreground leading-relaxed">
+                  <p className="text-muted-foreground leading-relaxed text-[11px]">
                     Koordinat didapatkan secara realtime dari sensor GPS perangkat pelapor saat mengisi formulir pengaduan.
                   </p>
                 </div>
-                <div className="pt-3 border-t border-border/40 mt-3 font-semibold text-foreground/80 flex items-center justify-between">
+                <div className="pt-3 border-t border-border/40 font-semibold text-foreground/80 flex items-center justify-between">
                   <span>Status Pemetaan</span>
-                  <Badge className="bg-primary/20 text-primary border-none text-[9px] py-0.5 px-2">AKTIF</Badge>
+                  <Badge className="bg-primary/20 text-primary border-none text-[9px] py-0.5 px-2 font-bold">AKTIF</Badge>
                 </div>
               </div>
             </div>
