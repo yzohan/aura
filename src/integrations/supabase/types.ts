@@ -228,6 +228,127 @@ export type Database = {
           }
         ]
       }
+      laporan_jalan: {
+        Row: {
+          id: number
+          image_file: string
+          total_lubang_terdeteksi: number | null
+          latitude: number
+          longitude: number
+          detail_lokasi: string | null
+          created_at: string | null
+        }
+        Insert: {
+          id?: number
+          image_file: string
+          total_lubang_terdeteksi?: number | null
+          latitude: number
+          longitude: number
+          detail_lokasi?: string | null
+          created_at?: string | null
+        }
+        Update: {
+          id?: number
+          image_file?: string
+          total_lubang_terdeteksi?: number | null
+          latitude?: number
+          longitude?: number
+          detail_lokasi?: string | null
+          created_at?: string | null
+        }
+        Relationships: []
+      }
+      fasilitas_radius: {
+        Row: {
+          id: number
+          laporan_id: number
+          nama_fasilitas: string
+        }
+        Insert: {
+          id?: number
+          laporan_id: number
+          nama_fasilitas: string
+        }
+        Update: {
+          id?: number
+          laporan_id?: number
+          nama_fasilitas?: string
+        }
+        Relationships: [
+          {
+            foreignKeyName: "fk_laporan_jalan"
+            columns: ["laporan_id"]
+            isOneToOne: false
+            referencedRelation: "laporan_jalan"
+            referencedColumns: ["id"]
+          }
+        ]
+      }
+      detail_lubang: {
+        Row: {
+          id: number
+          laporan_id: number
+          severity_visual: string
+          persentase_kerusakan: number
+          persentase_kedalaman: number
+          kategori_pelaporan_osm: string
+          nilai_score: number
+          status_score: string
+          petugas_penanganan: string | null
+          estimasi_waktu_penanganan: string | null
+        }
+        Insert: {
+          id?: number
+          laporan_id: number
+          severity_visual: string
+          persentase_kerusakan: number
+          persentase_kedalaman: number
+          kategori_pelaporan_osm: string
+          nilai_score: number
+          status_score: string
+          petugas_penanganan?: string | null
+          estimasi_waktu_penanganan?: string | null
+        }
+        Update: {
+          id?: number
+          laporan_id?: number
+          severity_visual?: string
+          persentase_kerusakan?: number
+          persentase_kedalaman?: number
+          kategori_pelaporan_osm?: string
+          nilai_score?: number
+          status_score?: string
+          petugas_penanganan?: string | null
+          estimasi_waktu_penanganan?: string | null
+        }
+        Relationships: [
+          {
+            foreignKeyName: "fk_laporan_jalan"
+            columns: ["laporan_id"]
+            isOneToOne: false
+            referencedRelation: "laporan_jalan"
+            referencedColumns: ["id"]
+          }
+        ]
+      }
+      metadata_ali: {
+        Row: {
+          id: number
+          total_index_ali: number | null
+          last_updated: string | null
+        }
+        Insert: {
+          id?: number
+          total_index_ali?: number | null
+          last_updated?: string | null
+        }
+        Update: {
+          id?: number
+          total_index_ali?: number | null
+          last_updated?: string | null
+        }
+        Relationships: []
+      }
     }
     Views: {
       [_ in never]: never

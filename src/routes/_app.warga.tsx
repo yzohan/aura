@@ -240,10 +240,123 @@ function ReportForm() {
       return;
     }
 
-    // Insert laporan → reporter_id = null (anonim), ip_address = IP user
-    const { error } = await supabase.from("reports").insert({
-      reporter_id: null,       // tidak perlu akun
-      ip_address: userIp,      // dicatat untuk anti-spam & cooldown
+    // 1. Kirim berkas gambar & GPS ke API Kecerdasan Buatan (Hugging Face)
+    let aiResponse: any = null;
+    try {
+      const apiFormData = new FormData();
+      apiFormData.append("file", photo);
+      apiFormData.append("lat", String(parsed.data.latitude));
+      apiFormData.append("lon", String(parsed.data.longitude));
+
+      const apiRes = await fetch("https://dennis1645-aura-ai.hf.space/api/v1/analyze", {
+        method: "POST",
+        body: apiFormData,
+      });
+
+      if (!apiRes.ok) {
+        throw new Error(`API AI merespon dengan status ${apiRes.status}`);
+      }
+
+      aiResponse = await apiRes.json();
+    } catch (apiErr: any) {
+      setSubmitting(false);
+      toast.error("Gagal melakukan analisis AI: " + apiErr.message);
+      return;
+    }
+
+    // 2. Simpan Laporan Utama ke tabel public.laporan_jalan
+    const { data: jalanData, error: jalanErr } = await supabase
+      .from("laporan_jalan")
+      .insert({
+        image_file: photoPath,
+        total_lubang_terdeteksi: aiResponse.Total_Lubang_Terdeteksi ?? 0,
+        latitude: parsed.data.latitude,
+        longitude: parsed.data.longitude,
+        detail_lokasi: aiResponse.Konteks_Geospasial?.Detail_Lokasi || parsed.data.address,
+      })
+      .select("id")
+      .single();
+
+    if (jalanErr || !jalanData) {
+      setSubmitting(false);
+      toast.error("Gagal menyimpan data laporan jalan: " + (jalanErr?.message || "Unknown error"));
+      return;
+    }
+
+    const laporanId = jalanData.id;
+
+    // 3. Simpan Fasilitas Radius 300 meter ke tabel public.fasilitas_radius
+    const daftarFasilitas = aiResponse.Konteks_Geospasial?.Fasilitas_Radius_300m || [];
+    if (daftarFasilitas.length > 0) {
+      const insertFasilitas = daftarFasilitas.map((nama: string) => ({
+        laporan_id: laporanId,
+        nama_fasilitas: nama,
+      }));
+      const { error: fasErr } = await supabase.from("fasilitas_radius").insert(insertFasilitas);
+      if (fasErr) {
+        console.error("Gagal menyimpan fasilitas sekitar ke database:", fasErr.message);
+      }
+    }
+
+    // 4. Simpan Detail Analisis Lubang ke tabel public.detail_lubang
+    const daftarAnalisis = aiResponse.Analisis_Kerusakan || [];
+    const parsePctValue = (val: string | number) => {
+      if (typeof val === "number") return val;
+      if (!val) return 0;
+      return parseFloat(val.replace("%", "")) || 0;
+    };
+
+    if (daftarAnalisis.length > 0) {
+      const insertDetail = daftarAnalisis.map((item: any) => ({
+        laporan_id: laporanId,
+        severity_visual: item.Severity_Visual || item.Severity || "Kecil",
+        persentase_kerusakan: parsePctValue(item.Persentase_Kerusakan || item["Persentase Kerusakan"]),
+        persentase_kedalaman: parsePctValue(item.Persentase_Kedalaman || item["Persentase Kedalaman"]),
+        kategori_pelaporan_osm: item.Kategori_Pelaporan_OSM || item["Kategori Pelaporan"] || "Ringan",
+        nilai_score: item.Severity_Scoring?.Nilai_Score ?? 0,
+        status_score: item.Severity_Scoring?.Status_Score ?? "Baik",
+        petugas_penanganan: item.Severity_Scoring?.Petugas_Penanganan || "Dinas PUPR Kota Cirebon",
+        estimasi_waktu_penanganan: item.Severity_Scoring?.Estimasi_Waktu_Penanganan || "24 Jam",
+      }));
+      const { error: detErr } = await supabase.from("detail_lubang").insert(insertDetail);
+      if (detErr) {
+        console.error("Gagal menyimpan analisis detail lubang:", detErr.message);
+      }
+    } else {
+      // Fallback jika AI tidak menemukan lubang visual di jalan tersebut
+      const { error: detErr } = await supabase.from("detail_lubang").insert({
+        laporan_id: laporanId,
+        severity_visual: "Kecil",
+        persentase_kerusakan: 0,
+        persentase_kedalaman: 0,
+        kategori_pelaporan_osm: "Ringan",
+        nilai_score: 0,
+        status_score: "Baik",
+        petugas_penanganan: "Dinas PUPR Kota Cirebon",
+        estimasi_waktu_penanganan: "24 Jam",
+      });
+      if (detErr) {
+        console.error("Gagal menyimpan detail default lubang:", detErr.message);
+      }
+    }
+
+    // 5. Update Akumulasi Indeks ALI Global ke tabel public.metadata_ali
+    const indexAliTerbaru = aiResponse.AURA_Location_Index_Kumulatif ?? 0;
+    if (indexAliTerbaru > 0) {
+      const { error: aliErr } = await supabase
+        .from("metadata_ali")
+        .update({ total_index_ali: indexAliTerbaru })
+        .eq("id", 1);
+      if (aliErr) {
+        console.error("Gagal memperbarui total index ALI:", aliErr.message);
+      }
+    }
+
+    // 6. Simpan Laporan Utama ke data backup tabel reports untuk kelayakan admin panel
+    // (Hal ini menjaga agar fitur panel admin & petugas tetap berjalan mulus menggunakan reports)
+    const { error: reportsBackupErr } = await supabase.from("reports").insert({
+      reporter_id: null,
+      ip_address: userIp,
       category: parsed.data.category,
       name: parsed.data.name,
       email: parsed.data.email,
@@ -253,12 +366,16 @@ function ReportForm() {
       longitude: parsed.data.longitude,
       address: parsed.data.address,
       photo_url: photoPath,
+      kategori_pelaporan: daftarAnalisis[0]?.Kategori_Pelaporan_OSM || daftarAnalisis[0]?.["Kategori Pelaporan"] || "ringan",
+      status_pelaporan: "pending",
     });
 
     setSubmitting(false);
-    if (error) { toast.error(error.message); return; }
+    if (reportsBackupErr) {
+      console.error("Gagal menyimpan data backup laporan:", reportsBackupErr.message);
+    }
 
-    toast.success("Laporan berhasil dikirim! Terima kasih.");
+    toast.success("Laporan berhasil dikirim dan dianalisis oleh AI!");
     setDescription(""); setAddress(""); setPhoto(null); setCoords(null);
     setName(""); setEmail(""); setPhone("");
 

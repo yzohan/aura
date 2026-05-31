@@ -47,7 +47,7 @@ interface Petugas {
   full_name: string;
 }
 
-// ── Helper: group reports by month (last 6 months) ──────────────────────────
+
 function buildMonthlyData(reports: Report[]) {
   const now = new Date();
   const months: { label: string; key: string }[] = [];
@@ -160,12 +160,11 @@ function AdminPage() {
             </span>
           </div>
           <p className="text-xs text-muted-foreground mt-1">
-            {formattedDate} — Pantau sebaran kerusakan kota dan kelola laporan warga secara langsung.
+            {formattedDate} Pantau sebaran kerusakan kota dan kelola laporan warga secara langsung.
           </p>
         </div>
       </div>
 
-      {/* ── Stat cards ── */}
       <div className="grid grid-cols-2 gap-4 lg:grid-cols-4">
         <StatCard 
           icon={ListChecks} 
