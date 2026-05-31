@@ -76,20 +76,25 @@ function AdminPage() {
   const [reports, setReports] = useState<Report[]>([]);
   const [petugas, setPetugas] = useState<Petugas[]>([]);
   const [adminName, setAdminName] = useState<string>("");
+  const [aliScore, setAliScore] = useState<number | null>(null);
   const [loadingData, setLoadingData] = useState(true);
   const [filterStatus, setFilterStatus] = useState<string>("all");
   const [filterCategory, setFilterCategory] = useState<string>("all");
 
   const loadData = async () => {
-    const [{ data: rep }, { data: roleRows }] = await Promise.all([
+    const [{ data: rep }, { data: roleRows }, { data: aliData }] = await Promise.all([
       supabase.from("reports").select("*").order("created_at", { ascending: false }),
       supabase.from("user_roles").select("user_id").eq("role", "petugas"),
+      supabase.from("metadata_ali").select("total_index_ali").eq("id", 1).maybeSingle(),
     ]);
     setReports((rep ?? []) as Report[]);
     const ids = (roleRows ?? []).map((r) => r.user_id);
     if (ids.length) {
       const { data: profs } = await supabase.from("profiles").select("id, full_name").in("id", ids);
       setPetugas((profs ?? []) as Petugas[]);
+    }
+    if (aliData?.total_index_ali !== undefined) {
+      setAliScore(aliData.total_index_ali);
     }
 
     if (user) {
@@ -148,7 +153,7 @@ function AdminPage() {
   return (
     <div className="space-y-6">
       {/* ── Welcome Section ── */}
-      <div className="flex flex-col gap-2 sm:flex-row sm:items-center sm:justify-between border-b border-border/50 pb-5">
+      <div className="flex flex-col gap-4 sm:flex-row sm:items-center sm:justify-between border-b border-border/50 pb-5">
         <div>
           <div className="flex items-center gap-2">
             <h1 className="text-xl font-extrabold tracking-tight text-foreground md:text-2xl">
@@ -163,6 +168,19 @@ function AdminPage() {
             {formattedDate} Pantau sebaran kerusakan kota dan kelola laporan warga secara langsung.
           </p>
         </div>
+
+        {/* AURA Location Index Widget */}
+        <Card className="flex items-center gap-3.5 px-4 py-2.5 bg-gradient-to-r from-primary/10 to-primary/5 border border-primary/20 shadow-soft shrink-0">
+          <span className="flex h-9 w-9 items-center justify-center rounded-xl bg-primary text-primary-foreground">
+            <Activity className="h-4.5 w-4.5" />
+          </span>
+          <div>
+            <p className="text-[10px] text-muted-foreground uppercase font-bold tracking-wider">AURA Location Index (ALI)</p>
+            <p className="text-lg font-extrabold text-primary mt-0.5">
+              {aliScore !== null ? aliScore.toFixed(2) : "0.00"}
+            </p>
+          </div>
+        </Card>
       </div>
 
       <div className="grid grid-cols-2 gap-4 lg:grid-cols-4">

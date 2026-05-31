@@ -80,6 +80,18 @@ interface AiAnalysisData {
   }[];
 }
 
+const getUrgencyKey = (val: string): "low" | "medium" | "high" | "critical" => {
+  const norm = (val || "").toLowerCase();
+  if (norm === "low" || norm === "medium" || norm === "high" || norm === "critical") {
+    return norm;
+  }
+  if (norm.includes("ringan") || norm.includes("kecil") || norm.includes("low")) return "low";
+  if (norm.includes("sedang") || norm.includes("medium")) return "medium";
+  if (norm.includes("tinggi") || norm.includes("berat") || norm.includes("high") || norm.includes("parah")) return "high";
+  if (norm.includes("kritis") || norm.includes("critical") || norm.includes("sangat parah")) return "critical";
+  return "medium";
+};
+
 function ReportDetailPage() {
   const { user } = useAuth();
   const navigate = useNavigate();
@@ -230,7 +242,8 @@ function ReportDetailPage() {
   // photoUrl is already resolved via state
 
   const CategoryIcon = CATEGORY_ICON[report.category as keyof typeof CATEGORY_ICON];
-  const urgencyColor = URGENCY_COLORS[report.kategori_pelaporan] ?? "#5a7a55";
+  const urgencyKey = getUrgencyKey(report.kategori_pelaporan);
+  const urgencyColor = URGENCY_COLORS[urgencyKey] ?? "#5a7a55";
   const createdDate = new Date(report.created_at);
 
   return (
@@ -291,7 +304,7 @@ function ReportDetailPage() {
                 style={{ backgroundColor: urgencyColor + "CC" }}
               >
                 <AlertTriangle className="h-3 w-3 mr-1" />
-                {report.kategori_pelaporan === 'ringan' ? 'Ringan' : (URGENCY_LABEL[report.kategori_pelaporan as keyof typeof URGENCY_LABEL] || report.kategori_pelaporan)}
+                {URGENCY_LABEL[urgencyKey]}
               </Badge>
               <Badge className={`backdrop-blur-sm ${report.status_pelaporan === 'progress' ? STATUS_TONE.in_progress : (STATUS_TONE[report.status_pelaporan as keyof typeof STATUS_TONE] || 'bg-secondary text-secondary-foreground')}`}>
                 {report.status_pelaporan === 'progress' ? 'Dikerjakan' : (STATUS_LABEL[report.status_pelaporan as keyof typeof STATUS_LABEL] || report.status_pelaporan)}
@@ -351,39 +364,40 @@ function ReportDetailPage() {
 
               <div className="grid gap-4 sm:grid-cols-3 mb-6">
                 {/* Total Potholes */}
-                <div className="bg-secondary/15 p-4 rounded-xl border border-border/40 text-center">
+                <div className="bg-secondary/15 p-4 rounded-xl border border-border/40 text-center flex flex-col justify-between min-h-[110px]">
                   <p className="text-[10px] text-muted-foreground uppercase font-bold tracking-wider">Total Lubang</p>
-                  <p className="text-2xl font-extrabold text-foreground mt-1">
+                  <p className="text-2xl font-extrabold text-foreground mt-2">
                     {aiData.laporan?.total_lubang_terdeteksi ?? 0}
                   </p>
-                  <p className="text-[9px] text-muted-foreground mt-0.5">Terdeteksi visual</p>
+                  <p className="text-[9px] text-muted-foreground mt-1 font-semibold">Terdeteksi visual</p>
                 </div>
 
-                {/* Score */}
-                <div className="bg-secondary/15 p-4 rounded-xl border border-border/40 text-center">
-                  <p className="text-[10px] text-muted-foreground uppercase font-bold tracking-wider">Indeks Kondisi Jalan</p>
-                  <p className="text-2xl font-extrabold text-primary mt-1">
-                    {aiData.detail[0]?.nilai_score ?? 0}
-                    <span className="text-xs font-normal text-muted-foreground">/100</span>
+                {/* Fasilitas Radius 300m */}
+                <div className="bg-secondary/15 p-4 rounded-xl border border-border/40 text-center flex flex-col justify-between min-h-[110px]">
+                  <p className="text-[10px] text-muted-foreground uppercase font-bold tracking-wider">Fasilitas Sekitar (300m)</p>
+                  {aiData.fasilitas.length > 0 ? (
+                    <div className="my-1.5 max-h-[50px] overflow-y-auto pr-1 flex flex-wrap gap-1 justify-center scrollbar-thin">
+                      {aiData.fasilitas.map((f) => (
+                        <Badge key={f.id} variant="secondary" className="text-[9px] px-1.5 py-0 rounded bg-background/50 border border-border/20 max-w-full truncate font-medium">
+                          {f.nama_fasilitas}
+                        </Badge>
+                      ))}
+                    </div>
+                  ) : (
+                    <p className="text-xs text-muted-foreground italic mt-2">Tidak Terdeteksi</p>
+                  )}
+                  <p className="text-[9px] text-muted-foreground font-semibold">
+                    {aiData.fasilitas.length} Fasilitas Sekitar
                   </p>
-                  <Badge variant="outline" className={`mt-1 text-[9px] px-1.5 py-0 ${
-                    (aiData.detail[0]?.status_score || "").toLowerCase() === "baik" 
-                      ? "bg-green-500/10 text-green-600 border-green-500/20" 
-                      : (aiData.detail[0]?.status_score || "").toLowerCase() === "sedang"
-                      ? "bg-yellow-500/10 text-yellow-600 border-yellow-500/20"
-                      : "bg-red-500/10 text-red-600 border-red-500/20"
-                  }`}>
-                    {aiData.detail[0]?.status_score || "Baik"}
-                  </Badge>
                 </div>
 
                 {/* OSM Category */}
-                <div className="bg-secondary/15 p-4 rounded-xl border border-border/40 text-center">
+                <div className="bg-secondary/15 p-4 rounded-xl border border-border/40 text-center flex flex-col justify-between min-h-[110px]">
                   <p className="text-[10px] text-muted-foreground uppercase font-bold tracking-wider">Klasifikasi Jalan (OSM)</p>
                   <p className="text-lg font-bold text-foreground mt-2 capitalize truncate">
                     {aiData.detail[0]?.kategori_pelaporan_osm || "Tidak Terpetakan"}
                   </p>
-                  <p className="text-[9px] text-muted-foreground mt-1">Saran Penanganan</p>
+                  <p className="text-[9px] text-muted-foreground mt-1 font-semibold">Saran Penanganan</p>
                 </div>
               </div>
 
@@ -419,7 +433,7 @@ function ReportDetailPage() {
               )}
 
               {/* Recommended Handler & Est Time */}
-              <div className="grid gap-4 sm:grid-cols-2 mb-5">
+              <div className="grid gap-4 sm:grid-cols-2 mb-2">
                 <div className="flex gap-2.5 items-start text-xs">
                   <div className="p-2 bg-primary/10 rounded-lg text-primary">
                     <Wrench className="h-3.5 w-3.5" />
@@ -440,23 +454,6 @@ function ReportDetailPage() {
                   </div>
                 </div>
               </div>
-
-              {/* Surrounding Facilities (Fasilitas Radius 300m) */}
-              {aiData.fasilitas.length > 0 && (
-                <div className="border-t border-border/40 pt-4 mt-4">
-                  <p className="text-xs font-bold text-muted-foreground uppercase tracking-wider mb-2.5 flex items-center gap-1.5">
-                    <Building2 className="h-3.5 w-3.5" />
-                    Fasilitas Umum Sekitar (Radius 300m)
-                  </p>
-                  <div className="flex flex-wrap gap-2">
-                    {aiData.fasilitas.map((f) => (
-                      <Badge key={f.id} variant="secondary" className="bg-secondary/40 border border-border/30 text-xs px-2.5 py-0.5 rounded-full font-medium">
-                        {f.nama_fasilitas}
-                      </Badge>
-                    ))}
-                  </div>
-                </div>
-              )}
             </Card>
           )}
 

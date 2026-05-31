@@ -198,6 +198,15 @@ function ReportForm() {
     );
   };
 
+  const mapUrgencyToKey = (val: string): "low" | "medium" | "high" | "critical" => {
+    const norm = (val || "").toLowerCase();
+    if (norm.includes("kecil") || norm.includes("ringan") || norm.includes("low")) return "low";
+    if (norm.includes("sedang") || norm.includes("medium")) return "medium";
+    if (norm.includes("tinggi") || norm.includes("berat") || norm.includes("high") || norm.includes("parah")) return "high";
+    if (norm.includes("kritis") || norm.includes("critical") || norm.includes("sangat parah")) return "critical";
+    return "medium";
+  };
+
   const onSubmit = async (e: React.FormEvent) => {
     e.preventDefault();
 
@@ -366,7 +375,7 @@ function ReportForm() {
       longitude: parsed.data.longitude,
       address: parsed.data.address,
       photo_url: photoPath,
-      kategori_pelaporan: daftarAnalisis[0]?.Kategori_Pelaporan_OSM || daftarAnalisis[0]?.["Kategori Pelaporan"] || "ringan",
+      kategori_pelaporan: mapUrgencyToKey(daftarAnalisis[0]?.Severity_Visual || daftarAnalisis[0]?.Severity || "low"),
       status_pelaporan: "pending",
     });
 
