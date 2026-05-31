@@ -499,18 +499,18 @@ function ReportDetailPage() {
                 </div>
 
                 <div className="space-y-1.5 text-xs pt-1">
-                  <div className="flex items-center justify-between bg-secondary/10 px-2 py-1 rounded-md border border-border/30">
-                    <span className="text-[10px] text-muted-foreground font-semibold">No. HP</span>
-                    <span className="font-bold text-foreground flex items-center gap-1 text-[11px]">
-                      <Phone className="h-3 w-3 text-primary" />
+                  <div className="flex items-center justify-between bg-secondary/10 px-2 py-1 rounded-md border border-border/30 gap-2">
+                    <span className="text-[10px] text-muted-foreground font-semibold shrink-0">No. HP</span>
+                    <span className="font-bold text-foreground flex items-center gap-1 text-[11px] break-all text-right justify-end">
+                      <Phone className="h-3 w-3 text-primary shrink-0" />
                       {report.no_hp}
                     </span>
                   </div>
                   {report.email && (
-                    <div className="flex items-center justify-between bg-secondary/10 px-2 py-1 rounded-md border border-border/30">
-                      <span className="text-[10px] text-muted-foreground font-semibold">Email</span>
-                      <span className="font-medium text-foreground truncate max-w-[120px] flex items-center gap-1 text-[11px]">
-                        <Mail className="h-3 w-3 text-primary" />
+                    <div className="flex items-center justify-between bg-secondary/10 px-2 py-1 rounded-md border border-border/30 gap-2">
+                      <span className="text-[10px] text-muted-foreground font-semibold shrink-0">Email</span>
+                      <span className="font-medium text-foreground flex items-center gap-1 text-[11px] break-all text-right justify-end">
+                        <Mail className="h-3 w-3 text-primary shrink-0" />
                         {report.email}
                       </span>
                     </div>
