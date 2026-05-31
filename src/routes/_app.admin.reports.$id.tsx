@@ -247,7 +247,7 @@ function ReportDetailPage() {
   const createdDate = new Date(report.created_at);
 
   return (
-    <div className="space-y-6 animate-in fade-in duration-500">
+    <div className="max-w-6xl mx-auto space-y-6 px-4 md:px-0 py-4 animate-in fade-in duration-500 w-full">
       {/* Back button */}
       <Button
         variant="ghost"
@@ -346,15 +346,15 @@ function ReportDetailPage() {
                   <p className="text-[10px] text-muted-foreground">Pelapor Mandiri</p>
                 </div>
               </div>
-              <div className="border-t border-border pt-3 space-y-2">
-                <div className="flex justify-between items-center py-1">
-                  <span className="text-xs text-muted-foreground">No. HP / WhatsApp</span>
-                  <span className="font-semibold text-sm text-foreground">{report.no_hp}</span>
+              <div className="border-t border-border pt-4 grid gap-3 sm:grid-cols-2 text-sm">
+                <div className="flex items-center gap-3 bg-secondary/15 px-4 py-2.5 rounded-xl border border-border/40">
+                  <span className="text-xs text-muted-foreground font-semibold w-28 shrink-0">No. HP / WhatsApp</span>
+                  <span className="font-bold text-sm text-foreground">{report.no_hp}</span>
                 </div>
                 {report.email && (
-                  <div className="flex justify-between items-center py-1">
-                    <span className="text-xs text-muted-foreground">Email</span>
-                    <span className="font-medium text-xs text-foreground">{report.email}</span>
+                  <div className="flex items-center gap-3 bg-secondary/15 px-4 py-2.5 rounded-xl border border-border/40">
+                    <span className="text-xs text-muted-foreground font-semibold w-16 shrink-0">Email</span>
+                    <span className="font-medium text-xs text-foreground truncate">{report.email}</span>
                   </div>
                 )}
               </div>
