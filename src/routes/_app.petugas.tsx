@@ -18,8 +18,12 @@ function PetugasLayout() {
   const navigate = useNavigate();
 
   useEffect(() => {
-    if (!loading && role && role !== "petugas") {
-      navigate({ to: "/" });
+    if (!loading) {
+      if (!role) {
+        navigate({ to: "/auth/login" });
+      } else if (role !== "petugas") {
+        navigate({ to: "/" });
+      }
     }
   }, [role, loading, navigate]);
 

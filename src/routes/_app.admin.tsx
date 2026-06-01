@@ -31,8 +31,12 @@ function AdminLayout() {
   const navigate = useNavigate();
 
   useEffect(() => {
-    if (!loading && role && role !== "admin") {
-      navigate({ to: "/" });
+    if (!loading) {
+      if (!role) {
+        navigate({ to: "/auth/login" });
+      } else if (role !== "admin") {
+        navigate({ to: "/" });
+      }
     }
   }, [role, loading, navigate]);
 
