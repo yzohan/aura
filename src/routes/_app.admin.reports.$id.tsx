@@ -3,7 +3,7 @@ import { useEffect, useState, lazy, Suspense } from "react";
 import {
   ArrowLeft, Camera, MapPin, Calendar, Loader2, ExternalLink, Clock, AlertTriangle, Tag,
   Sparkles, Wrench, Building2, ShieldAlert, CheckCircle2, ClipboardList, Activity,
-  User, Phone, Mail, Map,
+  User, Phone, Mail, Map, Trash2,
 } from "lucide-react";
 import { toast } from "sonner";
 import { formatDistanceToNow } from "date-fns";
@@ -13,6 +13,17 @@ import { supabase } from "@/integrations/supabase/client";
 import { Card } from "@/components/ui/card";
 import { Badge } from "@/components/ui/badge";
 import { Button } from "@/components/ui/button";
+import {
+  AlertDialog,
+  AlertDialogAction,
+  AlertDialogCancel,
+  AlertDialogContent,
+  AlertDialogDescription,
+  AlertDialogFooter,
+  AlertDialogHeader,
+  AlertDialogTitle,
+  AlertDialogTrigger,
+} from "@/components/ui/alert-dialog";
 import {
   Select, SelectContent, SelectItem, SelectTrigger, SelectValue,
 } from "@/components/ui/select";
@@ -230,6 +241,19 @@ function ReportDetailPage() {
 
     await supabase.from("reports").update({ status_pelaporan: "in_progress" }).eq("id", report.id);
     toast.success("Petugas berhasil ditugaskan");
+  };
+
+  const deleteReport = async () => {
+    if (!report) return;
+    setLoading(true);
+    const { error } = await supabase.from("reports").delete().eq("id", report.id);
+    if (error) {
+      toast.error(error.message);
+      setLoading(false);
+    } else {
+      toast.success("Laporan berhasil dihapus");
+      navigate({ to: "/admin" });
+    }
   };
 
   if (loading || !report) {
@@ -661,6 +685,31 @@ function ReportDetailPage() {
                 <div className="flex justify-between items-center bg-secondary/5 px-2.5 py-1.5 rounded-lg border border-border/30">
                   <span className="text-muted-foreground text-xs">Status Laporan</span>
                   <Badge variant="outline" className="bg-secondary/40 text-muted-foreground border-border/50 text-xs font-bold uppercase py-0.5 px-2">VALID</Badge>
+                </div>
+
+                <div className="border-t border-border/60 pt-4 mt-2 shrink-0">
+                  <AlertDialog>
+                    <AlertDialogTrigger asChild>
+                      <Button variant="destructive" className="w-full text-xs font-bold gap-2 bg-destructive/10 hover:bg-destructive text-destructive hover:text-destructive-foreground border border-destructive/20 hover:border-transparent transition-all h-9 rounded-lg">
+                        <Trash2 className="h-4 w-4" />
+                        Hapus Laporan
+                      </Button>
+                    </AlertDialogTrigger>
+                    <AlertDialogContent>
+                      <AlertDialogHeader>
+                        <AlertDialogTitle>Apakah Anda yakin?</AlertDialogTitle>
+                        <AlertDialogDescription>
+                          Tindakan ini akan menghapus laporan secara permanen dari sistem dan database. Data detail kerusakan dan analisis terkait juga akan ikut terhapus.
+                        </AlertDialogDescription>
+                      </AlertDialogHeader>
+                      <AlertDialogFooter>
+                        <AlertDialogCancel>Batal</AlertDialogCancel>
+                        <AlertDialogAction onClick={deleteReport} className="bg-destructive hover:bg-destructive/95 text-destructive-foreground">
+                          Hapus Laporan
+                        </AlertDialogAction>
+                      </AlertDialogFooter>
+                    </AlertDialogContent>
+                  </AlertDialog>
                 </div>
               </div>
             </div>
