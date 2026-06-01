@@ -12,7 +12,7 @@ import {
   DropdownMenuTrigger,
 } from "@/components/ui/dropdown-menu";
 import { Avatar, AvatarFallback } from "@/components/ui/avatar";
-import codingCampLogo from "@/assets/dbs-camp-logo.svg";
+import codingCampLogo from "@/assets/dbs-camp-logo.png";
 
 const PUBLIC_LINKS = [
   { to: "/", label: "Beranda" },
