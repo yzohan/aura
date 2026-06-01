@@ -17,11 +17,14 @@ import {
   Sparkles,
   AlertCircle,
   Info,
+  Users,
+  FileText,
 } from "lucide-react";
 import { SiteHeader, SiteFooter } from "@/components/site-chrome";
 import { Button } from "@/components/ui/button";
 import { Badge } from "@/components/ui/badge";
-import heroImg from "@/assets/hero-city.jpg";
+import { JakartaDiorama } from "@/components/jakarta-diorama";
+import potholeImg from "@/assets/pothole_road.jpg";
 
 export const Route = createFileRoute("/")({
   head: () => ({
@@ -43,9 +46,25 @@ export const Route = createFileRoute("/")({
   component: HomePage,
 });
 
-const PARTNERS = ["Dinas PUPR", "Dishub", "PJU Kota", "Tata Ruang", "Bappeda", "Kominfo"];
+const PARTNERS_CONFIG = [
+  { name: "Dinas PUPR", icon: Wrench },
+  { name: "Dishub", icon: Activity },
+  { name: "PJU Kota", icon: Lightbulb },
+  { name: "Tata Ruang", icon: MapPin },
+  { name: "Bappeda", icon: ShieldCheck },
+  { name: "Kominfo", icon: Leaf },
+];
 
 function HomePage() {
+  const [appStage, setAppStage] = useState(0);
+
+  useEffect(() => {
+    const timer = setInterval(() => {
+      setAppStage((prev) => (prev + 1) % 4);
+    }, 3000);
+    return () => clearInterval(timer);
+  }, []);
+
   return (
     <div className="flex min-h-screen flex-col">
       <SiteHeader />
@@ -74,22 +93,8 @@ function HomePage() {
 
               <h1 className="mt-5 text-4xl font-bold tracking-tight text-balance md:text-[3.75rem] md:leading-[1.05] animate-fade-in-up animation-delay-100">
                 Kota yang{" "}
-                <span className="relative inline-block text-primary">
+                <span className="bg-gradient-to-r from-primary via-primary-glow to-success bg-clip-text text-transparent">
                   menyembuhkan
-                  <svg
-                    aria-hidden
-                    viewBox="0 0 220 14"
-                    className="absolute -bottom-1 left-0 h-3 w-full text-primary/40"
-                    preserveAspectRatio="none"
-                  >
-                    <path
-                      d="M2 9 C 60 2, 140 2, 218 9"
-                      fill="none"
-                      stroke="currentColor"
-                      strokeWidth="3"
-                      strokeLinecap="round"
-                    />
-                  </svg>
                 </span>{" "}
                 dirinya sendiri.
               </h1>
@@ -129,95 +134,367 @@ function HomePage() {
             </div>
 
             {/* Hero visual */}
-            <div className="relative animate-fade-in-up animation-delay-200">
-              <div className="absolute -inset-6 -z-10 rounded-[2rem] bg-leaf-gradient opacity-25 blur-2xl animate-pulse-glow" />
-              <div className="relative overflow-hidden rounded-3xl ring-1 ring-border shadow-elev group">
-                <img
-                  src={heroImg}
-                  alt="Ilustrasi kota cerdas dengan infrastruktur yang terawat"
-                  className="h-full w-full object-cover transition-transform duration-700 group-hover:scale-105"
-                  decoding="async"
-                  loading="eager"
-                />
-                <div className="pointer-events-none absolute inset-0 bg-gradient-to-t from-background/40 via-transparent to-transparent" />
-              </div>
-
-              {/* Floating UI cards */}
-              <div className="absolute -bottom-6 -left-6 hidden w-[260px] rounded-2xl border border-border bg-card/95 p-4 shadow-soft backdrop-blur md:block animate-float-1 hover:scale-105 hover:shadow-glow transition-all duration-300 cursor-default">
-                <div className="flex items-center justify-between">
-                  <p className="text-xs font-medium text-muted-foreground">Laporan minggu ini</p>
-                  <span className="rounded-full bg-success/15 px-2 py-0.5 text-[10px] font-semibold text-success animate-pulse">
-                    +12%
-                  </span>
-                </div>
-                <p className="mt-1 text-2xl font-bold tracking-tight">128 selesai</p>
-                <div className="mt-3 flex h-10 items-end gap-1">
-                  {[40, 65, 35, 80, 55, 90, 70].map((h, i) => (
-                    <div
-                      key={i}
-                      className="flex-1 rounded-sm bg-leaf-gradient transition-all duration-500 hover:opacity-85"
-                      style={{ height: `${h}%` }}
-                    />
-                  ))}
-                </div>
-              </div>
-
-              <div className="absolute -top-4 -right-4 hidden rounded-2xl border border-border bg-card/95 p-3 shadow-soft backdrop-blur md:flex md:items-center md:gap-3 animate-float-2 hover:scale-105 hover:shadow-glow transition-all duration-300 cursor-default">
-                <span className="flex h-9 w-9 items-center justify-center rounded-xl bg-success/15 text-success">
-                  <CheckCircle2 className="h-5 w-5 animate-bounce" />
-                </span>
-                <div>
-                  <p className="text-xs text-muted-foreground">Jl. Asia Afrika</p>
-                  <p className="text-sm font-semibold">Lubang ditambal</p>
-                </div>
-              </div>
+            <div className="relative animate-fade-in-up animation-delay-200 h-[480px] md:h-[520px]">
+              <JakartaDiorama />
             </div>
           </div>
 
           {/* Partner marquee */}
-          <div className="relative border-y border-border/60 py-6 bg-muted/20 overflow-hidden flex items-center">
-            <div className="absolute left-0 z-10 bg-gradient-to-r from-background via-background/90 to-transparent pl-4 pr-12 py-6 hidden md:block select-none">
-              <span className="text-[10px] font-semibold tracking-widest uppercase text-muted-foreground/50">Dipercaya oleh:</span>
+          <div className="relative border-y border-border/40 py-5 bg-muted/10 overflow-hidden flex items-center">
+            <div className="absolute left-0 z-10 bg-gradient-to-r from-background via-background/90 to-transparent pl-6 pr-16 py-5 hidden lg:block select-none">
+              <span className="text-[10px] font-bold tracking-wider uppercase text-muted-foreground/60">Partner Strategis:</span>
             </div>
             <div className="marquee-fade flex flex-1 whitespace-nowrap overflow-hidden">
-              <div className="animate-marquee flex gap-16 text-xs font-semibold uppercase tracking-widest text-muted-foreground/60 select-none md:pl-32">
-                {[...PARTNERS, ...PARTNERS, ...PARTNERS].map((p, i) => (
-                  <span key={i} className="transition-colors hover:text-primary flex items-center gap-2 cursor-pointer">
-                    <span className="h-1.5 w-1.5 rounded-full bg-primary/40 animate-pulse" />
-                    {p}
-                  </span>
-                ))}
+              <div className="animate-marquee flex gap-6 text-xs font-semibold uppercase tracking-widest text-muted-foreground/60 select-none lg:pl-48">
+                {[...PARTNERS_CONFIG, ...PARTNERS_CONFIG, ...PARTNERS_CONFIG].map((p, i) => {
+                  const Icon = p.icon;
+                  return (
+                    <span key={i} className="group flex items-center gap-2.5 px-4 py-2 rounded-xl bg-card/50 backdrop-blur-md border border-border/60 shadow-sm transition-all duration-300 hover:border-primary/20 hover:bg-card hover:scale-[1.03] cursor-pointer">
+                      <Icon className="h-4 w-4 text-muted-foreground/75 group-hover:text-primary transition-colors duration-300" />
+                      <span className="text-xs font-medium tracking-normal normal-case text-foreground/80 group-hover:text-foreground transition-colors duration-300">{p.name}</span>
+                    </span>
+                  );
+                })}
               </div>
-              <div className="animate-marquee flex gap-16 text-xs font-semibold uppercase tracking-widest text-muted-foreground/60 select-none md:pl-32" aria-hidden="true">
-                {[...PARTNERS, ...PARTNERS, ...PARTNERS].map((p, i) => (
-                  <span key={`dup-${i}`} className="transition-colors hover:text-primary flex items-center gap-2 cursor-pointer">
-                    <span className="h-1.5 w-1.5 rounded-full bg-primary/40 animate-pulse" />
-                    {p}
-                  </span>
-                ))}
+              <div className="animate-marquee flex gap-6 text-xs font-semibold uppercase tracking-widest text-muted-foreground/60 select-none lg:pl-48" aria-hidden="true">
+                {[...PARTNERS_CONFIG, ...PARTNERS_CONFIG, ...PARTNERS_CONFIG].map((p, i) => {
+                  const Icon = p.icon;
+                  return (
+                    <span key={`dup-${i}`} className="group flex items-center gap-2.5 px-4 py-2 rounded-xl bg-card/50 backdrop-blur-md border border-border/60 shadow-sm transition-all duration-300 hover:border-primary/20 hover:bg-card hover:scale-[1.03] cursor-pointer">
+                      <Icon className="h-4 w-4 text-muted-foreground/75 group-hover:text-primary transition-colors duration-300" />
+                      <span className="text-xs font-medium tracking-normal normal-case text-foreground/80 group-hover:text-foreground transition-colors duration-300">{p.name}</span>
+                    </span>
+                  );
+                })}
               </div>
             </div>
           </div>
         </section>
 
-        {/* STATS STRIP */}
-        <section className="border-b border-border bg-card">
-          <div className="container mx-auto grid grid-cols-2 divide-x divide-y divide-border md:grid-cols-4 md:divide-y-0">
-            {[
-              { v: "2.4k+", l: "Laporan masuk" },
-              { v: "94%", l: "Tingkat penyelesaian" },
-              { v: "< 6 jam", l: "Rerata respon" },
-              { v: "37", l: "Petugas aktif" },
-            ].map((s, index) => (
-              <ScrollReveal key={s.l} delay={index * 100} direction="up" className="w-full h-full">
-                <div className="h-full p-6 text-center md:p-8 hover:bg-muted/30 transition-all duration-300 group cursor-default">
-                  <p className="text-3xl font-bold tracking-tight text-primary md:text-4xl transition-all duration-300 group-hover:scale-105 group-hover:translate-y-[-2px]">{s.v}</p>
-                  <p className="mt-1 text-sm text-muted-foreground">{s.l}</p>
+        {/* STATS SECTION */}
+        <section className="py-16 border-b border-border/60 relative overflow-hidden">
+          <div className="container mx-auto px-4">
+            <div className="relative rounded-[2.5rem] border border-border/80 bg-card/45 backdrop-blur-xl p-8 md:p-12 overflow-hidden shadow-soft">
+              {/* Subtle background decorative shapes */}
+              <div className="absolute -right-20 -top-20 w-80 h-80 bg-primary/10 rounded-full blur-3xl pointer-events-none" />
+              <div className="absolute -left-20 -bottom-20 w-80 h-80 bg-success/5 rounded-full blur-3xl pointer-events-none" />
+              <div className="absolute inset-0 grid-pattern opacity-40 pointer-events-none" />
+              
+              <div className="relative z-10 space-y-8 lg:space-y-12">
+                
+                {/* Header Info */}
+                <div className="space-y-2.5">
+                  <Badge variant="outline" className="border-primary/20 text-primary bg-primary/5 px-3 py-1 font-semibold text-xs tracking-wider uppercase">
+                    AURA Dalam Angka
+                  </Badge>
+                  <h3 className="text-3xl font-bold tracking-tight text-foreground md:text-4xl">
+                    Kinerja Tata Kota Real-Time
+                  </h3>
+                  <p className="text-sm text-muted-foreground max-w-lg leading-relaxed">
+                    Setiap laporan diproses oleh sistem pintar dan dikirimkan langsung ke petugas terdekat untuk efisiensi maksimum di lapangan.
+                  </p>
                 </div>
-              </ScrollReveal>
-            ))}
+
+                {/* Side-by-side Layout for Cards and Mockup */}
+                <div className="flex flex-col lg:flex-row gap-6 lg:gap-12 items-start w-full">
+                  
+                  {/* Left Column: Interactive Stats Cards (2x2 Grid) */}
+                  <div className="grid gap-4 grid-cols-2 flex-1 w-full">
+                  {/* Card 1: Laporan Masuk */}
+                  <ScrollReveal delay={0} direction="up">
+                    <div className="group relative h-full flex flex-col justify-between p-6 rounded-2xl bg-card/65 backdrop-blur-md border border-border/80 shadow-soft transition-all duration-300 hover:-translate-y-1 hover:border-primary/20 hover:bg-card hover:shadow-glow cursor-default overflow-hidden">
+                      <div className="absolute -right-6 -top-6 w-20 h-20 bg-primary/5 rounded-full blur-xl group-hover:bg-primary/10 transition-all duration-500 pointer-events-none" />
+                      
+                      <div className="flex items-center justify-between">
+                        <div className="p-2 rounded-xl bg-muted/60 text-muted-foreground/80 group-hover:bg-primary/10 group-hover:text-primary transition-all duration-300">
+                          <FileText className="h-5 w-5" />
+                        </div>
+                        <div className="inline-flex items-center gap-1.5 rounded-full border border-border/50 bg-muted/30 px-2 py-0.5 text-[10px] font-semibold text-muted-foreground/80">
+                          <span className="h-1.5 w-1.5 rounded-full bg-emerald-500 animate-pulse" />
+                          Aktif
+                        </div>
+                      </div>
+                      
+                      <div className="mt-4 mb-6">
+                        <span className="text-3xl font-bold tracking-tight text-foreground">2.4k+</span>
+                        <h4 className="text-sm font-semibold text-foreground/90 mt-1.5">Laporan masuk</h4>
+                        <p className="text-xs text-muted-foreground/75 mt-0.5">Aduan terverifikasi dari warga</p>
+                      </div>
+
+                      {/* SVG Sparkline positioned absolutely at the bottom */}
+                      <div className="absolute bottom-0 left-0 right-0 h-10 overflow-hidden pointer-events-none">
+                        <svg className="w-full h-full text-emerald-500/40 dark:text-emerald-500/30" viewBox="0 0 100 30" preserveAspectRatio="none" fill="none">
+                          <path d="M0 25 Q15 15 30 22 T60 8 T90 12 T100 4" stroke="currentColor" strokeWidth="1.5" strokeLinecap="round" />
+                          <path d="M0 25 Q15 15 30 22 T60 8 T90 12 T100 4 L100 30 L0 30 Z" fill="currentColor" opacity="0.1" />
+                        </svg>
+                      </div>
+                    </div>
+                  </ScrollReveal>
+
+                  {/* Card 2: Tingkat Penyelesaian */}
+                  <ScrollReveal delay={100} direction="up">
+                    <div className="group relative h-full flex flex-col justify-between p-6 rounded-2xl bg-card/65 backdrop-blur-md border border-border/80 shadow-soft transition-all duration-300 hover:-translate-y-1 hover:border-primary/20 hover:bg-card hover:shadow-glow cursor-default overflow-hidden">
+                      <div className="absolute -right-6 -top-6 w-20 h-20 bg-primary/5 rounded-full blur-xl group-hover:bg-primary/10 transition-all duration-500 pointer-events-none" />
+                      
+                      <div className="flex items-center justify-between">
+                        <div className="p-2 rounded-xl bg-muted/60 text-muted-foreground/80 group-hover:bg-primary/10 group-hover:text-primary transition-all duration-300">
+                          <CheckCircle2 className="h-5 w-5" />
+                        </div>
+                        <div className="inline-flex items-center gap-1.5 rounded-full border border-border/50 bg-muted/30 px-2 py-0.5 text-[10px] font-semibold text-muted-foreground/80">
+                          <span className="h-1.5 w-1.5 rounded-full bg-blue-500 animate-pulse" />
+                          Efisien
+                        </div>
+                      </div>
+                      
+                      <div className="mt-4 flex items-center justify-between gap-4">
+                        <div>
+                          <span className="text-3xl font-bold tracking-tight text-foreground">94%</span>
+                          <h4 className="text-sm font-semibold text-foreground/90 mt-1.5">Tingkat penyelesaian</h4>
+                          <p className="text-xs text-muted-foreground/75 mt-0.5">Selesai ditangani petugas</p>
+                        </div>
+                        {/* Circular Progress SVG */}
+                        <div className="relative w-11 h-11 flex items-center justify-center flex-shrink-0">
+                          <svg className="w-full h-full transform -rotate-90">
+                            <circle cx="22" cy="22" r="17" stroke="currentColor" className="text-muted-foreground/10" strokeWidth="2.5" fill="transparent" />
+                            <circle cx="22" cy="22" r="17" stroke="currentColor" className="text-primary" strokeWidth="2.5" fill="transparent"
+                              strokeDasharray={2 * Math.PI * 17}
+                              strokeDashoffset={2 * Math.PI * 17 * (1 - 0.94)}
+                              strokeLinecap="round"
+                            />
+                          </svg>
+                          <span className="absolute text-[9px] font-bold text-foreground/80">94%</span>
+                        </div>
+                      </div>
+                    </div>
+                  </ScrollReveal>
+
+                  {/* Card 3: Rerata Respon */}
+                  <ScrollReveal delay={200} direction="up">
+                    <div className="group relative h-full flex flex-col justify-between p-6 rounded-2xl bg-card/65 backdrop-blur-md border border-border/80 shadow-soft transition-all duration-300 hover:-translate-y-1 hover:border-primary/20 hover:bg-card hover:shadow-glow cursor-default overflow-hidden">
+                      <div className="absolute -right-6 -top-6 w-20 h-20 bg-primary/5 rounded-full blur-xl group-hover:bg-primary/10 transition-all duration-500 pointer-events-none" />
+                      
+                      <div className="flex items-center justify-between">
+                        <div className="p-2 rounded-xl bg-muted/60 text-muted-foreground/80 group-hover:bg-primary/10 group-hover:text-primary transition-all duration-300">
+                          <Clock className="h-5 w-5" />
+                        </div>
+                        <div className="inline-flex items-center gap-1.5 rounded-full border border-border/50 bg-muted/30 px-2 py-0.5 text-[10px] font-semibold text-muted-foreground/80">
+                          <span className="h-1.5 w-1.5 rounded-full bg-amber-500 animate-pulse" />
+                          Cepat
+                        </div>
+                      </div>
+                      
+                      <div className="mt-4">
+                        <span className="text-3xl font-bold tracking-tight text-foreground">&lt; 6 jam</span>
+                        <h4 className="text-sm font-semibold text-foreground/90 mt-1.5">Rerata respon</h4>
+                        <p className="text-xs text-muted-foreground/75 mt-0.5">Kecepatan penanganan awal</p>
+                      </div>
+
+                      <div className="mt-4 pt-1 flex items-center">
+                        <Badge className="text-[10px] font-semibold bg-emerald-500/10 text-emerald-600 dark:text-emerald-400 border-none px-2 py-0.5 shadow-none">
+                          ↓ 1.2 jam lebih cepat
+                        </Badge>
+                        <span className="text-[10px] text-muted-foreground/70 ml-2">vs bulan lalu</span>
+                      </div>
+                    </div>
+                  </ScrollReveal>
+
+                  {/* Card 4: Petugas Aktif */}
+                  <ScrollReveal delay={300} direction="up">
+                    <div className="group relative h-full flex flex-col justify-between p-6 rounded-2xl bg-card/65 backdrop-blur-md border border-border/80 shadow-soft transition-all duration-300 hover:-translate-y-1 hover:border-primary/20 hover:bg-card hover:shadow-glow cursor-default overflow-hidden">
+                      <div className="absolute -right-6 -top-6 w-20 h-20 bg-primary/5 rounded-full blur-xl group-hover:bg-primary/10 transition-all duration-500 pointer-events-none" />
+                      
+                      <div className="flex items-center justify-between">
+                        <div className="p-2 rounded-xl bg-muted/60 text-muted-foreground/80 group-hover:bg-primary/10 group-hover:text-primary transition-all duration-300">
+                          <Users className="h-5 w-5" />
+                        </div>
+                        <div className="inline-flex items-center gap-1.5 rounded-full border border-border/50 bg-muted/30 px-2 py-0.5 text-[10px] font-semibold text-muted-foreground/80">
+                          <span className="h-1.5 w-1.5 rounded-full bg-teal-500 animate-pulse" />
+                          Siaga
+                        </div>
+                      </div>
+                      
+                      <div className="mt-4">
+                        <span className="text-3xl font-bold tracking-tight text-foreground">37</span>
+                        <h4 className="text-sm font-semibold text-foreground/90 mt-1.5">Petugas aktif</h4>
+                        <p className="text-xs text-muted-foreground/75 mt-0.5">Siaga merespon laporan warga</p>
+                      </div>
+
+                      {/* Avatars Stack */}
+                      <div className="flex -space-x-2 mt-4 overflow-hidden">
+                        {[
+                          { name: "AD", bg: "bg-emerald-500/15 text-emerald-700 dark:text-emerald-400" },
+                          { name: "JS", bg: "bg-blue-500/15 text-blue-700 dark:text-blue-400" },
+                          { name: "MK", bg: "bg-amber-500/15 text-amber-700 dark:text-amber-400" },
+                          { name: "RY", bg: "bg-purple-500/15 text-purple-700 dark:text-purple-400" },
+                        ].map((av, idx) => (
+                          <div key={idx} className={`inline-flex items-center justify-center w-8 h-8 rounded-full text-[11px] font-bold border-2 border-card ${av.bg}`}>
+                            {av.name}
+                          </div>
+                        ))}
+                        <div className="inline-flex items-center justify-center w-8 h-8 rounded-full bg-muted text-muted-foreground text-[10px] font-bold border-2 border-card">
+                          +33
+                        </div>
+                      </div>
+                    </div>
+                  </ScrollReveal>
+                </div>
+              
+              {/* Right Column: Smartphone Mockup Simulator */}
+              <div className="hidden lg:flex justify-end lg:w-[320px] shrink-0">
+                <div className="relative w-[280px] h-[550px] bg-slate-950 rounded-[2.8rem] p-3 shadow-2xl border-[6px] border-slate-800 dark:border-slate-900 overflow-hidden select-none">
+                  {/* Dynamic Island Notch */}
+                  <div className="absolute top-4 left-1/2 -translate-x-1/2 w-24 h-4 bg-slate-950 rounded-full z-30 flex items-center justify-center border border-white/5">
+                    <div className="w-2.5 h-2.5 bg-slate-900 rounded-full ml-auto mr-1 border border-white/5" />
+                  </div>
+                  
+                  {/* Smartphone Screen Wrapper */}
+                  <div className="relative w-full h-full bg-background rounded-[2.2rem] overflow-hidden flex flex-col justify-between border border-border/20">
+                    
+                    {/* Header Info */}
+                    <div className="px-4 pt-6 pb-3 border-b border-border/40 bg-card flex items-center justify-between">
+                      <div className="flex items-center gap-1.5">
+                        <div className="w-1.5 h-1.5 rounded-full bg-primary animate-pulse" />
+                        <span className="text-[10px] font-bold tracking-wide uppercase text-foreground/80">AURA Citizen</span>
+                      </div>
+                      <span className="text-[9px] font-mono text-muted-foreground bg-muted/60 px-1.5 py-0.5 rounded">v1.0</span>
+                    </div>
+                    
+                    {/* Dynamic Simulated Display Body */}
+                    <div className="flex-1 p-4 flex flex-col justify-center">
+                      
+                      {appStage === 0 && (
+                        <div className="space-y-4">
+                          <div className="relative w-full h-[220px] bg-secondary/30 rounded-2xl overflow-hidden flex items-center justify-center border border-border/40">
+                            <div className="absolute inset-0 grid-pattern opacity-40" />
+                            <svg className="absolute inset-0 w-full h-full text-muted-foreground/15" fill="none">
+                              <path d="M 0,80 L 260,80 M 80,0 L 80,240 M 0,160 L 260,120 M 170,0 L 170,240" stroke="currentColor" strokeWidth="2.5" />
+                              <circle cx="80" cy="80" r="40" stroke="currentColor" strokeWidth="1" strokeDasharray="3 3" />
+                            </svg>
+                            {/* Pulsing GPS Dot */}
+                            <div className="relative z-10 flex flex-col items-center">
+                              <span className="relative flex h-5 w-5">
+                                <span className="absolute inline-flex h-full w-full animate-ping rounded-full bg-primary opacity-40" />
+                                <span className="relative inline-flex h-5 w-5 items-center justify-center rounded-full bg-primary text-white shadow-soft">
+                                  <MapPin className="w-3 h-3" />
+                                </span>
+                              </span>
+                            </div>
+                          </div>
+                          
+                          <div className="space-y-1">
+                            <span className="text-[9px] font-semibold text-muted-foreground/90 uppercase tracking-wide">Mendeteksi Lokasi</span>
+                            <p className="text-[11px] font-bold text-foreground leading-tight truncate">Menteng, Kota Jakarta Pusat</p>
+                          </div>
+                        </div>
+                      )}
+                      
+                      {appStage === 1 && (
+                        <div className="space-y-4">
+                          <div className="relative w-full h-[220px] rounded-2xl overflow-hidden flex items-center justify-center border border-border/40">
+                            <img
+                              src={potholeImg}
+                              alt="Foto jalan berlubang riil"
+                              className="absolute inset-0 w-full h-full object-cover"
+                            />
+                            <div className="absolute inset-0 bg-black/10 pointer-events-none" />
+                            
+                            {/* Laser Scanner line */}
+                            <div className="absolute inset-x-0 h-0.5 bg-emerald-500 shadow-[0_0_8px_#10b981] animate-scan pointer-events-none" />
+
+                            {/* AI Green Bounding Box */}
+                            <div className="absolute w-36 h-24 border-2 border-emerald-500 rounded-lg flex flex-col justify-between p-1 bg-emerald-500/20 shadow-[0_0_15px_rgba(16,185,129,0.3)] animate-pulse pointer-events-none">
+                              <div className="text-[8px] font-mono font-bold tracking-widest text-emerald-100 bg-emerald-600 px-1.5 py-0.5 rounded w-fit">
+                                JALAN BERLUBANG
+                              </div>
+                              <div className="text-[8px] font-mono font-bold text-emerald-300 bg-black/50 px-1 py-0.2 rounded w-fit self-end">
+                                94.6%
+                              </div>
+                            </div>
+                            <Camera className="absolute bottom-3 right-3 w-4 h-4 text-white drop-shadow-md" />
+                          </div>
+                          
+                          <div className="space-y-1">
+                            <span className="text-[9px] font-semibold text-muted-foreground/90 uppercase tracking-wide">Pindai Objek Foto</span>
+                            <p className="text-[11px] font-bold text-foreground leading-tight">Terdeteksi: Kerusakan Jalan (Sedang)</p>
+                          </div>
+                        </div>
+                      )}
+                      
+                      {appStage === 2 && (
+                        <div className="space-y-4">
+                          <div className="w-full h-[220px] bg-card/50 rounded-2xl p-4 flex flex-col justify-center gap-3.5 border border-border/40">
+                            <div className="space-y-1.5">
+                              <div className="h-2 bg-muted rounded w-1/3" />
+                              <div className="h-6 bg-muted/60 rounded-lg w-full" />
+                            </div>
+                            <div className="space-y-1.5">
+                              <div className="h-2 bg-muted rounded w-1/4" />
+                              <div className="h-6 bg-muted/60 rounded-lg w-full" />
+                            </div>
+                            <div className="mt-2 pt-2 border-t border-border/20">
+                              <div className="flex justify-between text-[9px] font-semibold text-muted-foreground/80 mb-1.5">
+                                <span>Mengunggah Laporan...</span>
+                                <span className="font-mono">75%</span>
+                              </div>
+                              <div className="w-full h-1.5 bg-muted rounded-full overflow-hidden">
+                                <div className="h-full bg-primary rounded-full" style={{ width: "75%" }} />
+                              </div>
+                            </div>
+                          </div>
+                          
+                          <div className="space-y-1">
+                            <span className="text-[9px] font-semibold text-muted-foreground/90 uppercase tracking-wide">Komunikasi Server</span>
+                            <p className="text-[11px] font-bold text-foreground leading-tight">Mengirim data spasial enkripsi...</p>
+                          </div>
+                        </div>
+                      )}
+                      
+                      {appStage === 3 && (
+                        <div className="space-y-4">
+                          <div className="w-full h-[220px] bg-emerald-500/5 rounded-2xl flex flex-col items-center justify-center gap-3 border border-emerald-500/10">
+                            <div className="w-12 h-12 rounded-full bg-emerald-500/10 border border-emerald-500/20 text-emerald-600 dark:text-emerald-400 flex items-center justify-center shadow-soft">
+                              <CheckCircle2 className="w-6 h-6 animate-bounce" />
+                            </div>
+                            <div className="text-center px-2 space-y-0.5">
+                              <p className="text-[11px] font-bold text-foreground">Laporan Terkirim!</p>
+                              <p className="text-[9px] text-muted-foreground max-w-[150px] mx-auto leading-relaxed">
+                                Tiket #AURA-4028 aktif. Petugas dinas segera ditugaskan.
+                              </p>
+                            </div>
+                          </div>
+                          
+                          <div className="space-y-1">
+                            <span className="text-[9px] font-semibold text-emerald-600 dark:text-emerald-400 uppercase tracking-wide">Berhasil</span>
+                            <p className="text-[11px] font-bold text-foreground leading-tight">Terima kasih atas laporannya!</p>
+                          </div>
+                        </div>
+                      )}
+                      
+                    </div>
+                    
+                    {/* Bottom Action Area */}
+                    <div className="pt-4 px-4 pb-7 border-t border-border/40 bg-card">
+                      <button className={`w-full py-2.5 rounded-xl text-[10px] font-semibold tracking-wide transition-all duration-300 ${
+                        appStage === 3 
+                          ? "bg-emerald-600 text-white hover:bg-emerald-700" 
+                          : "bg-primary text-primary-foreground hover:opacity-90"
+                      }`}>
+                        {appStage === 0 && "Konfirmasi Lokasi"}
+                        {appStage === 1 && "Unggah & Lapor"}
+                        {appStage === 2 && "Sedang Mengirim..."}
+                        {appStage === 3 && "Selesai"}
+                      </button>
+                    </div>
+                    
+                  </div>
+                </div>
+              </div>
+              
+            </div>
           </div>
-        </section>
+        </div>
+      </div>
+    </section>
 
         {/* CATEGORIES */}
         <section className="border-b border-border bg-secondary/40 relative overflow-hidden">

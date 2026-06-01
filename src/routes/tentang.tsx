@@ -5,7 +5,7 @@ import { SiteHeader, SiteFooter } from "@/components/site-chrome";
 export const Route = createFileRoute("/tentang")({
   head: () => ({
     meta: [
-      { title: "Tentang AURA — Visi & Misi Ekosistem Smart City" },
+      { title: "Tentang" },
       {
         name: "description",
         content:
@@ -68,7 +68,7 @@ function AboutPage() {
             <h2 className="text-3xl font-bold tracking-tight">Pengembangan Kolaboratif</h2>
             <p className="mt-4 text-muted-foreground">
               Ekosistem AURA dikelola secara kolaboratif oleh tim multidisiplin dari beberapa path
-              di program <strong>Coding Camp 2026 powered by DBS Foundation</strong>: Artificial
+              di program : Artificial
               Intelligence, Data Science, dan Full-Stack Development.
             </p>
           </div>

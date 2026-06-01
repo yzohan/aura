@@ -84,9 +84,6 @@ function TeamPage() {
 
         <section className="container mx-auto px-4 pb-20">
           <h2 className="text-2xl font-bold tracking-tight">Anggota tim</h2>
-          <p className="mt-1 text-sm text-muted-foreground">
-            Slot placeholder — lengkapi dengan nama, foto, dan tanggung jawab masing-masing anggota.
-          </p>
           <div className="mt-6 grid gap-4 sm:grid-cols-2 lg:grid-cols-3">
             {PLACEHOLDER_MEMBERS.map((m) => (
               <div key={m.id} className="flex items-start gap-4 rounded-2xl border border-border bg-card p-5 shadow-soft">

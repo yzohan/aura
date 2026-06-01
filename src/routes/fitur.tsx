@@ -26,7 +26,6 @@ const FEATURES = [
   { icon: Wrench, t: "Work Order Otomatis", d: "Admin menugaskan petugas lapangan langsung dari dashboard." },
   { icon: Bell, t: "Update Status", d: "Warga memantau perkembangan laporannya dari pending sampai selesai." },
   { icon: BarChart3, t: "Analitik Kota", d: "Statistik kategori, urgensi, dan response time per wilayah." },
-  { icon: Users, t: "Multi-Role", d: "Tiga peran: Warga, Petugas Lapangan, dan Admin Dinas dalam satu platform." },
   { icon: ShieldCheck, t: "Akses Aman", d: "Row-level security memastikan setiap user hanya akses data yang berhak." },
   { icon: Layers, t: "Indeks Urgensi", d: "Klasifikasi rendah, sedang, tinggi, kritis untuk prioritas penanganan." },
   { icon: Database, t: "Data Terpusat", d: "Riwayat laporan dan bukti perbaikan tersimpan rapi untuk audit." },
