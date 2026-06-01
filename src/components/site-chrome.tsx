@@ -91,14 +91,9 @@ export function SiteHeader() {
               </DropdownMenuContent>
             </DropdownMenu>
           ) : (
-            <>
-              <Button variant="ghost" asChild>
-                <Link to="/warga">Lapor Sekarang</Link>
-              </Button>
-              <Button variant="ghost" asChild>
-                <Link to="/auth/login">Masuk</Link>
-              </Button>
-            </>
+            <Button variant="ghost" asChild>
+              <Link to="/warga">Lapor Sekarang</Link>
+            </Button>
           )}
         </div>
 
@@ -148,14 +143,9 @@ export function SiteHeader() {
                   </Button>
                 </>
               ) : (
-                <>
-                  <Button variant="outline" asChild onClick={() => setOpen(false)}>
-                    <Link to="/warga">Lapor Sekarang</Link>
-                  </Button>
-                  <Button variant="ghost" asChild onClick={() => setOpen(false)}>
-                    <Link to="/auth/login">Masuk</Link>
-                  </Button>
-                </>
+                <Button variant="outline" asChild onClick={() => setOpen(false)}>
+                  <Link to="/warga">Lapor Sekarang</Link>
+                </Button>
               )}
             </div>
           </div>
