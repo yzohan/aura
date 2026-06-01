@@ -455,7 +455,7 @@ function ReportForm() {
     }
 
     // 7. Simpan Laporan Utama ke data backup tabel reports untuk kelayakan admin panel
-    const { error: reportsBackupErr } = await supabase.from("reports").insert({
+    const { data: newReportData, error: reportsBackupErr } = await supabase.from("reports").insert({
       reporter_id: null,
       ip_address: userIp,
       category: parsed.data.category,
@@ -469,11 +469,65 @@ function ReportForm() {
       photo_url: photoPath,
       kategori_pelaporan: determinedUrgencyKey,
       status_pelaporan: "pending",
-    });
+    }).select("id").single();
 
     setSubmitting(false);
     if (reportsBackupErr) {
       console.error("Gagal menyimpan data backup laporan:", reportsBackupErr.message);
+    } else if (newReportData) {
+      // Jalankan Auto-Assign jika diaktifkan di pengaturan sistem
+      try {
+        const savedSettings = localStorage.getItem("aura_system_settings");
+        if (savedSettings) {
+          const parsedSettings = JSON.parse(savedSettings);
+          if (parsedSettings.enableAutoAssign) {
+            // Ambil semua petugas lapangan
+            const { data: roleRows } = await supabase
+              .from("user_roles")
+              .select("user_id")
+              .eq("role", "petugas");
+            
+            const petugasIds = (roleRows ?? []).map((r) => r.user_id);
+            
+            // Ambil admin pertama sebagai assigned_by (karena mandatory NOT NULL)
+            const { data: adminRows } = await supabase
+              .from("user_roles")
+              .select("user_id")
+              .eq("role", "admin")
+              .limit(1);
+            
+            if (petugasIds.length > 0 && adminRows && adminRows.length > 0) {
+              // Simulasi menugaskan ke petugas terdekat (acak/available)
+              const randomIndex = Math.floor(Math.random() * petugasIds.length);
+              const assignedPetugasId = petugasIds[randomIndex];
+              const adminId = adminRows[0].user_id;
+              
+              // Buat Work Order baru
+              const { error: woErr } = await supabase.from("work_orders").insert({
+                report_id: newReportData.id,
+                assigned_to: assignedPetugasId,
+                assigned_by: adminId,
+                notes: "Ditugaskan secara otomatis oleh sistem (Auto-Assign)."
+              });
+              
+              if (!woErr) {
+                // Update status laporan ke 'in_progress' karena sudah ditugaskan ke petugas
+                await supabase
+                  .from("reports")
+                  .update({ status_pelaporan: "in_progress" })
+                  .eq("id", newReportData.id);
+                console.log("Auto-Assign berhasil untuk laporan ID:", newReportData.id);
+              } else {
+                console.error("Gagal membuat auto-assign work order:", woErr.message);
+              }
+            } else {
+              console.warn("Auto-Assign aktif tapi tidak ditemukan Petugas Lapangan atau Admin di database.");
+            }
+          }
+        }
+      } catch (e) {
+        console.error("Gagal memproses Auto-Assign:", e);
+      }
     }
 
     toast.success("Laporan berhasil dikirim dan dianalisis oleh AI!");
