@@ -14,6 +14,8 @@ import {
   Clock,
   Quote,
   Sparkles,
+  AlertCircle,
+  Info,
 } from "lucide-react";
 import { SiteHeader, SiteFooter } from "@/components/site-chrome";
 import { Button } from "@/components/ui/button";
@@ -209,10 +211,10 @@ function HomePage() {
                 Fokus penanganan
               </Badge>
               <h2 className="mt-4 text-3xl font-bold tracking-tight text-balance md:text-4xl">
-                Tiga jenis kerusakan yang paling kami prioritaskan
+                Tiga Jenis Prioritas Laporan
               </h2>
               <p className="mt-3 text-muted-foreground">
-                Dipilih karena dampaknya langsung ke mobilitas, aksesibilitas, dan keselamatan warga.
+                Setiap laporan diverifikasi dan diklasifikasikan ke dalam tiga tingkat urgensi untuk efisiensi penanganan.
               </p>
             </div>
 
@@ -220,23 +222,26 @@ function HomePage() {
               {[
                 {
                   icon: AlertTriangle,
-                  t: "Jalan Berlubang",
-                  d: "Deteksi lubang aspal sebelum jadi kecelakaan. Diprioritaskan berdasarkan volume kendaraan.",
-                  tag: "Urgensi tinggi",
+                  t: "Jalan Berlubang Kritis",
+                  d: "Kerusakan parah yang berlokasi di dekat fasilitas vital seperti sekolah, rumah sakit, tempat ibadah, atau jalan protokol utama dengan volume lalu lintas yang sangat padat.",
+                  tag: "Kritis",
+                  color: "border-red-500/20 bg-red-500/10 text-red-700 dark:text-red-400",
                 },
                 {
-                  icon: Footprints,
-                  t: "Trotoar Rusak",
-                  d: "Jaga jalur pejalan kaki, kursi roda, dan stroller. Audit aksesibilitas tiap kuartal.",
-                  tag: "Inklusif",
+                  icon: AlertCircle,
+                  t: "Jalan Berlubang Sedang",
+                  d: "Kerusakan menengah yang berada di dalam kawasan pemukiman padat penduduk, jalan penghubung antar-kecamatan, atau rute alternatif warga yang ramai dilalui.",
+                  tag: "Sedang",
+                  color: "border-amber-500/20 bg-amber-500/10 text-amber-700 dark:text-amber-400",
                 },
                 {
-                  icon: Lightbulb,
-                  t: "PJU Padam",
-                  d: "Pulihkan penerangan jalan untuk keamanan malam. Terhubung ke jadwal patroli petugas.",
-                  tag: "Keamanan",
+                  icon: Info,
+                  t: "Jalan Berlubang Ringan",
+                  d: "Kerusakan kecil atau retakan yang berlokasi di jalanan sepi, gang lingkungan perumahan kecil, atau jalan alternatif yang jarang dilalui oleh kendaraan warga.",
+                  tag: "Ringan",
+                  color: "border-emerald-500/20 bg-emerald-500/10 text-emerald-700 dark:text-emerald-400",
                 },
-              ].map(({ icon: Icon, t, d, tag }) => (
+              ].map(({ icon: Icon, t, d, tag, color }) => (
                 <div
                   key={t}
                   className="group relative overflow-hidden rounded-2xl border border-border bg-card p-7 shadow-soft transition-all hover:-translate-y-1 hover:shadow-elev"
@@ -249,7 +254,7 @@ function HomePage() {
                     <span className="flex h-12 w-12 items-center justify-center rounded-xl bg-primary/10 text-primary transition-transform group-hover:rotate-3 group-hover:scale-110">
                       <Icon className="h-6 w-6" />
                     </span>
-                    <span className="rounded-full border border-border bg-background px-2.5 py-0.5 text-[10px] font-medium uppercase tracking-wide text-muted-foreground">
+                    <span className={`rounded-full border px-2.5 py-0.5 text-[10px] font-bold uppercase tracking-wide ${color}`}>
                       {tag}
                     </span>
                   </div>
