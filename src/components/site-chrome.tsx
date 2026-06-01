@@ -12,6 +12,7 @@ import {
   DropdownMenuTrigger,
 } from "@/components/ui/dropdown-menu";
 import { Avatar, AvatarFallback } from "@/components/ui/avatar";
+import codingCampLogo from "@/assets/dbs-camp-logo.svg";
 
 const PUBLIC_LINKS = [
   { to: "/", label: "Beranda" },
@@ -179,6 +180,10 @@ export function SiteFooter() {
             Ekosistem tata kota cerdas untuk deteksi dan penanganan kerusakan infrastruktur publik
             secara cepat, transparan, dan berbasis data spasial.
           </p>
+          <div className="mt-5 flex flex-col gap-2">
+            <span className="text-[10px] font-bold uppercase tracking-wider text-muted-foreground/60">Organized & Supported By</span>
+            <img src={codingCampLogo} alt="Coding Camp powered by DBS Foundation" className="h-10 w-fit object-contain opacity-80 hover:opacity-100 transition-opacity dark:invert" />
+          </div>
         </div>
         <div>
           <h4 className="text-sm font-semibold">Produk</h4>
