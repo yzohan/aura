@@ -48,41 +48,25 @@ export function DashboardShell({
             );
           })}
         </nav>
-        <div className="mt-4 rounded-xl border border-border bg-card p-3">
-          {loc.pathname.startsWith("/warga") || !user ? (
-            <div className="space-y-2">
-              <div className="flex items-center gap-3">
-                <div className="h-10 w-10 shrink-0 rounded-full bg-slate-300 dark:bg-slate-700 flex items-center justify-center overflow-hidden">
-                  <svg viewBox="0 0 24 24" className="h-8 w-8 text-white mt-1">
-                    <path fill="currentColor" d="M12,4A4,4 0 0,1 16,8A4,4 0 0,1 12,12A4,4 0 0,1 8,8A4,4 0 0,1 12,4M12,14C16.42,14 20,15.79 20,18V20H4V18C4,15.79 7.58,14 12,14Z" />
-                  </svg>
-                </div>
-                <div className="min-w-0 flex-1">
-                  <p className="truncate text-sm font-semibold">Tamu</p>
-                  <p className="truncate text-xs text-muted-foreground">Mode Warga</p>
-                </div>
+        {user && (
+          <div className="mt-4 rounded-xl border border-border bg-card p-3">
+            <div className="flex items-center gap-3">
+              <Avatar className="h-10 w-10">
+                {(profile?.resolved_avatar_url || profile?.avatar_url) && (
+                  <AvatarImage src={profile.resolved_avatar_url || profile.avatar_url || ""} className="object-cover" />
+                )}
+                <AvatarFallback className="bg-primary text-primary-foreground text-xs">{initials}</AvatarFallback>
+              </Avatar>
+              <div className="min-w-0 flex-1">
+                <p className="truncate text-sm font-medium">{profile?.full_name ?? "Pengguna"}</p>
+                <p className="truncate text-xs text-muted-foreground">{role && ROLE_LABEL[role]}</p>
               </div>
             </div>
-          ) : (
-            <>
-              <div className="flex items-center gap-3">
-                <Avatar className="h-10 w-10">
-                  {(profile?.resolved_avatar_url || profile?.avatar_url) && (
-                    <AvatarImage src={profile.resolved_avatar_url || profile.avatar_url || ""} className="object-cover" />
-                  )}
-                  <AvatarFallback className="bg-primary text-primary-foreground text-xs">{initials}</AvatarFallback>
-                </Avatar>
-                <div className="min-w-0 flex-1">
-                  <p className="truncate text-sm font-medium">{profile?.full_name ?? "Pengguna"}</p>
-                  <p className="truncate text-xs text-muted-foreground">{role && ROLE_LABEL[role]}</p>
-                </div>
-              </div>
-              <Button onClick={() => signOut()} variant="ghost" size="sm" className="mt-2 w-full justify-start">
-                <LogOut className="mr-2 h-4 w-4" /> Keluar
-              </Button>
-            </>
-          )}
-        </div>
+            <Button onClick={() => signOut()} variant="ghost" size="sm" className="mt-2 w-full justify-start">
+              <LogOut className="mr-2 h-4 w-4" /> Keluar
+            </Button>
+          </div>
+        )}
       </aside>
 
       <div className="flex min-w-0 flex-1 flex-col">
@@ -103,15 +87,7 @@ export function DashboardShell({
             <h1 className="text-lg font-semibold tracking-tight">{title}</h1>
           </div>
           <div className="flex items-center gap-3 md:hidden">
-            {loc.pathname.startsWith("/warga") || !user ? (
-              <>
-                <div className="h-8 w-8 rounded-full bg-slate-300 dark:bg-slate-700 flex items-center justify-center overflow-hidden">
-                  <svg viewBox="0 0 24 24" className="h-6 w-6 text-white mt-1">
-                    <path fill="currentColor" d="M12,4A4,4 0 0,1 16,8A4,4 0 0,1 12,12A4,4 0 0,1 8,8A4,4 0 0,1 12,4M12,14C16.42,14 20,15.79 20,18V20H4V18C4,15.79 7.58,14 12,14Z" />
-                  </svg>
-                </div>
-              </>
-            ) : (
+            {user && (
               <>
                 <Avatar className="h-8 w-8">
                   {(profile?.resolved_avatar_url || profile?.avatar_url) && (
