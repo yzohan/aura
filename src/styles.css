@@ -234,13 +234,12 @@
 @keyframes pulseGlow {
   0%, 100% {
     opacity: 0.2;
-    transform: scale(1);
   }
   50% {
     opacity: 0.35;
-    transform: scale(1.15);
   }
 }
+
 
 @keyframes marqueeScroll {
   from {
@@ -281,6 +280,12 @@
   .animate-gradient-shift {
     background-size: 200% 200%;
     animation: gradientShift 10s ease infinite;
+  }
+
+  .will-change-gpu {
+    will-change: transform, opacity;
+    backface-visibility: hidden;
+    transform: translateZ(0);
   }
 
   .animation-delay-100 { animation-delay: 100ms; }
