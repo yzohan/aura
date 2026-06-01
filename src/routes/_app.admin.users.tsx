@@ -88,28 +88,16 @@ function AdminUsersPage() {
   }, []);
 
   const updateRole = async (userId: string, newRole: AppRole) => {
-    const { data: existing } = await supabase
+    // Hapus semua role lama milik user ini untuk menghindari bentrok duplicate key
+    await supabase.from("user_roles").delete().eq("user_id", userId);
+    
+    // Masukkan role baru
+    const { error: err } = await supabase
       .from("user_roles")
-      .select("id")
-      .eq("user_id", userId)
-      .maybeSingle();
+      .insert({ user_id: userId, role: newRole });
 
-    let error;
-    if (existing) {
-      const { error: err } = await supabase
-        .from("user_roles")
-        .update({ role: newRole })
-        .eq("user_id", userId);
-      error = err;
-    } else {
-      const { error: err } = await supabase
-        .from("user_roles")
-        .insert({ user_id: userId, role: newRole });
-      error = err;
-    }
-
-    if (error) {
-      toast.error(error.message);
+    if (err) {
+      toast.error(err.message);
     } else {
       toast.success("Role berhasil diperbarui");
       setUsers(users.map(u => u.id === userId ? { ...u, role: newRole } : u));
@@ -147,6 +135,8 @@ function AdminUsersPage() {
       }
     } else {
       // Unblock = set to warga
+      // Hapus role lama dulu sebelum insert untuk menghindari bentrok duplicate key
+      await supabase.from("user_roles").delete().eq("user_id", userId);
       const { error } = await supabase.from("user_roles").insert({ user_id: userId, role: "warga" });
       if (error) toast.error(error.message);
       else {
