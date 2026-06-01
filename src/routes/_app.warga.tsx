@@ -481,47 +481,13 @@ function ReportForm() {
         if (savedSettings) {
           const parsedSettings = JSON.parse(savedSettings);
           if (parsedSettings.enableAutoAssign) {
-            // Ambil semua petugas lapangan
-            const { data: roleRows } = await supabase
-              .from("user_roles")
-              .select("user_id")
-              .eq("role", "petugas");
-            
-            const petugasIds = (roleRows ?? []).map((r) => r.user_id);
-            
-            // Ambil admin pertama sebagai assigned_by (karena mandatory NOT NULL)
-            const { data: adminRows } = await supabase
-              .from("user_roles")
-              .select("user_id")
-              .eq("role", "admin")
-              .limit(1);
-            
-            if (petugasIds.length > 0 && adminRows && adminRows.length > 0) {
-              // Simulasi menugaskan ke petugas terdekat (acak/available)
-              const randomIndex = Math.floor(Math.random() * petugasIds.length);
-              const assignedPetugasId = petugasIds[randomIndex];
-              const adminId = adminRows[0].user_id;
-              
-              // Buat Work Order baru
-              const { error: woErr } = await supabase.from("work_orders").insert({
-                report_id: newReportData.id,
-                assigned_to: assignedPetugasId,
-                assigned_by: adminId,
-                notes: "Ditugaskan secara otomatis oleh sistem (Auto-Assign)."
-              });
-              
-              if (!woErr) {
-                // Update status laporan ke 'in_progress' karena sudah ditugaskan ke petugas
-                await supabase
-                  .from("reports")
-                  .update({ status_pelaporan: "in_progress" })
-                  .eq("id", newReportData.id);
-                console.log("Auto-Assign berhasil untuk laporan ID:", newReportData.id);
-              } else {
-                console.error("Gagal membuat auto-assign work order:", woErr.message);
-              }
+            const { error: rpcErr } = await supabase.rpc("assign_petugas_auto", {
+              report_id: newReportData.id
+            });
+            if (rpcErr) {
+              console.error("Gagal memproses Auto-Assign via RPC:", rpcErr.message);
             } else {
-              console.warn("Auto-Assign aktif tapi tidak ditemukan Petugas Lapangan atau Admin di database.");
+              console.log("Auto-Assign berhasil via RPC untuk laporan ID:", newReportData.id);
             }
           }
         }
