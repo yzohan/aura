@@ -54,11 +54,11 @@ function HomePage() {
         <section className="relative overflow-hidden grain">
           <div className="absolute inset-0 grid-pattern opacity-60" />
           <div
-            className="pointer-events-none absolute -top-40 -right-32 h-[480px] w-[480px] rounded-full opacity-35 blur-2xl animate-pulse-glow will-change-gpu"
+            className="pointer-events-none absolute -top-40 -right-32 h-[480px] w-[480px] rounded-full opacity-35 blur-3xl animate-pulse-glow will-change-gpu"
             style={{ background: "radial-gradient(closest-side, var(--primary-glow), transparent)" }}
           />
           <div
-            className="pointer-events-none absolute -bottom-40 -left-32 h-[420px] w-[420px] rounded-full opacity-20 blur-2xl animate-pulse-glow animation-delay-300 will-change-gpu"
+            className="pointer-events-none absolute -bottom-40 -left-32 h-[420px] w-[420px] rounded-full opacity-20 blur-3xl animate-pulse-glow animation-delay-300 will-change-gpu"
             style={{ background: "radial-gradient(closest-side, var(--accent), transparent)" }}
           />
 
@@ -141,7 +141,7 @@ function HomePage() {
               </div>
 
               {/* Floating UI cards */}
-              <div className="absolute -bottom-6 -left-6 hidden w-[260px] rounded-2xl border border-border bg-card/95 p-4 shadow-soft backdrop-blur md:block animate-float-1 will-change-gpu hover:scale-105 hover:shadow-glow transition-transform duration-300 cursor-default">
+              <div className="absolute -bottom-6 -left-6 hidden w-[260px] rounded-2xl border border-border bg-card/95 p-4 shadow-soft backdrop-blur md:block animate-float-1 hover:scale-105 hover:shadow-glow transition-all duration-300 cursor-default">
                 <div className="flex items-center justify-between">
                   <p className="text-xs font-medium text-muted-foreground">Laporan minggu ini</p>
                   <span className="rounded-full bg-success/15 px-2 py-0.5 text-[10px] font-semibold text-success animate-pulse">
@@ -160,7 +160,7 @@ function HomePage() {
                 </div>
               </div>
 
-              <div className="absolute -top-4 -right-4 hidden rounded-2xl border border-border bg-card/95 p-3 shadow-soft backdrop-blur md:flex md:items-center md:gap-3 animate-float-2 will-change-gpu hover:scale-105 hover:shadow-glow transition-transform duration-300 cursor-default">
+              <div className="absolute -top-4 -right-4 hidden rounded-2xl border border-border bg-card/95 p-3 shadow-soft backdrop-blur md:flex md:items-center md:gap-3 animate-float-2 hover:scale-105 hover:shadow-glow transition-all duration-300 cursor-default">
                 <span className="flex h-9 w-9 items-center justify-center rounded-xl bg-success/15 text-success">
                   <CheckCircle2 className="h-5 w-5 animate-bounce" />
                 </span>
@@ -387,11 +387,11 @@ function HomePage() {
           <ScrollReveal direction="up">
             <div className="grain relative overflow-hidden rounded-3xl bg-hero-gradient p-10 text-primary-foreground shadow-elev md:p-16 animate-gradient-shift">
               <div
-                className="pointer-events-none absolute -right-20 -top-20 h-72 w-72 rounded-full opacity-35 blur-2xl animate-pulse-glow"
+                className="pointer-events-none absolute -right-20 -top-20 h-72 w-72 rounded-full opacity-35 blur-3xl animate-pulse-glow will-change-gpu"
                 style={{ background: "var(--accent)" }}
               />
               <div
-                className="pointer-events-none absolute -left-20 -bottom-20 h-72 w-72 rounded-full opacity-20 blur-2xl animate-pulse-glow animation-delay-500"
+                className="pointer-events-none absolute -left-20 -bottom-20 h-72 w-72 rounded-full opacity-20 blur-3xl animate-pulse-glow animation-delay-500 will-change-gpu"
                 style={{ background: "var(--primary-glow)" }}
               />
               <div className="relative grid items-center gap-8 md:grid-cols-[1fr_auto]">
@@ -461,7 +461,7 @@ function ScrollReveal({ children, className = "", delay = 0, direction = "up" }:
   return (
     <div
       ref={ref}
-      className={`transition-[opacity,transform] will-change-gpu duration-1000 ease-[cubic-bezier(0.16,1,0.3,1)] ${
+      className={`transition-all duration-1000 ease-[cubic-bezier(0.16,1,0.3,1)] ${
         isIntersecting 
           ? "opacity-100 translate-y-0 translate-x-0" 
           : `opacity-0 ${directionClasses[direction]}`
