@@ -54,11 +54,11 @@ function HomePage() {
         <section className="relative overflow-hidden grain">
           <div className="absolute inset-0 grid-pattern opacity-60" />
           <div
-            className="pointer-events-none absolute -top-40 -right-32 h-[480px] w-[480px] rounded-full opacity-35 blur-3xl animate-pulse-glow will-change-gpu"
+            className="pointer-events-none absolute -top-40 -right-32 h-[480px] w-[480px] rounded-full opacity-35 blur-2xl animate-pulse-glow will-change-gpu"
             style={{ background: "radial-gradient(closest-side, var(--primary-glow), transparent)" }}
           />
           <div
-            className="pointer-events-none absolute -bottom-40 -left-32 h-[420px] w-[420px] rounded-full opacity-20 blur-3xl animate-pulse-glow animation-delay-300 will-change-gpu"
+            className="pointer-events-none absolute -bottom-40 -left-32 h-[420px] w-[420px] rounded-full opacity-20 blur-2xl animate-pulse-glow animation-delay-300 will-change-gpu"
             style={{ background: "radial-gradient(closest-side, var(--accent), transparent)" }}
           />
 
@@ -387,11 +387,11 @@ function HomePage() {
           <ScrollReveal direction="up">
             <div className="grain relative overflow-hidden rounded-3xl bg-hero-gradient p-10 text-primary-foreground shadow-elev md:p-16 animate-gradient-shift">
               <div
-                className="pointer-events-none absolute -right-20 -top-20 h-72 w-72 rounded-full opacity-35 blur-3xl animate-pulse-glow"
+                className="pointer-events-none absolute -right-20 -top-20 h-72 w-72 rounded-full opacity-35 blur-2xl animate-pulse-glow"
                 style={{ background: "var(--accent)" }}
               />
               <div
-                className="pointer-events-none absolute -left-20 -bottom-20 h-72 w-72 rounded-full opacity-20 blur-3xl animate-pulse-glow animation-delay-500"
+                className="pointer-events-none absolute -left-20 -bottom-20 h-72 w-72 rounded-full opacity-20 blur-2xl animate-pulse-glow animation-delay-500"
                 style={{ background: "var(--primary-glow)" }}
               />
               <div className="relative grid items-center gap-8 md:grid-cols-[1fr_auto]">
