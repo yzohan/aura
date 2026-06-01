@@ -21,7 +21,7 @@ export function DashboardShell({
 
   return (
     <div className="flex min-h-screen bg-secondary/30">
-      <aside className="hidden w-64 shrink-0 flex-col border-r border-border bg-sidebar p-4 md:flex">
+      <aside className="sticky top-0 h-screen hidden w-64 shrink-0 flex-col border-r border-border bg-sidebar p-4 md:flex">
         <Link to="/" className="mb-8 flex items-center gap-2 px-2">
           <span className="flex h-9 w-9 items-center justify-center rounded-xl bg-leaf-gradient text-primary-foreground shadow-soft">
             <Leaf className="h-5 w-5" />
