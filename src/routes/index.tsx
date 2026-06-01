@@ -277,7 +277,7 @@ function HomePage() {
             </h2>
           </div>
 
-          <div className="relative mt-14 grid gap-6 md:grid-cols-3">
+          <div className="relative mt-14 grid gap-6 md:grid-cols-4">
             <div
               aria-hidden
               className="absolute left-0 right-0 top-12 hidden h-px md:block"
@@ -291,19 +291,25 @@ function HomePage() {
                 n: "01",
                 icon: Camera,
                 t: "Warga melapor",
-                d: "Kirim foto, lokasi GPS, dan deskripsi kendala. Selesai dalam 30 detik.",
+                d: "Mengirimkan laporan foto kerusakan jalan, lokasi GPS, dan deskripsi kendala secara publik dalam 30 detik.",
               },
               {
                 n: "02",
-                icon: MapPin,
-                t: "Admin memetakan",
-                d: "Dashboard GIS memetakan sebaran masalah dan menentukan urgensi penanganan.",
+                icon: Sparkles,
+                t: "Sistem AI mengolah",
+                d: "AI otomatis mendeteksi lubang, menganalisis objek, serta mengklasifikasikan tingkat keparahan laporan secara real-time.",
               },
               {
                 n: "03",
                 icon: Wrench,
                 t: "Petugas menangani",
-                d: "Work order otomatis ke petugas terdekat, lengkap dengan bukti foto saat selesai.",
+                d: "Petugas lapangan menerima instruksi kerja (work order), melakukan perbaikan, dan mengirimkan bukti foto selesai.",
+              },
+              {
+                n: "04",
+                icon: ShieldCheck,
+                t: "Admin memverifikasi",
+                d: "Admin meninjau status penanganan dan memverifikasi apakah petugas sudah selesai mengerjakan tugasnya dengan benar.",
               },
             ].map(({ n, icon: Icon, t, d }) => (
               <div
