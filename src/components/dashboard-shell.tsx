@@ -62,13 +62,6 @@ export function DashboardShell({
                   <p className="truncate text-xs text-muted-foreground">Mode Warga</p>
                 </div>
               </div>
-              {!user && (
-                <Link to="/auth/login" className="block w-full">
-                  <Button variant="outline" size="sm" className="w-full justify-start text-xs">
-                    <LogOut className="mr-2 h-3.5 w-3.5 rotate-180" /> Masuk Akun
-                  </Button>
-                </Link>
-              )}
             </div>
           ) : (
             <>
@@ -117,13 +110,6 @@ export function DashboardShell({
                     <path fill="currentColor" d="M12,4A4,4 0 0,1 16,8A4,4 0 0,1 12,12A4,4 0 0,1 8,8A4,4 0 0,1 12,4M12,14C16.42,14 20,15.79 20,18V20H4V18C4,15.79 7.58,14 12,14Z" />
                   </svg>
                 </div>
-                {!user && (
-                  <Link to="/auth/login">
-                    <Button variant="outline" size="sm" className="h-8 px-2.5 text-xs">
-                      Masuk
-                    </Button>
-                  </Link>
-                )}
               </>
             ) : (
               <>
