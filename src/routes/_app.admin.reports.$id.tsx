@@ -116,6 +116,7 @@ function ReportDetailPage() {
   const [loading, setLoading] = useState(true);
   const [photoLoaded, setPhotoLoaded] = useState(false);
   const [photoUrl, setPhotoUrl] = useState<string | null>(null);
+  const [assignedPetugasId, setAssignedPetugasId] = useState<string | null>(null);
   const [photoError, setPhotoError] = useState(false);
 
   useEffect(() => {
@@ -191,6 +192,17 @@ function ReportDetailPage() {
         }
       }
 
+      // Load active work order to see who is assigned
+      const { data: woData } = await supabase
+        .from("work_orders")
+        .select("assigned_to")
+        .eq("report_id", id)
+        .maybeSingle();
+      
+      if (woData) {
+        setAssignedPetugasId(woData.assigned_to);
+      }
+
       setLoading(false);
     };
 
@@ -240,6 +252,7 @@ function ReportDetailPage() {
     }
 
     await supabase.from("reports").update({ status_pelaporan: "in_progress" }).eq("id", report.id);
+    setAssignedPetugasId(assignedTo);
     toast.success("Petugas berhasil ditugaskan");
   };
 
@@ -660,7 +673,7 @@ function ReportDetailPage() {
                 {/* Assign Petugas */}
                 <div className="space-y-1.5">
                   <label className="text-xs font-bold uppercase text-muted-foreground/90 tracking-wider">Tugaskan Petugas Lapangan</label>
-                  <Select onValueChange={(v) => assignPetugas(v)}>
+                  <Select value={assignedPetugasId || undefined} onValueChange={(v) => assignPetugas(v)}>
                     <SelectTrigger className="h-9 text-xs bg-background border border-border/80 rounded-lg font-medium">
                       <SelectValue placeholder="Pilih Petugas Lapangan..." />
                     </SelectTrigger>
