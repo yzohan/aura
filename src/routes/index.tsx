@@ -83,26 +83,24 @@ function HomePage() {
 
           <div className="container relative mx-auto grid gap-12 px-4 py-20 md:grid-cols-[1.05fr_1fr] md:py-28">
             <div className="flex flex-col justify-center">
-              <Badge className="w-fit gap-1.5 border-primary/20 bg-primary/10 px-3 py-1 text-primary hover:bg-primary/15 animate-fade-in-up">
+              <Badge className="w-fit gap-1.5 border-emerald-200/50 bg-emerald-50/80 px-3 py-1 text-emerald-800 hover:bg-emerald-100/90 shadow-xs animate-fade-in-up">
                 <span className="relative flex h-2 w-2">
-                  <span className="absolute inline-flex h-full w-full animate-ping rounded-full bg-primary opacity-60" />
-                  <span className="relative inline-flex h-2 w-2 rounded-full bg-primary" />
+                  <span className="absolute inline-flex h-full w-full animate-ping rounded-full bg-emerald-500 opacity-60" />
+                  <span className="relative inline-flex h-2 w-2 rounded-full bg-emerald-500" />
                 </span>
                 Live di 3 kelurahan percontohan
               </Badge>
 
-              <h1 className="mt-5 text-4xl font-bold tracking-tight text-balance md:text-[3.75rem] md:leading-[1.05] animate-fade-in-up animation-delay-100">
-                Kota yang{" "}
+              <h1 className="mt-5 text-3xl sm:text-4xl md:text-[3.25rem] lg:text-[3.75rem] font-extrabold tracking-tight md:leading-[1.15] animate-fade-in-up animation-delay-100">
+                Langkah Kecil, <br className="hidden md:inline" />
                 <span className="bg-gradient-to-r from-primary via-primary-glow to-success bg-clip-text text-transparent">
-                  menyembuhkan
+                  Dampak Nyata
                 </span>{" "}
-                dirinya sendiri.
+                Bagi Jalanan Kota.
               </h1>
 
-              <p className="mt-6 max-w-xl text-lg leading-relaxed text-muted-foreground text-balance animate-fade-in-up animation-delay-200">
-                AURA mengintegrasikan warga, petugas lapangan, dan admin dinas dalam satu alur
-                kerja terpadu — dari laporan foto di trotoar sampai work order yang selesai sore
-                itu juga.
+              <p className="mt-4 md:mt-6 max-w-xl text-sm sm:text-base md:text-lg leading-relaxed text-muted-foreground/90 font-medium animate-fade-in-up animation-delay-200">
+                Menghubungkan warga dan petugas dalam sistem pelaporan terpadu untuk jalan bebas lubang. Jadilah bagian dari solusi tata kota di Indonesia yang lebih responsif.
               </p>
 
               <div className="mt-8 flex flex-wrap gap-3 animate-fade-in-up animation-delay-300">
