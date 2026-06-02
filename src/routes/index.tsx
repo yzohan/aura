@@ -26,7 +26,7 @@ import { Button } from "@/components/ui/button";
 import { Badge } from "@/components/ui/badge";
 import { JakartaDiorama } from "@/components/jakarta-diorama";
 import potholeImg from "@/assets/pothole_road.jpg";
-import mentengRoadImg from "@/assets/menteng_road.png";
+import mentengRoadImg from "@/assets/menteng_road.jpg";
 import kebayoranRoadImg from "@/assets/kebayoran_road.jpg";
 import senayanRoadImg from "@/assets/senayan_road.png";
 import babakanRoadImg from "@/assets/babakan_road.jpg";
