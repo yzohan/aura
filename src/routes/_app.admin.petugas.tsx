@@ -391,7 +391,7 @@ function AdminPetugasPage() {
                   <Label htmlFor="add-name">Nama Lengkap</Label>
                   <Input 
                     id="add-name" 
-                    placeholder="Contoh: Wowok Hitam" 
+                    placeholder="Contoh: Mas Rusdi" 
                     value={addForm.full_name}
                     onChange={(e) => setAddForm(prev => ({ ...prev, full_name: e.target.value }))}
                   />
@@ -401,7 +401,7 @@ function AdminPetugasPage() {
                   <Input 
                     id="add-email" 
                     type="email"
-                    placeholder="wowok@aura.com" 
+                    placeholder="RusdiImut@aura.com" 
                     value={addForm.email}
                     onChange={(e) => setAddForm(prev => ({ ...prev, email: e.target.value }))}
                   />
@@ -556,7 +556,7 @@ function AdminPetugasPage() {
                           <Label htmlFor="edit-name">Nama Lengkap</Label>
                           <Input 
                             id="edit-name" 
-                            placeholder="Contoh: Wowok Lapangan" 
+                            placeholder="Contoh: Mas Rusdi" 
                             value={editForm.full_name}
                             onChange={(e) => setEditForm(prev => ({ ...prev, full_name: e.target.value }))}
                             required

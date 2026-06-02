@@ -81,7 +81,7 @@ const TEAM_MEMBERS = [
     id: 3,
     name: "Nathania Englandia Saraswati",
     role: "Full-Stack Development",
-    task: "Merancang arsitektur database Supabase, mengelola REST APIs, sistem otentikasi multi-role (Warga/Petugas/Admin), serta optimasi serverless Cloudflare.",
+    task: "Merancang arsitektur database Supabase, mengelola REST APIs, serta optimasi serverless Cloudflare.",
     github: "https://github.com/yzohan",
     linkedin: "https://linkedin.com/in/nathania-englandia-b4b59836b",
     instagram: "https://instagram.com/nvzyox",
