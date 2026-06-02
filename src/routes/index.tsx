@@ -29,6 +29,7 @@ import potholeImg from "@/assets/pothole_road.jpg";
 import mentengRoadImg from "@/assets/menteng_road.png";
 import kebayoranRoadImg from "@/assets/kebayoran_road.png";
 import senayanRoadImg from "@/assets/senayan_road.png";
+import babakanRoadImg from "@/assets/babakan_road.jpg";
 
 export const Route = createFileRoute("/")({
   head: () => ({
@@ -85,8 +86,8 @@ function HomePage() {
             style={{ background: "radial-gradient(closest-side, var(--accent), transparent)" }}
           />
 
-          <div className="container relative mx-auto grid gap-12 px-4 py-20 md:grid-cols-[1.05fr_1fr] md:py-28">
-            <div className="flex flex-col justify-center space-y-6">
+          <div className="container relative mx-auto grid gap-8 px-4 py-8 md:grid-cols-[1.05fr_1fr] md:py-12">
+            <div className="flex flex-col justify-center space-y-4">
               <Badge className="w-fit gap-1.5 border-emerald-200/50 bg-emerald-50/80 px-3 py-1 text-emerald-800 hover:bg-emerald-100/90 shadow-xs animate-fade-in-up">
                 <span className="relative flex h-2 w-2">
                   <span className="absolute inline-flex h-full w-full animate-ping rounded-full bg-emerald-500 opacity-60" />
@@ -95,7 +96,7 @@ function HomePage() {
                 Live di 3 kelurahan percontohan di Indonesia
               </Badge>
 
-              <h1 className="mt-5 text-3xl sm:text-4xl md:text-[3.25rem] lg:text-[3.75rem] font-extrabold tracking-tight md:leading-[1.15] animate-fade-in-up">
+              <h1 className="mt-3 text-3xl sm:text-4xl md:text-[3.25rem] lg:text-[3.75rem] font-extrabold tracking-tight md:leading-[1.15] animate-fade-in-up">
                 Langkah Kecil, <br className="hidden md:inline" />
                 <span className="bg-gradient-to-r from-primary via-primary-glow to-success bg-clip-text text-transparent">
                   Dampak Nyata
@@ -103,11 +104,11 @@ function HomePage() {
                 Bagi Jalanan Kota.
               </h1>
 
-              <p className="mt-4 md:mt-6 max-w-xl text-sm sm:text-base md:text-lg leading-relaxed text-muted-foreground/90 font-medium animate-fade-in-up">
+              <p className="mt-3 md:mt-4 max-w-xl text-sm sm:text-base md:text-lg leading-relaxed text-muted-foreground/90 font-medium animate-fade-in-up">
                 Menghubungkan warga dan petugas dalam sistem pelaporan terpadu untuk jalan bebas lubang. Jadilah bagian dari solusi tata kota di Indonesia yang lebih responsif.
               </p>
 
-              <div className="mt-8 flex flex-wrap gap-3 animate-fade-in-up">
+              <div className="mt-5 flex flex-wrap gap-3 animate-fade-in-up">
                 <Button
                   asChild
                   size="lg"
@@ -122,7 +123,7 @@ function HomePage() {
                 </Button>
               </div>
 
-              <div className="mt-10 flex flex-wrap items-center gap-x-6 gap-y-3 text-sm text-muted-foreground animate-fade-in-up">
+              <div className="mt-6 flex flex-wrap items-center gap-x-6 gap-y-3 text-sm text-muted-foreground animate-fade-in-up">
                 <div className="flex items-center gap-2 group cursor-default">
                   <ShieldCheck className="h-4 w-4 text-primary transition-transform duration-300 group-hover:scale-110" /> Data spasial terverifikasi
                 </div>
@@ -163,12 +164,12 @@ function HomePage() {
         </section>
 
         {/* WHY CHOOSE AURA (FEATURES & SIMULATOR) */}
-        <section className="container mx-auto px-4 py-16 md:py-24 border-t border-border/60">
-          <div className="grid gap-12 lg:grid-cols-[1.1fr_1fr] items-center">
+        <section className="container mx-auto px-4 py-8 md:py-11 border-t border-border/60">
+          <div className="grid gap-8 lg:grid-cols-[1.1fr_1fr] items-center">
             
             {/* Left Column: WANDER-style vertical cards & text */}
-            <div className="space-y-8">
-              <div className="space-y-4">
+            <div className="space-y-6">
+              <div className="space-y-3">
                 <Badge variant="outline" className="border-primary/20 text-primary bg-primary/5 px-3 py-1 font-semibold text-xs tracking-wider uppercase">
                   Mengapa Memilih AURA
                 </Badge>
@@ -180,50 +181,56 @@ function HomePage() {
                 </p>
               </div>
 
-              <div className="space-y-4">
+              <div className="space-y-3">
                 {/* Card 1 */}
-                <div className="flex items-center gap-5 p-5 rounded-2xl bg-card border border-border/80 shadow-soft transition-all duration-300 hover:border-primary/20 hover:shadow-glow">
-                  <span className="flex h-12 w-12 shrink-0 items-center justify-center rounded-xl bg-primary/10 text-primary">
-                    <MapPin className="w-5 h-5" />
-                  </span>
-                  <div>
-                    <h4 className="text-sm font-extrabold tracking-tight">Deteksi Lokasi Otomatis</h4>
-                    <p className="text-[11px] font-medium leading-relaxed text-muted-foreground mt-0.5">
-                      Sistem kami secara otomatis merekam koordinat GPS presisi dan mencocokkannya dengan wilayah kelurahan terkait.
-                    </p>
+                <ScrollReveal direction="up" delay={50}>
+                  <div className="flex items-center gap-4 p-4 rounded-2xl bg-card border border-border/80 shadow-soft transition-all duration-300 hover:border-primary/20 hover:shadow-glow">
+                    <span className="flex h-11 w-11 shrink-0 items-center justify-center rounded-xl bg-primary/10 text-primary">
+                      <MapPin className="w-5 h-5" />
+                    </span>
+                    <div>
+                      <h4 className="text-sm font-extrabold tracking-tight">Deteksi Lokasi Otomatis</h4>
+                      <p className="text-[11px] font-medium leading-relaxed text-muted-foreground mt-0.5">
+                        Sistem kami secara otomatis merekam koordinat GPS presisi and mencocokkannya dengan wilayah kelurahan terkait.
+                      </p>
+                    </div>
                   </div>
-                </div>
+                </ScrollReveal>
 
                 {/* Card 2 */}
-                <div className="flex items-center gap-5 p-5 rounded-2xl bg-card border border-border/80 shadow-soft transition-all duration-300 hover:border-primary/20 hover:shadow-glow">
-                  <span className="flex h-12 w-12 shrink-0 items-center justify-center rounded-xl bg-primary/10 text-primary">
-                    <Wrench className="w-5 h-5" />
-                  </span>
-                  <div>
-                    <h4 className="text-sm font-extrabold tracking-tight">Penugasan Kerja Instan</h4>
-                    <p className="text-[11px] font-medium leading-relaxed text-muted-foreground mt-0.5">
-                      Laporan yang lolos verifikasi AI langsung didisposisikan ke aplikasi petugas lapangan untuk penanganan segera.
-                    </p>
+                <ScrollReveal direction="up" delay={150}>
+                  <div className="flex items-center gap-4 p-4 rounded-2xl bg-card border border-border/80 shadow-soft transition-all duration-300 hover:border-primary/20 hover:shadow-glow">
+                    <span className="flex h-11 w-11 shrink-0 items-center justify-center rounded-xl bg-primary/10 text-primary">
+                      <Wrench className="w-5 h-5" />
+                    </span>
+                    <div>
+                      <h4 className="text-sm font-extrabold tracking-tight">Penugasan Kerja Instan</h4>
+                      <p className="text-[11px] font-medium leading-relaxed text-muted-foreground mt-0.5">
+                        Laporan yang lolos verifikasi AI langsung didisposisikan ke aplikasi petugas lapangan untuk penanganan segera.
+                      </p>
+                    </div>
                   </div>
-                </div>
+                </ScrollReveal>
 
                 {/* Card 3 */}
-                <div className="flex items-center gap-5 p-5 rounded-2xl bg-card border border-border/80 shadow-soft transition-all duration-300 hover:border-primary/20 hover:shadow-glow">
-                  <span className="flex h-12 w-12 shrink-0 items-center justify-center rounded-xl bg-primary/10 text-primary">
-                    <ShieldCheck className="w-5 h-5" />
-                  </span>
-                  <div>
-                    <h4 className="text-sm font-extrabold tracking-tight">Monitoring Progres Transparansi</h4>
-                    <p className="text-[11px] font-medium leading-relaxed text-muted-foreground mt-0.5">
-                      Pantau setiap tahapan pengerjaan secara langsung melalui peta GIS publik, mulai dari aduan masuk hingga jalan mulus kembali.
-                    </p>
+                <ScrollReveal direction="up" delay={250}>
+                  <div className="flex items-center gap-4 p-4 rounded-2xl bg-card border border-border/80 shadow-soft transition-all duration-300 hover:border-primary/20 hover:shadow-glow">
+                    <span className="flex h-11 w-11 shrink-0 items-center justify-center rounded-xl bg-primary/10 text-primary">
+                      <ShieldCheck className="w-5 h-5" />
+                    </span>
+                    <div>
+                      <h4 className="text-sm font-extrabold tracking-tight">Monitoring Progres Transparansi</h4>
+                      <p className="text-[11px] font-medium leading-relaxed text-muted-foreground mt-0.5">
+                        Pantau setiap tahapan pengerjaan secara langsung melalui peta GIS publik, mulai dari aduan masuk hingga jalan mulus kembali.
+                      </p>
+                    </div>
                   </div>
-                </div>
+                </ScrollReveal>
               </div>
 
               {/* Horizontal Stats counters row */}
-              <div className="grid grid-cols-3 gap-6 pt-6 border-t border-border/60">
-                <div className="space-y-2">
+              <div className="grid grid-cols-3 gap-4 pt-4 border-t border-border/60">
+                <div className="space-y-1">
                   <div className="flex items-center gap-2">
                     <span className="flex h-8 w-8 items-center justify-center rounded-full bg-primary/10 text-primary">
                       <FileText className="w-4 h-4" />
@@ -233,7 +240,7 @@ function HomePage() {
                   <p className="text-xs text-muted-foreground font-semibold">Laporan Selesai</p>
                 </div>
                 
-                <div className="space-y-2">
+                <div className="space-y-1">
                   <div className="flex items-center gap-2">
                     <span className="flex h-8 w-8 items-center justify-center rounded-full bg-primary/10 text-primary">
                       <CheckCircle2 className="w-4 h-4" />
@@ -243,7 +250,7 @@ function HomePage() {
                   <p className="text-xs text-muted-foreground font-semibold">Penyelesaian</p>
                 </div>
                 
-                <div className="space-y-2">
+                <div className="space-y-1">
                   <div className="flex items-center gap-2">
                     <span className="flex h-8 w-8 items-center justify-center rounded-full bg-primary/10 text-primary">
                       <Users className="w-4 h-4" />
@@ -256,7 +263,7 @@ function HomePage() {
             </div>
 
             {/* Right Column: Smartphone Simulator */}
-            <div className="flex justify-center lg:justify-end">
+            <ScrollReveal direction="up" delay={200} className="flex justify-center lg:justify-end">
               <div className="relative w-[300px] h-[580px] bg-slate-950 rounded-[3rem] p-3.5 shadow-2xl border-[6px] border-slate-800 dark:border-slate-900 overflow-hidden select-none">
                 {/* Dynamic Island Notch */}
                 <div className="absolute top-4 left-1/2 -translate-x-1/2 w-24 h-4 bg-slate-950 rounded-full z-30 flex items-center justify-center border border-white/5">
@@ -389,16 +396,16 @@ function HomePage() {
                   
                 </div>
               </div>
-            </div>
+            </ScrollReveal>
             
           </div>
         </section>
 
         {/* KONDISI KELURAHAN TERKINI */}
-        <section className="bg-secondary/35 dark:bg-card/45 border-y border-border/40 py-16 md:py-24 relative overflow-hidden">
+        <section className="bg-secondary/35 dark:bg-card/45 border-y border-border/40 py-8 md:py-11 relative overflow-hidden">
           <div className="absolute inset-0 grid-pattern opacity-30 pointer-events-none" />
           <div className="container mx-auto px-4 relative z-10">
-            <div className="flex flex-col md:flex-row md:items-end justify-between gap-6 mb-10">
+            <ScrollReveal direction="up" className="flex flex-col md:flex-row md:items-end justify-between gap-6 mb-6">
               <div className="space-y-3">
                 <Badge variant="outline" className="border-primary/20 text-primary bg-primary/5 px-3 py-1 font-semibold uppercase tracking-wider text-xs">
                   Daerah Aktif
@@ -418,7 +425,7 @@ function HomePage() {
               >
                 <Link to="/warga">Lihat Peta Interaktif</Link>
               </Button>
-            </div>
+            </ScrollReveal>
             
             {/* 4 Cards Grid */}
             <div className="grid gap-6 grid-cols-1 sm:grid-cols-2 lg:grid-cols-4">
@@ -457,54 +464,55 @@ function HomePage() {
                   stat: "92% Selesai",
                   rating: "4.5",
                   reports: "280 laporan",
-                  img: potholeImg,
+                  img: babakanRoadImg,
                 },
-              ].map((c) => (
-                <div 
-                  key={c.id} 
-                  className="group relative h-[340px] rounded-3xl overflow-hidden shadow-soft hover:shadow-glow transition-all duration-500 cursor-pointer border border-border/40 bg-card"
-                >
-                  {/* Background image */}
-                  <img 
-                    src={c.img} 
-                    alt={c.name}
-                    className="absolute inset-0 w-full h-full object-cover group-hover:scale-105 transition-transform duration-700" 
-                  />
-                  
-                  {/* Dark gradient overlay */}
-                  <div className="absolute inset-0 bg-gradient-to-t from-black/90 via-black/35 to-transparent opacity-95" />
-                  
-                  {/* Top right pill */}
-                  <div className="absolute top-4 right-4">
-                    <span className="bg-white/95 dark:bg-[#151c19]/95 text-emerald-800 dark:text-emerald-300 text-[10px] font-black tracking-wide px-3 py-1.5 rounded-full shadow-xs">
-                      {c.stat}
-                    </span>
-                  </div>
-                  
-                  {/* Bottom details */}
-                  <div className="absolute bottom-0 inset-x-0 p-5 text-white flex flex-col justify-end">
-                    <span className="text-[9px] text-emerald-300/90 font-bold uppercase tracking-wider">{c.sub}</span>
-                    <h4 className="text-base font-extrabold tracking-tight mt-0.5">{c.name}</h4>
+              ].map((c, index) => (
+                <ScrollReveal key={c.id} delay={index * 100} direction="up">
+                  <div 
+                    className="group relative h-[340px] rounded-3xl overflow-hidden shadow-soft hover:shadow-glow transition-all duration-500 cursor-pointer border border-border/40 bg-card"
+                  >
+                    {/* Background image */}
+                    <img 
+                      src={c.img} 
+                      alt={c.name}
+                      className="absolute inset-0 w-full h-full object-cover group-hover:scale-105 transition-transform duration-700" 
+                    />
                     
-                    {/* Rating/reports */}
-                    <div className="flex items-center gap-1.5 mt-2.5 pt-2.5 border-t border-white/10 text-xs text-white/80">
-                      <Star className="w-3.5 h-3.5 fill-amber-400 stroke-amber-400" />
-                      <span className="font-extrabold text-white">{c.rating}</span>
-                      <span className="opacity-60">({c.reports})</span>
+                    {/* Dark gradient overlay */}
+                    <div className="absolute inset-0 bg-gradient-to-t from-black/90 via-black/35 to-transparent opacity-95" />
+                    
+                    {/* Top right pill */}
+                    <div className="absolute top-4 right-4">
+                      <span className="bg-white/95 dark:bg-[#151c19]/95 text-emerald-800 dark:text-emerald-300 text-[10px] font-black tracking-wide px-3 py-1.5 rounded-full shadow-xs">
+                        {c.stat}
+                      </span>
+                    </div>
+                    
+                    {/* Bottom details */}
+                    <div className="absolute bottom-0 inset-x-0 p-5 text-white flex flex-col justify-end">
+                      <span className="text-[9px] text-emerald-300/90 font-bold uppercase tracking-wider">{c.sub}</span>
+                      <h4 className="text-base font-extrabold tracking-tight mt-0.5">{c.name}</h4>
+                      
+                      {/* Rating/reports */}
+                      <div className="flex items-center gap-1.5 mt-2.5 pt-2.5 border-t border-white/10 text-xs text-white/80">
+                        <Star className="w-3.5 h-3.5 fill-amber-400 stroke-amber-400" />
+                        <span className="font-extrabold text-white">{c.rating}</span>
+                        <span className="opacity-60">({c.reports})</span>
+                      </div>
                     </div>
                   </div>
-                </div>
+                </ScrollReveal>
               ))}
             </div>
           </div>
         </section>
 
         {/* PROGRAM UNGGULAN */}
-        <section className="container mx-auto px-4 py-16 md:py-24">
-          <div className="grid gap-6 md:grid-cols-[1.1fr_1.2fr_1.2fr]">
+        <section className="container mx-auto px-4 py-8 md:py-11">
+          <div className="grid gap-5 md:grid-cols-[1.1fr_1.2fr_1.2fr]">
             
             {/* Left Card: AURA Theme Background */}
-            <div className="flex flex-col justify-between p-8 rounded-3xl bg-secondary/80 dark:bg-secondary/20 border border-border/60 text-foreground min-h-[300px]">
+            <ScrollReveal delay={0} direction="up" className="flex flex-col justify-between p-6 rounded-3xl bg-secondary/80 dark:bg-secondary/20 border border-border/60 text-foreground min-h-[300px]">
               <div className="space-y-3">
                 <span className="text-[10px] font-extrabold uppercase tracking-wider text-primary">Program Terpadu</span>
                 <h3 className="text-2xl font-black tracking-tight leading-tight text-foreground">
@@ -521,53 +529,57 @@ function HomePage() {
               >
                 <Link to="/fitur">Jelajahi Fitur</Link>
               </Button>
-            </div>
+            </ScrollReveal>
             
             {/* Middle Card */}
-            <div className="group relative rounded-3xl overflow-hidden min-h-[300px] shadow-soft border border-border/40 cursor-pointer bg-card">
-              <img 
-                src={kebayoranRoadImg} 
-                alt="Jalan Bebas Lubang" 
-                className="absolute inset-0 w-full h-full object-cover group-hover:scale-105 transition-transform duration-500"
-              />
-              <div className="absolute inset-0 bg-gradient-to-t from-black/80 via-black/20 to-transparent" />
-              <div className="absolute bottom-5 left-5 right-5 text-white">
-                <span className="text-[10px] text-emerald-300 font-extrabold uppercase tracking-widest">Inisiatif 01</span>
-                <h4 className="text-lg font-black tracking-tight mt-0.5">Gerakan Jalan Bebas Lubang</h4>
-                <p className="text-[10px] text-white/80 mt-1 leading-relaxed">Pemberantasan jalan rusak secara masif di kelurahan percontohan.</p>
+            <ScrollReveal delay={150} direction="up">
+              <div className="group relative rounded-3xl overflow-hidden min-h-[300px] shadow-soft border border-border/40 cursor-pointer bg-card">
+                <img 
+                  src={kebayoranRoadImg} 
+                  alt="Jalan Bebas Lubang" 
+                  className="absolute inset-0 w-full h-full object-cover group-hover:scale-105 transition-transform duration-500"
+                />
+                <div className="absolute inset-0 bg-gradient-to-t from-black/80 via-black/20 to-transparent" />
+                <div className="absolute bottom-5 left-5 right-5 text-white">
+                  <span className="text-[10px] text-emerald-300 font-extrabold uppercase tracking-widest">Inisiatif 01</span>
+                  <h4 className="text-lg font-black tracking-tight mt-0.5">Gerakan Jalan Bebas Lubang</h4>
+                  <p className="text-[10px] text-white/80 mt-1 leading-relaxed">Pemberantasan jalan rusak secara masif di kelurahan percontohan.</p>
+                </div>
               </div>
-            </div>
+            </ScrollReveal>
 
             {/* Right Card */}
-            <div className="group relative rounded-3xl overflow-hidden min-h-[300px] shadow-soft border border-border/40 cursor-pointer bg-card">
-              <img 
-                src={mentengRoadImg} 
-                alt="Pedestrian Ramah Difabel" 
-                className="absolute inset-0 w-full h-full object-cover group-hover:scale-105 transition-transform duration-500"
-              />
-              <div className="absolute inset-0 bg-gradient-to-t from-black/80 via-black/20 to-transparent" />
-              <div className="absolute bottom-5 left-5 right-5 text-white">
-                <span className="text-[10px] text-emerald-300 font-extrabold uppercase tracking-widest">Inisiatif 02</span>
-                <h4 className="text-lg font-black tracking-tight mt-0.5">Pedestrian Ramah Difabel</h4>
-                <p className="text-[10px] text-white/80 mt-1 leading-relaxed">Restorasi trotoar berlubang menjadi jalur ramah pejalan kaki & difabel.</p>
+            <ScrollReveal delay={300} direction="up">
+              <div className="group relative rounded-3xl overflow-hidden min-h-[300px] shadow-soft border border-border/40 cursor-pointer bg-card">
+                <img 
+                  src={mentengRoadImg} 
+                  alt="Pedestrian Ramah Difabel" 
+                  className="absolute inset-0 w-full h-full object-cover group-hover:scale-105 transition-transform duration-500"
+                />
+                <div className="absolute inset-0 bg-gradient-to-t from-black/80 via-black/20 to-transparent" />
+                <div className="absolute bottom-5 left-5 right-5 text-white">
+                  <span className="text-[10px] text-emerald-300 font-extrabold uppercase tracking-widest">Inisiatif 02</span>
+                  <h4 className="text-lg font-black tracking-tight mt-0.5">Pedestrian Ramah Difabel</h4>
+                  <p className="text-[10px] text-white/80 mt-1 leading-relaxed">Restorasi trotoar berlubang menjadi jalur ramah pejalan kaki & difabel.</p>
+                </div>
               </div>
-            </div>
+            </ScrollReveal>
 
           </div>
         </section>
 
         {/* HOW IT WORKS */}
-        <section className="container mx-auto px-4 py-16 md:py-24 border-t border-border/60">
-          <div className="mx-auto max-w-2xl text-center mb-12">
+        <section className="container mx-auto px-4 py-8 md:py-11 border-t border-border/60">
+          <ScrollReveal direction="up" className="mx-auto max-w-2xl text-center mb-6">
             <Badge variant="outline" className="border-accent/30 text-accent bg-accent/5 px-3 py-1 font-semibold uppercase tracking-wider text-xs">
               Alur Kerja
             </Badge>
             <h2 className="mt-4 text-3xl font-extrabold tracking-tight text-foreground md:text-4xl">
               Dari Foto Laporan ke Perbaikan dalam Hitungan Jam
             </h2>
-          </div>
+          </ScrollReveal>
 
-          <div className="grid gap-6 md:grid-cols-4">
+          <div className="grid gap-5 md:grid-cols-4">
             {[
               {
                 n: "01",
@@ -593,20 +605,21 @@ function HomePage() {
                 t: "Selesai & Terbuka",
                 d: "Admin memverifikasi perbaikan dan status diperbarui di peta GIS publik warga.",
               },
-            ].map(({ n, icon: Icon, t, d }) => (
-              <div 
-                key={n} 
-                className="group relative rounded-2xl border border-border/80 bg-card p-6 shadow-soft hover:shadow-glow hover:border-primary/20 transition-all duration-300"
-              >
-                <div className="flex items-center justify-between">
-                  <span className="text-xs font-black bg-primary/10 text-primary px-2.5 py-0.5 rounded-full">
-                    Langkah {n}
-                  </span>
-                  <Icon className="h-5 w-5 text-muted-foreground group-hover:text-primary transition-colors" />
+            ].map(({ n, icon: Icon, t, d }, index) => (
+              <ScrollReveal key={n} delay={index * 100} direction="up" className="w-full h-full">
+                <div 
+                  className="h-full group relative rounded-2xl border border-border/80 bg-card p-5 shadow-soft hover:shadow-glow hover:border-primary/20 transition-all duration-300"
+                >
+                  <div className="flex items-center justify-between">
+                    <span className="text-xs font-black bg-primary/10 text-primary px-2.5 py-0.5 rounded-full">
+                      Langkah {n}
+                    </span>
+                    <Icon className="h-5 w-5 text-muted-foreground group-hover:text-primary transition-colors" />
+                  </div>
+                  <h4 className="mt-4 text-base font-extrabold tracking-tight text-foreground">{t}</h4>
+                  <p className="mt-1.5 text-xs text-muted-foreground leading-relaxed">{d}</p>
                 </div>
-                <h4 className="mt-4 text-base font-extrabold tracking-tight text-foreground">{t}</h4>
-                <p className="mt-1.5 text-xs text-muted-foreground leading-relaxed">{d}</p>
-              </div>
+              </ScrollReveal>
             ))}
           </div>
         </section>
@@ -614,8 +627,8 @@ function HomePage() {
         {/* TESTIMONIAL */}
         <section className="border-y border-border bg-warm-gradient overflow-hidden relative">
           <div className="absolute top-0 right-0 w-96 h-96 bg-primary/5 rounded-full blur-3xl pointer-events-none" />
-          <div className="container mx-auto px-4 py-20 relative z-10">
-            <div className="max-w-4xl mx-auto flex flex-col items-center text-center space-y-6">
+          <div className="container mx-auto px-4 py-8 relative z-10">
+            <ScrollReveal direction="up" className="max-w-4xl mx-auto flex flex-col items-center text-center space-y-4">
               <div className="flex h-12 w-12 items-center justify-center rounded-2xl bg-primary text-primary-foreground shadow-elev">
                 <Quote className="h-5 w-5" />
               </div>
@@ -636,37 +649,39 @@ function HomePage() {
                   Resolusi Cepat 3 Hari
                 </span>
               </div>
-            </div>
+            </ScrollReveal>
           </div>
         </section>
 
         {/* CTA */}
-        <section className="container mx-auto px-4 py-20">
-          <div className="grain relative overflow-hidden rounded-3xl bg-hero-gradient p-10 text-primary-foreground shadow-elev md:p-16 animate-gradient-shift">
-            <div
-              className="pointer-events-none absolute -right-20 -top-20 h-72 w-72 rounded-full opacity-35 blur-3xl animate-pulse-glow will-change-gpu"
-              style={{ background: "var(--accent)" }}
-            />
-            <div
-              className="pointer-events-none absolute -left-20 -bottom-20 h-72 w-72 rounded-full opacity-20 blur-3xl animate-pulse-glow animation-delay-500 will-change-gpu"
-              style={{ background: "var(--primary-glow)" }}
-            />
-            <div className="relative grid items-center gap-8 md:grid-cols-[1fr_auto]">
-              <div>
-                <h2 className="text-3xl font-bold tracking-tight text-balance md:text-4xl">
-                  Jadilah bagian dari kota yang lebih baik.
-                </h2>
-                <p className="mt-3 max-w-xl text-primary-foreground/85">
-                  Laporkan setiap jalan berlubang atau trotoar rusak di sekitar Anda dalam hitungan detik. Bersama-sama, kita wujudkan jalanan Indonesia yang lebih aman, mulus, dan tertata rapi.
-                </p>
-              </div>
-              <div className="flex flex-wrap gap-3">
-                <Button asChild size="lg" variant="secondary" className="hover:scale-105 active:scale-95 transition-all duration-300 shadow-soft">
-                  <Link to="/warga">Lapor Sekarang</Link>
-                </Button>
+        <section className="container mx-auto px-4 py-8">
+          <ScrollReveal direction="up">
+            <div className="grain relative overflow-hidden rounded-3xl bg-hero-gradient p-8 text-primary-foreground shadow-elev md:p-12 animate-gradient-shift">
+              <div
+                className="pointer-events-none absolute -right-20 -top-20 h-72 w-72 rounded-full opacity-35 blur-3xl animate-pulse-glow will-change-gpu"
+                style={{ background: "var(--accent)" }}
+              />
+              <div
+                className="pointer-events-none absolute -left-20 -bottom-20 h-72 w-72 rounded-full opacity-20 blur-3xl animate-pulse-glow animation-delay-500 will-change-gpu"
+                style={{ background: "var(--primary-glow)" }}
+              />
+              <div className="relative grid items-center gap-8 md:grid-cols-[1fr_auto]">
+                <div>
+                  <h2 className="text-3xl font-bold tracking-tight text-balance md:text-4xl">
+                    Jadilah bagian dari kota yang lebih baik.
+                  </h2>
+                  <p className="mt-3 max-w-xl text-primary-foreground/85">
+                    Laporkan setiap jalan berlubang atau trotoar rusak di sekitar Anda dalam hitungan detik. Bersama-sama, kita wujudkan jalanan Indonesia yang lebih aman, mulus, dan tertata rapi.
+                  </p>
+                </div>
+                <div className="flex flex-wrap gap-3">
+                  <Button asChild size="lg" variant="secondary" className="hover:scale-105 active:scale-95 transition-all duration-300 shadow-soft">
+                    <Link to="/warga">Lapor Sekarang</Link>
+                  </Button>
+                </div>
               </div>
             </div>
-          </div>
+          </ScrollReveal>
         </section>
       </main>
       <SiteFooter />
@@ -688,35 +703,40 @@ function ScrollReveal({ children, className = "", delay = 0, direction = "up" }:
   useEffect(() => {
     const observer = new IntersectionObserver(
       ([entry]) => {
-        setIsIntersecting(entry.isIntersecting);
+        if (entry.isIntersecting) {
+          setIsIntersecting(true);
+        }
       },
       {
         threshold: 0.05,
-        rootMargin: "0px 0px -40px 0px",
+        rootMargin: "0px 0px -50px 0px",
       }
     );
 
-    if (ref.current) {
-      observer.observe(ref.current);
+    const currentRef = ref.current;
+    if (currentRef) {
+      observer.observe(currentRef);
     }
 
     return () => {
-      observer.disconnect();
+      if (currentRef) {
+        observer.unobserve(currentRef);
+      }
     };
   }, []);
 
   const directionClasses = {
-    up: "translate-y-8",
-    down: "-translate-y-8",
-    left: "translate-x-8",
-    right: "-translate-x-8",
+    up: "translate-y-12",
+    down: "-translate-y-12",
+    left: "translate-x-12",
+    right: "-translate-x-12",
     none: "",
   };
 
   return (
     <div
       ref={ref}
-      className={`transition-all duration-1000 ease-[cubic-bezier(0.16,1,0.3,1)] ${
+      className={`transform transition-all duration-700 ease-[cubic-bezier(0.16,1,0.3,1)] will-change-transform ${
         isIntersecting 
           ? "opacity-100 translate-y-0 translate-x-0" 
           : `opacity-0 ${directionClasses[direction]}`
