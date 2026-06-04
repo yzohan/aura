@@ -708,8 +708,8 @@ function ScrollReveal({ children, className = "", delay = 0, direction = "up" }:
         }
       },
       {
-        threshold: 0.05,
-        rootMargin: "0px 0px -50px 0px",
+        threshold: 0.01,
+        rootMargin: "0px 0px -20px 0px",
       }
     );
 
@@ -726,17 +726,17 @@ function ScrollReveal({ children, className = "", delay = 0, direction = "up" }:
   }, []);
 
   const directionClasses = {
-    up: "translate-y-12",
-    down: "-translate-y-12",
-    left: "translate-x-12",
-    right: "-translate-x-12",
+    up: "translate-y-6",
+    down: "-translate-y-6",
+    left: "translate-x-6",
+    right: "-translate-x-6",
     none: "",
   };
 
   return (
     <div
       ref={ref}
-      className={`transform transition-all duration-700 ease-[cubic-bezier(0.16,1,0.3,1)] will-change-transform ${
+      className={`transform transition-[opacity,transform] duration-500 ease-[cubic-bezier(0.16,1,0.3,1)] will-change-transform ${
         isIntersecting 
           ? "opacity-100 translate-y-0 translate-x-0" 
           : `opacity-0 ${directionClasses[direction]}`
