@@ -35,7 +35,7 @@ Pastikan perangkat lokal Anda sudah terinstall:
 #### 1. Clone Repositori
 Silakan clone repositori ini ke folder lokal Anda:
 ```bash
-git clone https://github.com/yzohan/aura.git
+git clone https://github.com/Zidfar/AURA.git
 cd aura
 ```
 
