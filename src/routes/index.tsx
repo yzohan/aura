@@ -703,9 +703,7 @@ function ScrollReveal({ children, className = "", delay = 0, direction = "up" }:
   useEffect(() => {
     const observer = new IntersectionObserver(
       ([entry]) => {
-        if (entry.isIntersecting) {
-          setIsIntersecting(true);
-        }
+        setIsIntersecting(entry.isIntersecting);
       },
       {
         threshold: 0.05,
