@@ -20,7 +20,7 @@ import {
 } from "lucide-react";
 
 export const Route = createFileRoute("/_app/admin/settings")({
-  head: () => ({ meta: [{ title: "Pengaturan Sistem - AURA" }] }),
+  head: () => ({ meta: [{ title: "Pengaturan Sistem " }] }),
   component: AdminSettingsPage,
 });
 
@@ -42,7 +42,7 @@ interface SystemSettings {
 
 const DEFAULT_SETTINGS: SystemSettings = {
   appName: "AURA - Citizen Reporting",
-  appUrl: "https://aura-maxxing.wowokomprengmbg.workers.dev/",
+  appUrl: "https://aura-ai.aura-project.workers.dev",
   requireGps: true,
   enableAutoAssign: false,
   maxReportsPerDay: 3,
@@ -62,7 +62,6 @@ function AdminSettingsPage() {
   const [loading, setLoading] = useState(true);
 
   useEffect(() => {
-    // Muat data dari localStorage jika ada, agar terasa dinamis & berfungsi
     try {
       const saved = localStorage.getItem("aura_system_settings");
       if (saved) {
@@ -165,7 +164,7 @@ function AdminSettingsPage() {
                         id="appUrl"
                         value={settings.appUrl}
                         onChange={(e) => updateField("appUrl", e.target.value)}
-                        placeholder="https://aura-maxxing.wowokomprengmbg.workers.dev/"
+                        placeholder="https://aura-ai.aura-project.workers.dev"
                         required
                       />
                     </div>
@@ -342,7 +341,6 @@ function AdminSettingsPage() {
                 </Card>
               </TabsContent>
 
-              {/* TAB 4: KATEGORI LAPORAN */}
               <TabsContent value="categories">
                 <Card className="p-6 space-y-6 border border-border">
                   <div>
