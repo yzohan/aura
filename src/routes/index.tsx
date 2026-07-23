@@ -6,8 +6,6 @@ import {
   Camera,
   Wrench,
   ShieldCheck,
-  Activity,
-  Leaf,
   Lightbulb,
   Footprints,
   AlertTriangle,
@@ -51,14 +49,7 @@ export const Route = createFileRoute("/")({
   component: HomePage,
 });
 
-const PARTNERS_CONFIG = [
-  { name: "Dinas PUPR", icon: Wrench },
-  { name: "Dishub", icon: Activity },
-  { name: "PJU Kota", icon: Lightbulb },
-  { name: "Tata Ruang", icon: MapPin },
-  { name: "Bappeda", icon: ShieldCheck },
-  { name: "Kominfo", icon: Leaf },
-];
+
 
 function HomePage() {
   const [appStage, setAppStage] = useState(0);
@@ -88,13 +79,7 @@ function HomePage() {
 
           <div className="container relative mx-auto grid gap-8 px-4 py-8 md:grid-cols-[1.05fr_1fr] md:py-12">
             <div className="flex flex-col justify-center space-y-4">
-              <Badge className="w-fit gap-1.5 border-emerald-200/50 bg-emerald-50/80 px-3 py-1 text-emerald-800 hover:bg-emerald-100/90 shadow-xs animate-fade-in-up">
-                <span className="relative flex h-2 w-2">
-                  <span className="absolute inline-flex h-full w-full animate-ping rounded-full bg-emerald-500 opacity-60" />
-                  <span className="relative inline-flex h-2 w-2 rounded-full bg-emerald-500" />
-                </span>
-                Live di 3 kelurahan percontohan di Indonesia
-              </Badge>
+
 
               <h1 className="mt-3 text-3xl sm:text-4xl md:text-[3.25rem] lg:text-[3.75rem] font-extrabold tracking-tight md:leading-[1.15] animate-fade-in-up">
                 Langkah Kecil, <br className="hidden md:inline" />
@@ -123,17 +108,7 @@ function HomePage() {
                 </Button>
               </div>
 
-              <div className="mt-6 flex flex-wrap items-center gap-x-6 gap-y-3 text-sm text-muted-foreground animate-fade-in-up">
-                <div className="flex items-center gap-2 group cursor-default">
-                  <ShieldCheck className="h-4 w-4 text-primary transition-transform duration-300 group-hover:scale-110" /> Data spasial terverifikasi
-                </div>
-                <div className="flex items-center gap-2 group cursor-default">
-                  <Activity className="h-4 w-4 text-primary transition-transform duration-300 group-hover:scale-110" /> Update tiap detik
-                </div>
-                <div className="flex items-center gap-2 group cursor-default">
-                  <Leaf className="h-4 w-4 text-primary transition-transform duration-300 group-hover:scale-110" /> Eco-urban first
-                </div>
-              </div>
+
             </div>
 
             {/* Hero visual */}
@@ -142,25 +117,7 @@ function HomePage() {
             </div>
           </div>
 
-          {/* Partner marquee */}
-          <div className="relative border-y border-border/40 py-5 bg-muted/10 overflow-hidden flex items-center">
-            <div className="absolute left-0 z-10 bg-gradient-to-r from-background via-background/90 to-transparent pl-6 pr-16 py-5 hidden lg:block select-none">
-              <span className="text-[10px] font-bold tracking-wider uppercase text-muted-foreground/60">Partner Strategis:</span>
-            </div>
-            <div className="marquee-fade flex flex-1 whitespace-nowrap overflow-hidden">
-              <div className="animate-marquee flex gap-6 text-xs font-semibold uppercase tracking-widest text-muted-foreground/60 select-none lg:pl-48">
-                {[...PARTNERS_CONFIG, ...PARTNERS_CONFIG, ...PARTNERS_CONFIG].map((p, i) => {
-                  const Icon = p.icon;
-                  return (
-                    <span key={i} className="group flex items-center gap-2.5 px-4 py-2 rounded-xl bg-card/50 backdrop-blur-md border border-border/60 shadow-sm transition-all duration-300 hover:border-primary/20 hover:bg-card hover:scale-[1.03] cursor-pointer">
-                      <Icon className="h-4 w-4 text-muted-foreground/75 group-hover:text-primary transition-colors duration-300" />
-                      <span className="text-xs font-medium tracking-normal normal-case text-foreground/80 group-hover:text-foreground transition-colors duration-300">{p.name}</span>
-                    </span>
-                  );
-                })}
-              </div>
-            </div>
-          </div>
+
         </section>
 
         {/* WHY CHOOSE AURA (FEATURES & SIMULATOR) */}
@@ -634,7 +591,7 @@ function HomePage() {
               </div>
               
               <blockquote className="text-lg sm:text-xl font-semibold leading-relaxed text-foreground italic">
-                “Dulu melaporkan jalan berlubang sangat membingungkan dan memakan waktu berminggu-minggu tanpa kejelasan. Dengan AURA, saya tinggal ambil foto, kirim, dan dalam tiga hari jalanan kompleks kami sudah mulus ditambal. Anak-anak sekarang aman bermain sepeda lagi.”
+                “Dulu melaporkan jalan berlubang sangat membingungkan dan memakan waktu berminggu-minggu tanpa kejelasan. Dengan AURA, saya tinggal ambil foto, kirim, dan dalam tiga hari jalanan kompleks kami sudah mulus ditambal.”
               </blockquote>
               
               <div className="flex flex-col sm:flex-row items-center gap-3 pt-4">
@@ -642,7 +599,7 @@ function HomePage() {
                   RS
                 </div>
                 <div className="text-left text-xs">
-                  <p className="font-extrabold text-foreground">Rini Suryani</p>
+                  <p className="font-extrabold text-foreground">Carlos Sainz</p>
                   <p className="text-muted-foreground">Warga Kelurahan Babakan · Pengguna AURA</p>
                 </div>
                 <span className="hidden sm:inline-flex items-center gap-1 rounded-full border border-border bg-card px-2.5 py-0.5 text-[10px] font-semibold text-muted-foreground">
@@ -668,7 +625,7 @@ function HomePage() {
               <div className="relative grid items-center gap-8 md:grid-cols-[1fr_auto]">
                 <div>
                   <h2 className="text-3xl font-bold tracking-tight text-balance md:text-4xl">
-                    Jadilah bagian dari kota yang lebih baik.
+                    Jadilah bagian dari kota yang lebih baik
                   </h2>
                   <p className="mt-3 max-w-xl text-primary-foreground/85">
                     Laporkan setiap jalan berlubang atau trotoar rusak di sekitar Anda dalam hitungan detik. Bersama-sama, kita wujudkan jalanan Indonesia yang lebih aman, mulus, dan tertata rapi.
