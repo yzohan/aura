@@ -50,7 +50,7 @@ const reportSchema = z.object({
 //   field "query" = IP publik pengguna saat ini
 //   PENTING: versi gratis hanya HTTP (bukan HTTPS)
 //   Jika website pakai HTTPS di production, browser akan
-async function fetchPublicIp(): Promise<string | null> {
+async function fetchPublicIp(): Promise<string> {
   // Bypass untuk local development: agar tidak error karena AdBlock/CORS di localhost
   if (import.meta.env.DEV) {
     return "127.0.0.1";
@@ -74,7 +74,17 @@ async function fetchPublicIp(): Promise<string | null> {
     }
   } catch {}
 
-  return null;
+  // 3. Fallback ke seeip.org
+  try {
+    const res = await fetch("https://api.seeip.org/jsonip");
+    if (res.ok) {
+      const data = (await res.json()) as { ip?: string };
+      if (data.ip) return data.ip;
+    }
+  } catch {}
+
+  // Fallback default ID agar form tidak terkunci jika user menggunakan AdBlocker
+  return "online-user";
 }
 
 async function fetchOSMPlaces(lat: number, lng: number): Promise<string[]> {
@@ -206,22 +216,27 @@ function ReportForm() {
 
       // 1. Fetch IP publik
       const ip = await fetchPublicIp();
-      if (!ip) { setIpStatus("error"); return; }
       setUserIp(ip);
 
       // 2. Panggil Supabase RPC: hitung laporan dari IP ini dalam 24 jam terakhir
-      //    Fungsi ini kita buat di migration SQL: count_reports_by_ip(_ip TEXT) → INTEGER
-      const { data, error } = await supabase.rpc("count_reports_by_ip", { _ip: ip });
-      if (error) { 
-        console.error("Supabase RPC Error:", error);
-        setIpStatus("error"); 
-        return; 
-      }
+      try {
+        const { data, error } = await supabase.rpc("count_reports_by_ip", { _ip: ip });
+        if (error) { 
+          console.warn("Supabase RPC Warning:", error);
+          setRemainingReports(5);
+          setIpStatus("ok");
+          return; 
+        }
 
-      const count = (data as number) ?? 0;
-      const remaining = Math.max(0, 5 - count);
-      setRemainingReports(remaining);
-      setIpStatus(count >= 5 ? "blocked" : "ok");
+        const count = (data as number) ?? 0;
+        const remaining = Math.max(0, 5 - count);
+        setRemainingReports(remaining);
+        setIpStatus(count >= 5 ? "blocked" : "ok");
+      } catch (err) {
+        console.warn("RPC fetch failed, defaulting to active:", err);
+        setRemainingReports(5);
+        setIpStatus("ok");
+      }
     })();
   }, []);
 
