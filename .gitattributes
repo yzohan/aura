@@ -1,0 +1,2 @@
+ai/the_brain_aura_best.keras filter=lfs diff=lfs merge=lfs -text
+ai/the_lens_aura_v26.pt filter=lfs diff=lfs merge=lfs -text

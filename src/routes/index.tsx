@@ -2,32 +2,44 @@ import { useEffect, useRef, useState, ReactNode } from "react";
 import { createFileRoute, Link } from "@tanstack/react-router";
 import {
   ArrowRight,
+  X,
   MapPin,
   Camera,
   Wrench,
   ShieldCheck,
+  Activity,
   Lightbulb,
-  Footprints,
-  AlertTriangle,
   CheckCircle2,
   Clock,
-  Quote,
   Sparkles,
-  AlertCircle,
   Info,
   Users,
   FileText,
   Star,
+  Map as MapIcon,
+  ScanSearch,
+  MessageSquarePlus,
+  Send,
 } from "lucide-react";
+import { toast } from "sonner";
 import { SiteHeader, SiteFooter } from "@/components/site-chrome";
+import { CtaBanner } from "@/components/cta-banner";
 import { Button } from "@/components/ui/button";
-import { Badge } from "@/components/ui/badge";
-import { JakartaDiorama } from "@/components/jakarta-diorama";
+import { Input } from "@/components/ui/input";
+import { Textarea } from "@/components/ui/textarea";
+import {
+  Dialog,
+  DialogContent,
+  DialogDescription,
+  DialogHeader,
+  DialogTitle,
+} from "@/components/ui/dialog";
+import { TangselDiorama } from "@/components/tangsel-diorama";
 import potholeImg from "@/assets/pothole_road.jpg";
-import mentengRoadImg from "@/assets/menteng_road.jpg";
-import kebayoranRoadImg from "@/assets/kebayoran_road.jpg";
-import senayanRoadImg from "@/assets/senayan_road.png";
-import babakanRoadImg from "@/assets/babakan_road.jpg";
+import rawaBuntuRoadImg from "@/assets/rawa_buntu_road.jpg";
+import pamulangRoadImg from "@/assets/pamulang_road.jpg";
+import pondokArenRoadImg from "@/assets/pondok_aren_road.jpg";
+import ciputatRoadImg from "@/assets/ciputat_road.jpg";
 
 export const Route = createFileRoute("/")({
   head: () => ({
@@ -49,10 +61,102 @@ export const Route = createFileRoute("/")({
   component: HomePage,
 });
 
+const PARTNERS_CONFIG = [
+  { name: "Dinas PUPR", icon: Wrench },
+  { name: "Dishub", icon: Activity },
+  { name: "PJU Kota", icon: Lightbulb },
+  { name: "Tata Ruang", icon: MapPin },
+  { name: "Bappeda", icon: ShieldCheck },
+  { name: "Kominfo", icon: Info },
+];
 
+const QUICK_CARDS = [
+  { icon: Camera, t: "Foto dan GPS", d: "Satu foto, lokasi terekam otomatis." },
+  { icon: ScanSearch, t: "Verifikasi AI", d: "Tingkat kerusakan dinilai otomatis." },
+  { icon: Wrench, t: "Penugasan Petugas", d: "Work order langsung ke petugas." },
+];
+
+const INITIAL_KELURAHAN = [
+  { id: "rawa-buntu", name: "Kelurahan Rawa Buntu", sub: "Kec. Serpong, Tangsel", stat: "98% Selesai", reports: 420, rating: 4.9, speed: "24 Jam", img: rawaBuntuRoadImg },
+  { id: "pamulang-barat", name: "Kelurahan Pamulang Barat", sub: "Kec. Pamulang, Tangsel", stat: "95% Selesai", reports: 310, rating: 4.8, speed: "36 Jam", img: pamulangRoadImg },
+  { id: "pondok-aren", name: "Kelurahan Pondok Aren", sub: "Kec. Pondok Aren, Tangsel", stat: "99% Selesai", reports: 510, rating: 5.0, speed: "18 Jam", img: pondokArenRoadImg },
+  { id: "ciputat", name: "Kelurahan Ciputat", sub: "Kec. Ciputat, Tangsel", stat: "92% Selesai", reports: 280, rating: 4.7, speed: "48 Jam", img: ciputatRoadImg },
+];
+
+const STEPS = [
+  { n: "01", icon: Camera, t: "Warga Melapor", d: "Mengunggah foto kerusakan jalan, mendeteksi lokasi GPS otomatis dalam waktu 30 detik." },
+  { n: "02", icon: Sparkles, t: "Verifikasi Sistem", d: "Sistem AI mengolah citra laporan untuk mengklasifikasikan tingkat urgensi secara otomatis." },
+  { n: "03", icon: Wrench, t: "Petugas Lapangan", d: "Menerima work order terdekat, melakukan perbaikan, dan mengirimkan konfirmasi hasil kerja." },
+  { n: "04", icon: ShieldCheck, t: "Selesai & Terbuka", d: "Admin memverifikasi perbaikan dan status diperbarui di peta GIS publik warga." },
+];
+
+const TESTIMONIALS = [
+  { n: "Siti Rahmawati", r: "Warga Pamulang Barat", q: "Lubang di depan rumah dilaporkan pagi, sore sudah ada petugas yang datang menambal." },
+  { n: "Budi Santoso", r: "Warga Rawa Buntu", q: "Saya suka bisa lihat status laporan. Tidak perlu lagi menelepon kelurahan." },
+  { n: "Maya Putri", r: "Warga Pondok Aren", q: "Prosesnya cepat, cukup foto dan kirim. Lokasinya terisi sendiri." },
+];
+
+function Pill({ children, dark = false }: { children: ReactNode; dark?: boolean }) {
+  return (
+    <span
+      className={`inline-flex w-fit items-center rounded-full px-4 py-1.5 text-xs font-bold ${
+        dark ? "bg-forest text-primary" : "bg-sage text-forest"
+      }`}
+    >
+      {children}
+    </span>
+  );
+}
+
+function ArrowCircle() {
+  return (
+    <span className="flex h-8 w-8 items-center justify-center rounded-full bg-forest text-primary">
+      <ArrowRight className="h-4 w-4" />
+    </span>
+  );
+}
 
 function HomePage() {
   const [appStage, setAppStage] = useState(0);
+  const [mapOpen, setMapOpen] = useState(false);
+
+  // Interaktif Rating Kelurahan
+  const [kelurahanList, setKelurahanList] = useState(INITIAL_KELURAHAN);
+  const [activeKelurahan, setActiveKelurahan] = useState<typeof INITIAL_KELURAHAN[0] | null>(null);
+  const [ratingVal, setRatingVal] = useState(5);
+  const [hoverRatingVal, setHoverRatingVal] = useState(0);
+  const [reviewerName, setReviewerName] = useState("");
+  const [reviewerComment, setReviewerComment] = useState("");
+
+  const handleRatingSubmit = (e: React.FormEvent) => {
+    e.preventDefault();
+    if (!activeKelurahan) return;
+    if (!reviewerName.trim() || !reviewerComment.trim()) {
+      toast.error("Mohon isi nama dan ulasan Anda.");
+      return;
+    }
+
+    setKelurahanList((prev) =>
+      prev.map((k) => {
+        if (k.id === activeKelurahan.id) {
+          const newReports = k.reports + 1;
+          const newAvgRating = Number(((k.rating * k.reports + ratingVal) / newReports).toFixed(1));
+          return {
+            ...k,
+            reports: newReports,
+            rating: Math.min(5.0, newAvgRating),
+          };
+        }
+        return k;
+      })
+    );
+
+    toast.success(`Rating ⭐ ${ratingVal}.0 untuk ${activeKelurahan.name} berhasil disimpan!`);
+    setActiveKelurahan(null);
+    setReviewerName("");
+    setReviewerComment("");
+    setRatingVal(5);
+  };
 
   useEffect(() => {
     const timer = setInterval(() => {
@@ -62,585 +166,594 @@ function HomePage() {
   }, []);
 
   return (
-    <div className="flex min-h-screen flex-col">
-      <SiteHeader />
+    <div className="relative flex min-h-screen flex-col">
+      <SiteHeader overlay />
       <main className="flex-1">
         {/* HERO */}
-        <section className="relative overflow-hidden grain">
-          <div className="absolute inset-0 grid-pattern opacity-60" />
-          <div
-            className="pointer-events-none absolute -top-40 -right-32 h-[480px] w-[480px] rounded-full opacity-35 blur-3xl animate-pulse-glow will-change-gpu"
-            style={{ background: "radial-gradient(closest-side, var(--primary-glow), transparent)" }}
-          />
-          <div
-            className="pointer-events-none absolute -bottom-40 -left-32 h-[420px] w-[420px] rounded-full opacity-20 blur-3xl animate-pulse-glow animation-delay-300 will-change-gpu"
-            style={{ background: "radial-gradient(closest-side, var(--accent), transparent)" }}
-          />
-
-          <div className="container relative mx-auto grid gap-8 px-4 py-8 md:grid-cols-[1.05fr_1fr] md:py-12">
-            <div className="flex flex-col justify-center space-y-4">
-
-
-              <h1 className="mt-3 text-3xl sm:text-4xl md:text-[3.25rem] lg:text-[3.75rem] font-extrabold tracking-tight md:leading-[1.15] animate-fade-in-up">
-                Langkah Kecil, <br className="hidden md:inline" />
-                <span className="bg-gradient-to-r from-primary via-primary-glow to-success bg-clip-text text-transparent">
-                  Dampak Nyata
-                </span>{" "}
-                Bagi Jalanan Kota.
-              </h1>
-
-              <p className="mt-3 md:mt-4 max-w-xl text-sm sm:text-base md:text-lg leading-relaxed text-muted-foreground/90 font-medium animate-fade-in-up">
-                Menghubungkan warga dan petugas dalam sistem pelaporan terpadu untuk jalan bebas lubang. Jadilah bagian dari solusi tata kota di Indonesia yang lebih responsif.
-              </p>
-
-              <div className="mt-5 flex flex-wrap gap-3 animate-fade-in-up">
-                <Button
-                  asChild
-                  size="lg"
-                  className="bg-leaf-gradient text-primary-foreground shadow-elev hover:opacity-90 hover:scale-105 active:scale-95 transition-all duration-300"
-                >
-                  <Link to="/warga">
-                    Lapor Sekarang <ArrowRight className="ml-1 h-4 w-4 transition-transform duration-300 hover:translate-x-1" />
-                  </Link>
-                </Button>
-                <Button asChild size="lg" variant="outline" className="hover:bg-secondary/50 hover:scale-105 active:scale-95 transition-all duration-300">
-                  <Link to="/fitur">Lihat cara kerjanya</Link>
-                </Button>
+        <section className="px-3 pt-3 md:px-5 md:pt-5">
+          <div className="relative mx-auto max-w-[1400px] overflow-hidden rounded-[36px] bg-forest">
+            <img
+              src={pamulangRoadImg}
+              alt="Jalan di Tangerang Selatan"
+              className="absolute inset-0 h-full w-full object-cover"
+            />
+            <div className="absolute inset-0 bg-gradient-to-t from-forest via-forest/60 to-forest/20" />
+            <div className="relative grid min-h-[680px] items-end gap-8 px-6 pb-12 pt-40 md:px-14 lg:grid-cols-[1.3fr_0.7fr]">
+              <div className="flex flex-col gap-5 text-white animate-fade-in-up">
+                <Pill>Uji coba di 4 kelurahan Tangerang Selatan</Pill>
+                <h1 className="text-4xl font-extrabold leading-[1.05] text-balance sm:text-5xl lg:text-6xl">
+                  Jalan berlubang di Tangsel? Foto, kirim, pantau sampai ditambal.
+                </h1>
+                <p className="max-w-xl text-base leading-relaxed text-white/80 md:text-lg">
+                  Foto lubangnya, AURA mencatat lokasinya, lalu tugasnya masuk ke petugas dinas. Status laporan bisa kamu lihat kapan saja.
+                </p>
+                <div className="flex flex-wrap gap-3">
+                  <Button asChild size="lg" className="gap-3 pr-2">
+                    <Link to="/warga">
+                      Lapor sekarang <ArrowCircle />
+                    </Link>
+                  </Button>
+                  <Button
+                    asChild
+                    size="lg"
+                    variant="ghost"
+                    className="border border-white/40 !bg-transparent text-white hover:!bg-white/15 hover:text-white font-medium shadow-none"
+                  >
+                    <Link to="/fitur">Lihat cara kerjanya</Link>
+                  </Button>
+                </div>
               </div>
 
-
-            </div>
-
-            {/* Hero visual */}
-            <div className="relative animate-fade-in-up h-[480px] md:h-[520px]">
-              <JakartaDiorama />
+              <div className="h-[260px] w-full max-w-[340px] animate-fade-in-up justify-self-end overflow-hidden rounded-[32px] ring-4 ring-white/20">
+                <TangselDiorama />
+              </div>
             </div>
           </div>
 
+          {/* 3 poin singkat */}
+          <div className="mx-auto mt-6 flex max-w-[1200px] flex-wrap justify-center gap-x-10 gap-y-3 px-4 text-sm font-semibold text-forest dark:text-foreground">
+            <span className="flex items-center gap-2"><ShieldCheck className="h-4 w-4" /> Lokasi terekam otomatis</span>
+            <span className="flex items-center gap-2"><Activity className="h-4 w-4" /> Langsung ke petugas</span>
+            <span className="flex items-center gap-2"><Clock className="h-4 w-4" /> Status laporan bisa dipantau</span>
+          </div>
 
+          {/* 4 kartu layanan */}
+          <div className="mx-auto mt-8 grid max-w-[1200px] gap-4 px-2 sm:grid-cols-2 lg:grid-cols-4">
+            {QUICK_CARDS.map(({ icon: Icon, t, d }) => (
+              <div key={t} className="flex min-h-[200px] flex-col rounded-[28px] border border-border bg-card p-6 shadow-soft">
+                <span className="flex h-12 w-12 items-center justify-center rounded-full bg-sage text-forest">
+                  <Icon className="h-5 w-5" />
+                </span>
+                <h3 className="mt-5 text-lg font-extrabold">{t}</h3>
+                <p className="mt-1 text-sm text-muted-foreground">{d}</p>
+                <span className="mt-auto flex h-9 w-9 items-center justify-center self-end rounded-full bg-forest text-primary">
+                  <ArrowRight className="h-4 w-4" />
+                </span>
+              </div>
+            ))}
+            <Link
+              to="/warga"
+              className="flex min-h-[200px] flex-col rounded-[28px] bg-primary p-6 text-primary-foreground transition-transform hover:-translate-y-1"
+            >
+              <span className="flex h-12 w-12 items-center justify-center rounded-full bg-forest text-primary">
+                <MapIcon className="h-5 w-5" />
+              </span>
+              <h3 className="mt-5 text-lg font-extrabold">Peta Publik</h3>
+              <p className="mt-1 text-sm text-forest/80">Lihat laporan terbaru di sekitarmu.</p>
+              <span className="mt-auto flex h-9 w-9 items-center justify-center self-end rounded-full bg-forest text-primary">
+                <ArrowRight className="h-4 w-4" />
+              </span>
+            </Link>
+          </div>
         </section>
 
-        {/* WHY CHOOSE AURA (FEATURES & SIMULATOR) */}
-        <section className="container mx-auto px-4 py-8 md:py-11 border-t border-border/60">
-          <div className="grid gap-8 lg:grid-cols-[1.1fr_1fr] items-center">
-            
-            {/* Left Column: WANDER-style vertical cards & text */}
+        {/* MITRA */}
+        <section className="mt-10 py-4">
+          <p className="mb-4 text-center text-xs font-bold text-muted-foreground">Partner Strategis</p>
+          <div className="mx-auto flex max-w-[1200px] flex-wrap justify-center gap-3 px-4">
+            {PARTNERS_CONFIG.map((p) => (
+              <span key={p.name} className="flex items-center gap-2.5 rounded-full bg-secondary px-5 py-2.5 text-sm font-semibold text-forest">
+                <p.icon className="h-4 w-4" /> {p.name}
+              </span>
+            ))}
+          </div>
+        </section>
+
+        {/* KENAPA AURA */}
+        <section className="mx-auto max-w-[1200px] px-4 py-12 md:py-16">
+          <div className="grid items-center gap-10 lg:grid-cols-[1.1fr_1fr]">
             <div className="space-y-6">
               <div className="space-y-3">
-                <Badge variant="outline" className="border-primary/20 text-primary bg-primary/5 px-3 py-1 font-semibold text-xs tracking-wider uppercase">
-                  Mengapa Memilih AURA
-                </Badge>
-                <h2 className="text-3xl md:text-4xl font-extrabold tracking-tight text-foreground leading-tight">
+                <Pill>Mengapa Memilih AURA</Pill>
+                <h2 className="text-3xl font-extrabold leading-tight text-forest md:text-4xl dark:text-foreground">
                   Sistem Pelaporan Tata Kota Terintegrasi & Efisien
                 </h2>
-                <p className="text-sm text-muted-foreground leading-relaxed">
+                <p className="text-sm leading-relaxed text-muted-foreground">
                   AURA menghadirkan kemudahan melapor kerusakan jalan langsung dari ponsel Anda. Didukung sistem pemetaan GIS real-time dan dispatch petugas dinas secara instan.
                 </p>
               </div>
 
               <div className="space-y-3">
-                {/* Card 1 */}
-                <ScrollReveal direction="up" delay={50}>
-                  <div className="flex items-center gap-4 p-4 rounded-2xl bg-card border border-border/80 shadow-soft transition-all duration-300 hover:border-primary/20 hover:shadow-glow">
-                    <span className="flex h-11 w-11 shrink-0 items-center justify-center rounded-xl bg-primary/10 text-primary">
-                      <MapPin className="w-5 h-5" />
-                    </span>
-                    <div>
-                      <h4 className="text-sm font-extrabold tracking-tight">Deteksi Lokasi Otomatis</h4>
-                      <p className="text-[11px] font-medium leading-relaxed text-muted-foreground mt-0.5">
-                        Sistem kami secara otomatis merekam koordinat GPS presisi and mencocokkannya dengan wilayah kelurahan terkait.
-                      </p>
+                {[
+                  { icon: MapPin, t: "Deteksi Lokasi Otomatis", d: "Sistem kami secara otomatis merekam koordinat GPS presisi dan mencocokkannya dengan wilayah kelurahan terkait.", delay: 50 },
+                  { icon: Wrench, t: "Penugasan Kerja Instan", d: "Laporan yang lolos verifikasi AI langsung didisposisikan ke aplikasi petugas lapangan untuk penanganan segera.", delay: 150 },
+                  { icon: ShieldCheck, t: "Monitoring Progres Transparan", d: "Pantau setiap tahapan pengerjaan secara langsung melalui peta GIS publik, mulai dari aduan masuk hingga jalan mulus kembali.", delay: 250 },
+                ].map(({ icon: Icon, t, d, delay }) => (
+                  <ScrollReveal key={t} direction="up" delay={delay}>
+                    <div className="card-dashed flex items-center gap-4 p-4">
+                      <span className="flex h-12 w-12 shrink-0 items-center justify-center rounded-full bg-forest text-primary">
+                        <Icon className="h-5 w-5" />
+                      </span>
+                      <div>
+                        <h4 className="text-sm font-extrabold">{t}</h4>
+                        <p className="mt-0.5 text-xs leading-relaxed text-muted-foreground">{d}</p>
+                      </div>
                     </div>
-                  </div>
-                </ScrollReveal>
-
-                {/* Card 2 */}
-                <ScrollReveal direction="up" delay={150}>
-                  <div className="flex items-center gap-4 p-4 rounded-2xl bg-card border border-border/80 shadow-soft transition-all duration-300 hover:border-primary/20 hover:shadow-glow">
-                    <span className="flex h-11 w-11 shrink-0 items-center justify-center rounded-xl bg-primary/10 text-primary">
-                      <Wrench className="w-5 h-5" />
-                    </span>
-                    <div>
-                      <h4 className="text-sm font-extrabold tracking-tight">Penugasan Kerja Instan</h4>
-                      <p className="text-[11px] font-medium leading-relaxed text-muted-foreground mt-0.5">
-                        Laporan yang lolos verifikasi AI langsung didisposisikan ke aplikasi petugas lapangan untuk penanganan segera.
-                      </p>
-                    </div>
-                  </div>
-                </ScrollReveal>
-
-                {/* Card 3 */}
-                <ScrollReveal direction="up" delay={250}>
-                  <div className="flex items-center gap-4 p-4 rounded-2xl bg-card border border-border/80 shadow-soft transition-all duration-300 hover:border-primary/20 hover:shadow-glow">
-                    <span className="flex h-11 w-11 shrink-0 items-center justify-center rounded-xl bg-primary/10 text-primary">
-                      <ShieldCheck className="w-5 h-5" />
-                    </span>
-                    <div>
-                      <h4 className="text-sm font-extrabold tracking-tight">Monitoring Progres Transparansi</h4>
-                      <p className="text-[11px] font-medium leading-relaxed text-muted-foreground mt-0.5">
-                        Pantau setiap tahapan pengerjaan secara langsung melalui peta GIS publik, mulai dari aduan masuk hingga jalan mulus kembali.
-                      </p>
-                    </div>
-                  </div>
-                </ScrollReveal>
+                  </ScrollReveal>
+                ))}
               </div>
 
-              {/* Horizontal Stats counters row */}
-              <div className="grid grid-cols-3 gap-4 pt-4 border-t border-border/60">
-                <div className="space-y-1">
-                  <div className="flex items-center gap-2">
-                    <span className="flex h-8 w-8 items-center justify-center rounded-full bg-primary/10 text-primary">
-                      <FileText className="w-4 h-4" />
-                    </span>
-                    <span className="text-xl sm:text-2xl font-black text-foreground">2.4k+</span>
+              <div className="grid grid-cols-3 gap-3">
+                {[
+                  { icon: FileText, v: "2.4k+", l: "Laporan Selesai", tone: "bg-forest text-white", num: "text-primary" },
+                  { icon: CheckCircle2, v: "94%", l: "Penyelesaian", tone: "bg-sage text-forest", num: "text-forest" },
+                  { icon: Users, v: "37", l: "Petugas Siaga", tone: "bg-forest text-white", num: "text-primary" },
+                ].map(({ icon: Icon, v, l, tone, num }) => (
+                  <div key={l} className={`rounded-3xl p-4 ${tone}`}>
+                    <Icon className="h-4 w-4 opacity-70" />
+                    <p className={`mt-2 text-2xl font-extrabold sm:text-3xl ${num}`}>{v}</p>
+                    <p className="text-[11px] font-semibold opacity-80">{l}</p>
                   </div>
-                  <p className="text-xs text-muted-foreground font-semibold">Laporan Selesai</p>
-                </div>
-                
-                <div className="space-y-1">
-                  <div className="flex items-center gap-2">
-                    <span className="flex h-8 w-8 items-center justify-center rounded-full bg-primary/10 text-primary">
-                      <CheckCircle2 className="w-4 h-4" />
-                    </span>
-                    <span className="text-xl sm:text-2xl font-black text-foreground">94%</span>
-                  </div>
-                  <p className="text-xs text-muted-foreground font-semibold">Penyelesaian</p>
-                </div>
-                
-                <div className="space-y-1">
-                  <div className="flex items-center gap-2">
-                    <span className="flex h-8 w-8 items-center justify-center rounded-full bg-primary/10 text-primary">
-                      <Users className="w-4 h-4" />
-                    </span>
-                    <span className="text-xl sm:text-2xl font-black text-foreground">37</span>
-                  </div>
-                  <p className="text-xs text-muted-foreground font-semibold font-sans">Petugas Siaga</p>
-                </div>
+                ))}
               </div>
             </div>
 
-            {/* Right Column: Smartphone Simulator */}
+            {/* Simulator ponsel */}
             <ScrollReveal direction="up" delay={200} className="flex justify-center lg:justify-end">
-              <div className="relative w-[300px] h-[580px] bg-slate-950 rounded-[3rem] p-3.5 shadow-2xl border-[6px] border-slate-800 dark:border-slate-900 overflow-hidden select-none">
-                {/* Dynamic Island Notch */}
-                <div className="absolute top-4 left-1/2 -translate-x-1/2 w-24 h-4 bg-slate-950 rounded-full z-30 flex items-center justify-center border border-white/5">
-                  <div className="w-2.5 h-2.5 bg-slate-900 rounded-full ml-auto mr-1 border border-white/5" />
-                </div>
-                
-                {/* Smartphone Screen Wrapper */}
-                <div className="relative w-full h-full bg-background rounded-[2.5rem] overflow-hidden flex flex-col justify-between border border-border/20">
-                  
-                  {/* Header Info */}
-                  <div className="px-4 pt-6 pb-3 border-b border-border/40 bg-card flex items-center justify-between">
+              <div className="relative h-[580px] w-[300px] select-none overflow-hidden rounded-[3rem] border-[6px] border-forest-soft bg-forest p-3.5 shadow-elev">
+                <div className="absolute left-1/2 top-4 z-30 h-4 w-24 -translate-x-1/2 rounded-full bg-forest" />
+                <div className="relative flex h-full w-full flex-col justify-between overflow-hidden rounded-[2.4rem] bg-background">
+                  <div className="flex items-center justify-between border-b border-border/60 bg-card px-4 pb-3 pt-6">
                     <div className="flex items-center gap-1.5">
-                      <div className="w-1.5 h-1.5 rounded-full bg-primary animate-pulse" />
-                      <span className="text-[10px] font-bold tracking-wide uppercase text-foreground/80">AURA Citizen</span>
+                      <div className="h-1.5 w-1.5 animate-pulse rounded-full bg-primary" />
+                      <span className="text-[10px] font-bold text-foreground/80">AURA Citizen</span>
                     </div>
-                    <span className="text-[9px] font-mono text-muted-foreground bg-muted/60 px-1.5 py-0.5 rounded">v1.0</span>
+                    <span className="rounded-full bg-secondary px-2 py-0.5 font-mono text-[9px] text-muted-foreground">v1.0</span>
                   </div>
-                  
-                  {/* Dynamic Simulated Display Body */}
-                  <div className="flex-1 p-4 flex flex-col justify-center">
-                    
+
+                  <div className="flex flex-1 flex-col justify-center p-4">
                     {appStage === 0 && (
                       <div className="space-y-4">
-                        <div className="relative w-full h-[240px] bg-secondary/30 rounded-2xl overflow-hidden flex items-center justify-center border border-border/40">
-                          <div className="absolute inset-0 grid-pattern opacity-40" />
-                          <svg className="absolute inset-0 w-full h-full text-muted-foreground/15" fill="none">
+                        <div className="relative flex h-[240px] w-full items-center justify-center overflow-hidden rounded-3xl bg-sky/50">
+                          <svg className="absolute inset-0 h-full w-full text-forest/10" fill="none">
                             <path d="M 0,80 L 260,80 M 80,0 L 80,240 M 0,160 L 260,120 M 170,0 L 170,240" stroke="currentColor" strokeWidth="2.5" />
                             <circle cx="80" cy="80" r="40" stroke="currentColor" strokeWidth="1" strokeDasharray="3 3" />
                           </svg>
-                          <div className="relative z-10 flex flex-col items-center">
-                            <span className="relative flex h-5 w-5">
-                              <span className="absolute inline-flex h-full w-full animate-ping rounded-full bg-primary opacity-40" />
-                              <span className="relative inline-flex h-5 w-5 items-center justify-center rounded-full bg-primary text-white shadow-soft">
-                                <MapPin className="w-3 h-3" />
-                              </span>
+                          <span className="relative flex h-6 w-6">
+                            <span className="absolute inline-flex h-full w-full animate-ping rounded-full bg-primary opacity-60" />
+                            <span className="relative inline-flex h-6 w-6 items-center justify-center rounded-full bg-forest text-primary shadow-soft">
+                              <MapPin className="h-3 w-3" />
                             </span>
-                          </div>
+                          </span>
                         </div>
-                        
                         <div className="space-y-1">
-                          <span className="text-[9px] font-semibold text-muted-foreground/90 uppercase tracking-wide">Mendeteksi Lokasi</span>
-                          <p className="text-[11px] font-bold text-foreground leading-tight truncate">Menteng, Jakarta Pusat</p>
+                          <span className="text-[9px] font-semibold uppercase tracking-wide text-muted-foreground">Mendeteksi Lokasi</span>
+                          <p className="truncate text-[11px] font-bold leading-tight">BSD City, Tangerang Selatan</p>
                         </div>
                       </div>
                     )}
-                    
+
                     {appStage === 1 && (
                       <div className="space-y-4">
-                        <div className="relative w-full h-[240px] rounded-2xl overflow-hidden flex items-center justify-center border border-border/40">
-                          <img
-                            src={potholeImg}
-                            alt="Foto jalan berlubang"
-                            className="absolute inset-0 w-full h-full object-cover"
-                          />
-                          <div className="absolute inset-0 bg-black/10 pointer-events-none" />
-                          <div className="absolute inset-x-0 h-0.5 bg-emerald-500 shadow-[0_0_8px_#10b981] animate-scan pointer-events-none" />
-                          <div className="absolute w-36 h-24 border-2 border-emerald-500 rounded-lg flex flex-col justify-between p-1 bg-emerald-500/20 shadow-[0_0_15px_rgba(16,185,129,0.3)] animate-pulse pointer-events-none">
-                            <div className="text-[8px] font-mono font-bold tracking-widest text-emerald-100 bg-emerald-600 px-1.5 py-0.5 rounded w-fit">
+                        <div className="relative flex h-[240px] w-full items-center justify-center overflow-hidden rounded-3xl">
+                          <img src={potholeImg} alt="Foto jalan berlubang" className="absolute inset-0 h-full w-full object-cover" />
+                          <div className="pointer-events-none absolute inset-0 bg-black/10" />
+                          <div className="animate-scan pointer-events-none absolute inset-x-0 h-0.5 bg-primary" />
+                          <div className="absolute flex h-24 w-36 flex-col justify-between rounded-xl border-2 border-primary bg-primary/20 p-1">
+                            <div className="w-fit rounded-full bg-primary px-2 py-0.5 font-mono text-[8px] font-bold tracking-widest text-primary-foreground">
                               JALAN BERLUBANG
                             </div>
-                            <div className="text-[8px] font-mono font-bold text-emerald-300 bg-black/50 px-1 py-0.2 rounded w-fit self-end">
-                              94.6%
-                            </div>
+                            <div className="w-fit self-end rounded-full bg-black/60 px-1.5 font-mono text-[8px] font-bold text-primary">94.6%</div>
                           </div>
                         </div>
-                        
                         <div className="space-y-1">
-                          <span className="text-[9px] font-semibold text-muted-foreground/90 uppercase tracking-wide">Pindai Objek Foto</span>
-                          <p className="text-[11px] font-bold text-foreground leading-tight">Terdeteksi: Kerusakan Jalan (Sedang)</p>
+                          <span className="text-[9px] font-semibold uppercase tracking-wide text-muted-foreground">Pindai Objek Foto</span>
+                          <p className="text-[11px] font-bold leading-tight">Terdeteksi: Kerusakan Jalan (Sedang)</p>
                         </div>
                       </div>
                     )}
-                    
+
                     {appStage === 2 && (
                       <div className="space-y-4">
-                        <div className="w-full h-[240px] bg-card/50 rounded-2xl p-4 flex flex-col justify-center gap-3.5 border border-border/40">
+                        <div className="flex h-[240px] w-full flex-col justify-center gap-3.5 rounded-3xl bg-field p-4">
                           <div className="space-y-1.5">
-                            <div className="h-2 bg-muted rounded w-1/3" />
-                            <div className="h-6 bg-muted/60 rounded-lg w-full" />
+                            <div className="h-2 w-1/3 rounded-full bg-forest/15" />
+                            <div className="h-6 w-full rounded-full bg-forest/10" />
                           </div>
                           <div className="space-y-1.5">
-                            <div className="h-2 bg-muted rounded w-1/4" />
-                            <div className="h-6 bg-muted/60 rounded-lg w-full" />
+                            <div className="h-2 w-1/4 rounded-full bg-forest/15" />
+                            <div className="h-6 w-full rounded-full bg-forest/10" />
                           </div>
                         </div>
-                        
                         <div className="space-y-1">
-                          <span className="text-[9px] font-semibold text-muted-foreground/90 uppercase tracking-wide">Komunikasi Server</span>
-                          <p className="text-[11px] font-bold text-foreground leading-tight">Mengirim data spasial...</p>
+                          <span className="text-[9px] font-semibold uppercase tracking-wide text-muted-foreground">Komunikasi Server</span>
+                          <p className="text-[11px] font-bold leading-tight">Mengirim data spasial...</p>
                         </div>
                       </div>
                     )}
-                    
+
                     {appStage === 3 && (
                       <div className="space-y-4">
-                        <div className="w-full h-[240px] bg-emerald-500/5 rounded-2xl flex flex-col items-center justify-center gap-3 border border-emerald-500/10">
-                          <div className="w-12 h-12 rounded-full bg-emerald-500/10 border border-emerald-500/20 text-emerald-600 dark:text-emerald-400 flex items-center justify-center shadow-soft">
-                            <CheckCircle2 className="w-6 h-6 animate-bounce" />
+                        <div className="flex h-[240px] w-full flex-col items-center justify-center gap-3 rounded-3xl bg-sage">
+                          <div className="flex h-14 w-14 items-center justify-center rounded-full bg-forest text-primary shadow-soft">
+                            <CheckCircle2 className="h-7 w-7 animate-bounce" />
                           </div>
-                          <div className="text-center px-2 space-y-0.5">
-                            <p className="text-[11px] font-bold text-foreground">Laporan Terkirim!</p>
-                            <p className="text-[9px] text-muted-foreground max-w-[150px] mx-auto leading-relaxed">
+                          <div className="space-y-0.5 px-2 text-center">
+                            <p className="text-[11px] font-bold">Laporan Terkirim!</p>
+                            <p className="mx-auto max-w-[150px] text-[9px] leading-relaxed text-forest/70">
                               Tiket #AURA-4028 aktif. Petugas dinas segera ditugaskan.
                             </p>
                           </div>
                         </div>
-                        
                         <div className="space-y-1">
-                          <span className="text-[9px] font-semibold text-emerald-600 dark:text-emerald-400 uppercase tracking-wide">Berhasil</span>
-                          <p className="text-[11px] font-bold text-foreground leading-tight">Terima kasih atas laporannya!</p>
+                          <span className="text-[9px] font-semibold uppercase tracking-wide text-success">Berhasil</span>
+                          <p className="text-[11px] font-bold leading-tight">Terima kasih atas laporannya!</p>
                         </div>
                       </div>
                     )}
-                    
                   </div>
-                  
-                  {/* Bottom Action Area */}
-                  <div className="pt-4 px-4 pb-7 border-t border-border/40 bg-card">
-                    <button className={`w-full py-2.5 rounded-xl text-[10px] font-semibold tracking-wide transition-all duration-300 ${
-                      appStage === 3 
-                        ? "bg-emerald-600 text-white hover:bg-emerald-700" 
-                        : "bg-primary text-primary-foreground hover:opacity-90"
-                    }`}>
+
+                  <div className="border-t border-border/40 bg-card px-4 pb-7 pt-4">
+                    <div
+                      className={`w-full rounded-full py-2.5 text-center text-[10px] font-bold ${
+                        appStage === 3 ? "bg-forest text-white" : "bg-primary text-primary-foreground"
+                      }`}
+                    >
                       {appStage === 0 && "Konfirmasi Lokasi"}
                       {appStage === 1 && "Unggah & Lapor"}
                       {appStage === 2 && "Sedang Mengirim..."}
                       {appStage === 3 && "Selesai"}
-                    </button>
+                    </div>
                   </div>
-                  
                 </div>
               </div>
             </ScrollReveal>
-            
           </div>
         </section>
 
-        {/* KONDISI KELURAHAN TERKINI */}
-        <section className="bg-secondary/35 dark:bg-card/45 border-y border-border/40 py-8 md:py-11 relative overflow-hidden">
-          <div className="absolute inset-0 grid-pattern opacity-30 pointer-events-none" />
-          <div className="container mx-auto px-4 relative z-10">
-            <ScrollReveal direction="up" className="flex flex-col md:flex-row md:items-end justify-between gap-6 mb-6">
+        {/* KONDISI KELURAHAN */}
+        <section className="my-12 overflow-hidden rounded-[48px] bg-[#dcf0f8] py-14 md:rounded-[64px] md:py-20 dark:bg-card">
+          <div className="relative mx-auto max-w-[1200px] px-4">
+            <div className="mb-8 flex flex-col justify-between gap-6 md:flex-row md:items-end">
               <div className="space-y-3">
-                <Badge variant="outline" className="border-primary/20 text-primary bg-primary/5 px-3 py-1 font-semibold uppercase tracking-wider text-xs">
-                  Daerah Aktif
-                </Badge>
-                <h3 className="text-2xl sm:text-3xl font-extrabold tracking-tight text-foreground md:text-4xl">
-                  Kondisi Kelurahan Terkini
-                </h3>
-                <p className="text-sm text-muted-foreground max-w-xl">
+                <Pill dark>Daerah Aktif</Pill>
+                <h3 className="text-3xl font-extrabold text-forest md:text-4xl dark:text-foreground">Kondisi Kelurahan Terkini</h3>
+                <p className="max-w-xl text-sm text-forest/70 dark:text-muted-foreground">
                   Pantau tingkat penyelesaian laporan infrastruktur jalan dan trotoar di wilayah percontohan secara real-time.
                 </p>
               </div>
-              
-              <Button
-                asChild
-                variant="outline"
-                className="w-fit hover:bg-secondary/50 rounded-full px-6 transition-all duration-300"
-              >
-                <Link to="/warga">Lihat Peta Interaktif</Link>
-              </Button>
-            </ScrollReveal>
-            
-            {/* 4 Cards Grid */}
-            <div className="grid gap-6 grid-cols-1 sm:grid-cols-2 lg:grid-cols-4">
-              {[
-                {
-                  id: "menteng",
-                  name: "Kelurahan Menteng",
-                  sub: "Kec. Menteng, Jakarta Pusat",
-                  stat: "98% Selesai",
-                  rating: "4.9",
-                  reports: "420 laporan",
-                  img: mentengRoadImg,
-                },
-                {
-                  id: "kebayoran",
-                  name: "Kebayoran Baru",
-                  sub: "Kec. Kebayoran Baru, Jaksel",
-                  stat: "95% Selesai",
-                  rating: "4.7",
-                  reports: "310 laporan",
-                  img: kebayoranRoadImg,
-                },
-                {
-                  id: "senayan",
-                  name: "Kelurahan Senayan",
-                  sub: "Kec. Kebayoran Baru, Jaksel",
-                  stat: "99% Selesai",
-                  rating: "4.8",
-                  reports: "510 laporan",
-                  img: senayanRoadImg,
-                },
-                {
-                  id: "babakan",
-                  name: "Kelurahan Babakan",
-                  sub: "Kec. Tangerang, Tangerang",
-                  stat: "92% Selesai",
-                  rating: "4.5",
-                  reports: "280 laporan",
-                  img: babakanRoadImg,
-                },
-              ].map((c, index) => (
-                <ScrollReveal key={c.id} delay={index * 100} direction="up">
-                  <div 
-                    className="group relative h-[340px] rounded-3xl overflow-hidden shadow-soft hover:shadow-glow transition-all duration-500 cursor-pointer border border-border/40 bg-card"
-                  >
-                    {/* Background image */}
-                    <img 
-                      src={c.img} 
-                      alt={c.name}
-                      className="absolute inset-0 w-full h-full object-cover group-hover:scale-105 transition-transform duration-700" 
-                    />
+              <div className="flex flex-wrap items-center gap-2.5">
+                <Button variant="dark" className="w-fit gap-3 pr-1.5" onClick={() => setMapOpen(true)}>
+                  Lihat Peta Interaktif
+                  <span className="flex h-8 w-8 items-center justify-center rounded-full bg-primary text-primary-foreground">
+                    <ArrowRight className="h-4 w-4" />
+                  </span>
+                </Button>
+                <Button asChild variant="outline" className="rounded-full bg-card/80 text-forest font-bold hover:bg-card dark:text-foreground">
+                  <Link to="/daerah">
+                    Lihat Semua Rating Daerah
+                  </Link>
+                </Button>
+              </div>
+            </div>
+
+            <div className="grid grid-cols-1 gap-5 sm:grid-cols-2 lg:grid-cols-4">
+              {kelurahanList.map((c) => (
+                <div
+                  key={c.id}
+                  role="button"
+                  tabIndex={0}
+                  onClick={() => {
+                    setActiveKelurahan(c);
+                    setRatingVal(5);
+                    setHoverRatingVal(0);
+                  }}
+                  onKeyDown={(e) => {
+                    if (e.key === "Enter" || e.key === " ") {
+                      setActiveKelurahan(c);
+                      setRatingVal(5);
+                      setHoverRatingVal(0);
+                    }
+                  }}
+                  className="group relative block h-[350px] cursor-pointer overflow-hidden rounded-[28px] bg-card shadow-soft transition-shadow duration-300 hover:shadow-elev focus:outline-none focus:ring-2 focus:ring-primary"
+                >
+                  <img src={c.img} alt={c.name} className="absolute inset-0 h-full w-full object-cover transition-transform duration-700 group-hover:scale-105" />
+                  <div className="absolute inset-0 bg-gradient-to-t from-forest/95 via-forest/30 to-transparent" />
+                  
+                  <div className="absolute right-4 top-4 flex flex-col items-end gap-1">
+                    <span className="rounded-full bg-primary px-3 py-1.5 text-[11px] font-extrabold text-primary-foreground shadow-soft">
+                      {c.stat}
+                    </span>
+                    <span className="rounded-full bg-forest/80 backdrop-blur-md px-2.5 py-0.5 text-[10px] font-bold text-primary opacity-0 transition-opacity group-hover:opacity-100">
+                      ★ Beri Rating
+                    </span>
+                  </div>
+
+                  <div className="absolute inset-x-0 bottom-0 flex flex-col p-5 text-white">
+                    <span className="text-[10px] font-bold text-primary">{c.sub}</span>
+                    <h4 className="mt-0.5 text-base font-extrabold group-hover:text-primary transition-colors">{c.name}</h4>
                     
-                    {/* Dark gradient overlay */}
-                    <div className="absolute inset-0 bg-gradient-to-t from-black/90 via-black/35 to-transparent opacity-95" />
-                    
-                    {/* Top right pill */}
-                    <div className="absolute top-4 right-4">
-                      <span className="bg-white/95 dark:bg-[#151c19]/95 text-emerald-800 dark:text-emerald-300 text-[10px] font-black tracking-wide px-3 py-1.5 rounded-full shadow-xs">
-                        {c.stat}
-                      </span>
-                    </div>
-                    
-                    {/* Bottom details */}
-                    <div className="absolute bottom-0 inset-x-0 p-5 text-white flex flex-col justify-end">
-                      <span className="text-[9px] text-emerald-300/90 font-bold uppercase tracking-wider">{c.sub}</span>
-                      <h4 className="text-base font-extrabold tracking-tight mt-0.5">{c.name}</h4>
-                      
-                      {/* Rating/reports */}
-                      <div className="flex items-center gap-1.5 mt-2.5 pt-2.5 border-t border-white/10 text-xs text-white/80">
-                        <Star className="w-3.5 h-3.5 fill-amber-400 stroke-amber-400" />
-                        <span className="font-extrabold text-white">{c.rating}</span>
-                        <span className="opacity-60">({c.reports})</span>
+                    <div className="mt-2.5 flex items-center justify-between border-t border-white/15 pt-2.5 text-xs text-white/90">
+                      <div className="flex items-center gap-1.5">
+                        <span className="flex">
+                          {Array.from({ length: 5 }).map((_, i) => (
+                            <Star key={i} className="h-3.5 w-3.5 fill-primary stroke-primary" />
+                          ))}
+                        </span>
+                        <span className="font-extrabold">{c.rating}</span>
                       </div>
+                      <span className="opacity-80 font-medium">{c.reports} laporan</span>
+                    </div>
+
+                    <div className="mt-2 flex items-center justify-between text-[11px] text-white/70">
+                      <span>Respon SLA:</span>
+                      <span className="font-bold text-primary">{c.speed}</span>
                     </div>
                   </div>
-                </ScrollReveal>
+                </div>
               ))}
             </div>
+
+            {/* MODAL DIALOG BERI RATING KELURAHAN LANGSUNG DARI BERANDA */}
+            <Dialog open={!!activeKelurahan} onOpenChange={(open) => !open && setActiveKelurahan(null)}>
+              <DialogContent className="sm:max-w-md max-h-[90vh] overflow-y-auto rounded-[32px] p-0 border-none">
+                {activeKelurahan && (
+                  <div className="flex flex-col bg-card">
+                    {/* Header Banner */}
+                    <div className="relative h-40 w-full overflow-hidden bg-forest">
+                      <img
+                        src={activeKelurahan.img}
+                        alt={activeKelurahan.name}
+                        className="h-full w-full object-cover opacity-80"
+                      />
+                      <div className="absolute inset-0 bg-gradient-to-t from-card via-card/50 to-transparent" />
+                      <div className="absolute top-4 right-4">
+                        <span className="rounded-full bg-primary px-3 py-1 text-xs font-black text-primary-foreground">
+                          {activeKelurahan.stat}
+                        </span>
+                      </div>
+                      <div className="absolute bottom-3 left-5 right-5">
+                        <span className="text-[11px] font-bold text-primary uppercase">{activeKelurahan.sub}</span>
+                        <h3 className="text-2xl font-black text-white">{activeKelurahan.name}</h3>
+                      </div>
+                    </div>
+
+                    {/* Form Rating */}
+                    <form onSubmit={handleRatingSubmit} className="p-5 space-y-4">
+                      <div>
+                        <label className="text-xs font-bold text-forest dark:text-foreground">
+                          Pilih Bintang Kepuasan:
+                        </label>
+                        <div
+                          className="mt-2 flex items-center gap-1.5"
+                          onMouseLeave={() => setHoverRatingVal(0)}
+                        >
+                          {[1, 2, 3, 4, 5].map((star) => {
+                            const isFilled = star <= (hoverRatingVal || ratingVal);
+                            return (
+                              <button
+                                key={star}
+                                type="button"
+                                onClick={() => setRatingVal(star)}
+                                onMouseEnter={() => setHoverRatingVal(star)}
+                                className="rounded-xl p-1 transition-colors hover:bg-sage/40 focus:outline-none"
+                              >
+                                <Star
+                                  className={`h-8 w-8 transition-colors duration-150 ${
+                                    isFilled
+                                      ? "fill-primary stroke-primary text-primary"
+                                      : "stroke-muted-foreground/30 text-transparent"
+                                  }`}
+                                />
+                              </button>
+                            );
+                          })}
+                          <span className="ml-2 rounded-full bg-sage px-3 py-1 text-xs font-extrabold text-forest">
+                            {hoverRatingVal || ratingVal}.0 / 5.0
+                          </span>
+                        </div>
+                        <p className="mt-1 min-h-[1.25rem] text-xs font-medium text-forest/80 dark:text-primary">
+                          {(hoverRatingVal || ratingVal) === 5 && "Sangat Puas! Jalanan mulus & respon kilat (5/5)"}
+                          {(hoverRatingVal || ratingVal) === 4 && "Puas! Respon cepat & tambalan rapi (4/5)"}
+                          {(hoverRatingVal || ratingVal) === 3 && "Cukup, penanganan sedang berjalan (3/5)"}
+                          {(hoverRatingVal || ratingVal) === 2 && "Kurang Puas, penanganan agak lambat (2/5)"}
+                          {(hoverRatingVal || ratingVal) === 1 && "Kecewa, masih banyak lubang (1/5)"}
+                        </p>
+                      </div>
+
+                      <div>
+                        <label className="text-xs font-bold text-forest dark:text-foreground">Nama Anda</label>
+                        <Input
+                          placeholder="Nama warga pelapor"
+                          className="mt-1 rounded-2xl"
+                          value={reviewerName}
+                          onChange={(e) => setReviewerName(e.target.value)}
+                          required
+                        />
+                      </div>
+
+                      <div>
+                        <label className="text-xs font-bold text-forest dark:text-foreground">Ulasan & Kesan Anda</label>
+                        <Textarea
+                          placeholder={`Bagikan pengalaman kondisi jalan atau respon petugas di ${activeKelurahan.name}...`}
+                          rows={3}
+                          className="mt-1 rounded-2xl resize-none"
+                          value={reviewerComment}
+                          onChange={(e) => setReviewerComment(e.target.value)}
+                          required
+                        />
+                      </div>
+
+                      <div className="flex items-center justify-between pt-2">
+                        <Link
+                          to="/daerah"
+                          className="text-xs font-bold text-forest hover:underline dark:text-primary"
+                          onClick={() => setActiveKelurahan(null)}
+                        >
+                          Lihat semua ulasan daerah →
+                        </Link>
+                        <div className="flex gap-2">
+                          <Button
+                            type="button"
+                            variant="outline"
+                            className="rounded-full"
+                            onClick={() => setActiveKelurahan(null)}
+                          >
+                            Tutup
+                          </Button>
+                          <Button type="submit" variant="dark" className="rounded-full gap-2">
+                            <Send className="h-3.5 w-3.5 text-primary" /> Kirim Rating
+                          </Button>
+                        </div>
+                      </div>
+                    </form>
+                  </div>
+                )}
+              </DialogContent>
+            </Dialog>
           </div>
         </section>
 
         {/* PROGRAM UNGGULAN */}
-        <section className="container mx-auto px-4 py-8 md:py-11">
+        <section className="mx-auto max-w-[1200px] px-4 py-8 md:py-12">
           <div className="grid gap-5 md:grid-cols-[1.1fr_1.2fr_1.2fr]">
-            
-            {/* Left Card: AURA Theme Background */}
-            <ScrollReveal delay={0} direction="up" className="flex flex-col justify-between p-6 rounded-3xl bg-secondary/80 dark:bg-secondary/20 border border-border/60 text-foreground min-h-[300px]">
+            <ScrollReveal delay={0} direction="up" className="flex min-h-[320px] flex-col justify-between rounded-[28px] bg-sage p-7">
               <div className="space-y-3">
-                <span className="text-[10px] font-extrabold uppercase tracking-wider text-primary">Program Terpadu</span>
-                <h3 className="text-2xl font-black tracking-tight leading-tight text-foreground">
-                  Program Penataan Kota
-                </h3>
-                <p className="text-xs font-medium leading-relaxed text-muted-foreground">
+                <Pill dark>Program Terpadu</Pill>
+                <h3 className="text-2xl font-extrabold leading-tight text-forest">Program Penataan Kota</h3>
+                <p className="text-sm leading-relaxed text-forest/75">
                   AURA mendukung berbagai gerakan perbaikan fasilitas publik demi terciptanya jalanan kota yang lebih ramah lingkungan dan aman bagi semua kalangan warga.
                 </p>
               </div>
-              
-              <Button
-                asChild
-                className="w-fit bg-primary text-primary-foreground hover:opacity-90 rounded-full px-6 mt-6 shadow-xs text-xs font-bold transition-all duration-300"
-              >
-                <Link to="/fitur">Jelajahi Fitur</Link>
+              <Button asChild variant="dark" className="mt-6 w-fit gap-3 pr-1.5">
+                <Link to="/fitur">
+                  Jelajahi Fitur
+                  <span className="flex h-8 w-8 items-center justify-center rounded-full bg-primary text-primary-foreground">
+                    <ArrowRight className="h-4 w-4" />
+                  </span>
+                </Link>
               </Button>
             </ScrollReveal>
-            
-            {/* Middle Card */}
-            <ScrollReveal delay={150} direction="up">
-              <div className="group relative rounded-3xl overflow-hidden min-h-[300px] shadow-soft border border-border/40 cursor-pointer bg-card">
-                <img 
-                  src={kebayoranRoadImg} 
-                  alt="Jalan Bebas Lubang" 
-                  className="absolute inset-0 w-full h-full object-cover group-hover:scale-105 transition-transform duration-500"
-                />
-                <div className="absolute inset-0 bg-gradient-to-t from-black/80 via-black/20 to-transparent" />
-                <div className="absolute bottom-5 left-5 right-5 text-white">
-                  <span className="text-[10px] text-emerald-300 font-extrabold uppercase tracking-widest">Inisiatif 01</span>
-                  <h4 className="text-lg font-black tracking-tight mt-0.5">Gerakan Jalan Bebas Lubang</h4>
-                  <p className="text-[10px] text-white/80 mt-1 leading-relaxed">Pemberantasan jalan rusak secara masif di kelurahan percontohan.</p>
-                </div>
-              </div>
-            </ScrollReveal>
 
-            {/* Right Card */}
-            <ScrollReveal delay={300} direction="up">
-              <div className="group relative rounded-3xl overflow-hidden min-h-[300px] shadow-soft border border-border/40 cursor-pointer bg-card">
-                <img 
-                  src={mentengRoadImg} 
-                  alt="Pedestrian Ramah Difabel" 
-                  className="absolute inset-0 w-full h-full object-cover group-hover:scale-105 transition-transform duration-500"
-                />
-                <div className="absolute inset-0 bg-gradient-to-t from-black/80 via-black/20 to-transparent" />
-                <div className="absolute bottom-5 left-5 right-5 text-white">
-                  <span className="text-[10px] text-emerald-300 font-extrabold uppercase tracking-widest">Inisiatif 02</span>
-                  <h4 className="text-lg font-black tracking-tight mt-0.5">Pedestrian Ramah Difabel</h4>
-                  <p className="text-[10px] text-white/80 mt-1 leading-relaxed">Restorasi trotoar berlubang menjadi jalur ramah pejalan kaki & difabel.</p>
-                </div>
-              </div>
-            </ScrollReveal>
-
-          </div>
-        </section>
-
-        {/* HOW IT WORKS */}
-        <section className="container mx-auto px-4 py-8 md:py-11 border-t border-border/60">
-          <ScrollReveal direction="up" className="mx-auto max-w-2xl text-center mb-6">
-            <Badge variant="outline" className="border-accent/30 text-accent bg-accent/5 px-3 py-1 font-semibold uppercase tracking-wider text-xs">
-              Alur Kerja
-            </Badge>
-            <h2 className="mt-4 text-3xl font-extrabold tracking-tight text-foreground md:text-4xl">
-              Dari Foto Laporan ke Perbaikan dalam Hitungan Jam
-            </h2>
-          </ScrollReveal>
-
-          <div className="grid gap-5 md:grid-cols-4">
             {[
-              {
-                n: "01",
-                icon: Camera,
-                t: "Warga Melapor",
-                d: "Mengunggah foto kerusakan jalan, mendeteksi lokasi GPS otomatis dalam waktu 30 detik.",
-              },
-              {
-                n: "02",
-                icon: Sparkles,
-                t: "Verifikasi Sistem",
-                d: "Sistem AI mengolah citra laporan untuk mengklasifikasikan tingkat urgensi secara otomatis.",
-              },
-              {
-                n: "03",
-                icon: Wrench,
-                t: "Petugas Lapangan",
-                d: "Menerima work order terdekat, melakukan perbaikan, dan mengirimkan konfirmasi hasil kerja.",
-              },
-              {
-                n: "04",
-                icon: ShieldCheck,
-                t: "Selesai & Terbuka",
-                d: "Admin memverifikasi perbaikan dan status diperbarui di peta GIS publik warga.",
-              },
-            ].map(({ n, icon: Icon, t, d }, index) => (
-              <ScrollReveal key={n} delay={index * 100} direction="up" className="w-full h-full">
-                <div 
-                  className="h-full group relative rounded-2xl border border-border/80 bg-card p-5 shadow-soft hover:shadow-glow hover:border-primary/20 transition-all duration-300"
-                >
-                  <div className="flex items-center justify-between">
-                    <span className="text-xs font-black bg-primary/10 text-primary px-2.5 py-0.5 rounded-full">
-                      Langkah {n}
-                    </span>
-                    <Icon className="h-5 w-5 text-muted-foreground group-hover:text-primary transition-colors" />
+              { img: pamulangRoadImg, t: "Gerakan Jalan Bebas Lubang", d: "Pemberantasan jalan rusak secara masif di kelurahan percontohan.", delay: 150 },
+              { img: rawaBuntuRoadImg, t: "Pedestrian Ramah Difabel", d: "Restorasi trotoar berlubang menjadi jalur ramah pejalan kaki & difabel.", delay: 300 },
+            ].map(({ img, t, d, delay }) => (
+              <ScrollReveal key={t} delay={delay} direction="up">
+                <div className="group relative min-h-[320px] overflow-hidden rounded-[28px] bg-card shadow-soft">
+                  <img src={img} alt={t} className="absolute inset-0 h-full w-full object-cover transition-transform duration-500 group-hover:scale-105" />
+                  <div className="absolute inset-0 bg-gradient-to-t from-forest/90 via-forest/20 to-transparent" />
+                  <div className="absolute inset-x-6 bottom-6 text-white">
+                    <span className="rounded-full bg-primary px-3 py-1 text-[10px] font-extrabold text-primary-foreground">Program</span>
+                    <h4 className="mt-3 text-lg font-extrabold">{t}</h4>
+                    <p className="mt-1 text-xs leading-relaxed text-white/80">{d}</p>
                   </div>
-                  <h4 className="mt-4 text-base font-extrabold tracking-tight text-foreground">{t}</h4>
-                  <p className="mt-1.5 text-xs text-muted-foreground leading-relaxed">{d}</p>
                 </div>
               </ScrollReveal>
             ))}
           </div>
         </section>
 
-        {/* TESTIMONIAL */}
-        <section className="border-y border-border bg-warm-gradient overflow-hidden relative">
-          <div className="absolute top-0 right-0 w-96 h-96 bg-primary/5 rounded-full blur-3xl pointer-events-none" />
-          <div className="container mx-auto px-4 py-8 relative z-10">
-            <ScrollReveal direction="up" className="max-w-4xl mx-auto flex flex-col items-center text-center space-y-4">
-              <div className="flex h-12 w-12 items-center justify-center rounded-2xl bg-primary text-primary-foreground shadow-elev">
-                <Quote className="h-5 w-5" />
-              </div>
-              
-              <blockquote className="text-lg sm:text-xl font-semibold leading-relaxed text-foreground italic">
-                “Dulu melaporkan jalan berlubang sangat membingungkan dan memakan waktu berminggu-minggu tanpa kejelasan. Dengan AURA, saya tinggal ambil foto, kirim, dan dalam tiga hari jalanan kompleks kami sudah mulus ditambal.”
-              </blockquote>
-              
-              <div className="flex flex-col sm:flex-row items-center gap-3 pt-4">
-                <div className="flex h-9 w-9 items-center justify-center rounded-full bg-primary/10 text-xs font-bold text-primary">
-                  RS
+        {/* ALUR KERJA */}
+        <section className="mx-auto max-w-[1200px] px-4 py-12 md:py-16">
+          <ScrollReveal direction="up" className="mx-auto mb-10 max-w-2xl text-center">
+            <Pill>Alur Kerja</Pill>
+            <h2 className="mt-4 text-3xl font-extrabold text-forest md:text-4xl dark:text-foreground">
+              Dari Foto Laporan ke Perbaikan dalam Hitungan Jam
+            </h2>
+          </ScrollReveal>
+
+          <div className="relative grid gap-5 md:grid-cols-4">
+            <div aria-hidden className="absolute left-[12%] right-[12%] top-[52px] hidden border-t-2 border-dashed border-forest/25 md:block" />
+            {STEPS.map(({ n, icon: Icon, t, d }, index) => (
+              <ScrollReveal key={n} delay={index * 100} direction="up" className="h-full w-full">
+                <div className="card-dashed relative h-full p-6">
+                  <div className="flex items-center justify-between">
+                    <span className="flex h-14 w-14 items-center justify-center rounded-full bg-forest text-lg font-extrabold text-primary">{n}</span>
+                    <Icon className="h-5 w-5 text-forest/60" />
+                  </div>
+                  <h4 className="mt-5 text-base font-extrabold">{t}</h4>
+                  <p className="mt-1.5 text-xs leading-relaxed text-muted-foreground">{d}</p>
                 </div>
-                <div className="text-left text-xs">
-                  <p className="font-extrabold text-foreground">Carlos Sainz</p>
-                  <p className="text-muted-foreground">Warga Kelurahan Babakan · Pengguna AURA</p>
+              </ScrollReveal>
+            ))}
+          </div>
+        </section>
+
+        {/* TESTIMONI */}
+        <section className="mx-auto max-w-[1200px] px-4 py-10">
+          <div className="mx-auto mb-8 max-w-2xl space-y-4 text-center">
+            <Pill>Suara Warga</Pill>
+            <h2 className="text-3xl font-extrabold text-forest md:text-4xl dark:text-foreground">
+              Cerita dari warga yang sudah melapor
+            </h2>
+          </div>
+          <div className="grid gap-5 md:grid-cols-3">
+            {TESTIMONIALS.map((t) => (
+              <div key={t.n} className="flex flex-col rounded-[28px] border border-border bg-card p-6 shadow-soft">
+                <div className="flex gap-1">
+                  {Array.from({ length: 5 }).map((_, i) => (
+                    <Star key={i} className="h-4 w-4 fill-primary stroke-primary" />
+                  ))}
                 </div>
-                <span className="hidden sm:inline-flex items-center gap-1 rounded-full border border-border bg-card px-2.5 py-0.5 text-[10px] font-semibold text-muted-foreground">
-                  Resolusi Cepat 3 Hari
-                </span>
+                <p className="mt-4 text-sm leading-relaxed">“{t.q}”</p>
+                <div className="mt-auto flex items-center gap-3 pt-6">
+                  <span className="flex h-10 w-10 items-center justify-center rounded-full bg-sage text-xs font-extrabold text-forest">
+                    {t.n.split(" ").map((s) => s[0]).join("")}
+                  </span>
+                  <div className="text-xs">
+                    <p className="font-extrabold">{t.n}</p>
+                    <p className="text-muted-foreground">{t.r}</p>
+                  </div>
+                </div>
               </div>
-            </ScrollReveal>
+            ))}
+          </div>
+
+          <div className="mt-5 overflow-hidden rounded-[36px] bg-forest p-8 text-white md:p-12">
+            <span className="rounded-full bg-primary px-4 py-1.5 text-xs font-bold text-primary-foreground">Resolusi Cepat 3 Hari</span>
+            <blockquote className="mt-5 max-w-3xl text-xl font-semibold leading-relaxed md:text-2xl">
+              “Dalam tiga hari, jalanan di kompleks kami yang berlubang sudah mulus ditambal. Benar-benar membantu warga.”
+            </blockquote>
+            <p className="mt-5 text-sm font-extrabold">
+              Dewi Lestari <span className="font-normal text-white/70">· Ketua RW 05 Ciputat</span>
+            </p>
           </div>
         </section>
 
         {/* CTA */}
-        <section className="container mx-auto px-4 py-8">
-          <ScrollReveal direction="up">
-            <div className="grain relative overflow-hidden rounded-3xl bg-hero-gradient p-8 text-primary-foreground shadow-elev md:p-12 animate-gradient-shift">
-              <div
-                className="pointer-events-none absolute -right-20 -top-20 h-72 w-72 rounded-full opacity-35 blur-3xl animate-pulse-glow will-change-gpu"
-                style={{ background: "var(--accent)" }}
-              />
-              <div
-                className="pointer-events-none absolute -left-20 -bottom-20 h-72 w-72 rounded-full opacity-20 blur-3xl animate-pulse-glow animation-delay-500 will-change-gpu"
-                style={{ background: "var(--primary-glow)" }}
-              />
-              <div className="relative grid items-center gap-8 md:grid-cols-[1fr_auto]">
-                <div>
-                  <h2 className="text-3xl font-bold tracking-tight text-balance md:text-4xl">
-                    Jadilah bagian dari kota yang lebih baik
-                  </h2>
-                  <p className="mt-3 max-w-xl text-primary-foreground/85">
-                    Laporkan setiap jalan berlubang atau trotoar rusak di sekitar Anda dalam hitungan detik. Bersama-sama, kita wujudkan jalanan Indonesia yang lebih aman, mulus, dan tertata rapi.
-                  </p>
-                </div>
-                <div className="flex flex-wrap gap-3">
-                  <Button asChild size="lg" variant="secondary" className="hover:scale-105 active:scale-95 transition-all duration-300 shadow-soft">
-                    <Link to="/warga">Lapor Sekarang</Link>
-                  </Button>
-                </div>
-              </div>
-            </div>
-          </ScrollReveal>
-        </section>
+        <CtaBanner />
       </main>
+
+      {/* POP-UP PETA 3D */}
+      {mapOpen && (
+        <div
+          className="fixed inset-0 z-50 flex items-center justify-center bg-forest/80 p-4 backdrop-blur-sm"
+          onClick={() => setMapOpen(false)}
+        >
+          <div className="relative h-[80vh] w-full max-w-5xl" onClick={(e) => e.stopPropagation()}>
+            <TangselDiorama />
+            <button
+              onClick={() => setMapOpen(false)}
+              aria-label="Tutup peta"
+              className="absolute right-4 top-4 z-30 flex h-10 w-10 items-center justify-center rounded-full bg-card text-forest shadow-soft hover:bg-sage"
+            >
+              <X className="h-5 w-5" />
+            </button>
+          </div>
+        </div>
+      )}
+
       <SiteFooter />
     </div>
   );
@@ -658,25 +771,27 @@ function ScrollReveal({ children, className = "", delay = 0, direction = "up" }:
   const ref = useRef<HTMLDivElement>(null);
 
   useEffect(() => {
+    const currentRef = ref.current;
+    if (!currentRef) return;
+
     const observer = new IntersectionObserver(
       ([entry]) => {
-        setIsIntersecting(entry.isIntersecting);
+        if (entry.isIntersecting) {
+          setIsIntersecting(true);
+          // Sekali muncul, kunci dan hentikan observasi agar tidak mendut-mendut saat scroll
+          observer.unobserve(entry.target);
+        }
       },
       {
         threshold: 0.05,
-        rootMargin: "0px 0px -50px 0px",
+        rootMargin: "0px 0px 80px 0px",
       }
     );
 
-    const currentRef = ref.current;
-    if (currentRef) {
-      observer.observe(currentRef);
-    }
+    observer.observe(currentRef);
 
     return () => {
-      if (currentRef) {
-        observer.unobserve(currentRef);
-      }
+      observer.disconnect();
     };
   }, []);
 
@@ -692,8 +807,8 @@ function ScrollReveal({ children, className = "", delay = 0, direction = "up" }:
     <div
       ref={ref}
       className={`transform transition-all duration-700 ease-[cubic-bezier(0.16,1,0.3,1)] will-change-transform ${
-        isIntersecting 
-          ? "opacity-100 translate-y-0 translate-x-0" 
+        isIntersecting
+          ? "opacity-100 translate-y-0 translate-x-0"
           : `opacity-0 ${directionClasses[direction]}`
       } ${className}`}
       style={{ transitionDelay: `${delay}ms` }}
@@ -702,4 +817,3 @@ function ScrollReveal({ children, className = "", delay = 0, direction = "up" }:
     </div>
   );
 }
-

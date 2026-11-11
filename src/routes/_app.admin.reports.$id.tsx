@@ -1,18 +1,14 @@
 import { createFileRoute, useNavigate } from "@tanstack/react-router";
-import { useEffect, useState, lazy, Suspense } from "react";
+import { useEffect, useState } from "react";
 import {
-  ArrowLeft, Camera, MapPin, Calendar, Loader2, ExternalLink, Clock, AlertTriangle, Tag,
-  Sparkles, Wrench, Building2, ShieldAlert, CheckCircle2, ClipboardList, Activity,
-  User, Phone, Mail, Map, Trash2,
+  ArrowLeft, Camera, Calendar, Loader2, ExternalLink, Clock, AlertTriangle,
+  Wrench, Building2, ClipboardList, Activity, User, Phone, Mail, Trash2, Trash, MapPin,
 } from "lucide-react";
 import { toast } from "sonner";
 import { formatDistanceToNow } from "date-fns";
 import { id as idLocale } from "date-fns/locale";
 import { useAuth } from "@/lib/auth";
 import { supabase } from "@/integrations/supabase/client";
-import { Card } from "@/components/ui/card";
-import { Badge } from "@/components/ui/badge";
-import { Button } from "@/components/ui/button";
 import {
   AlertDialog,
   AlertDialogAction,
@@ -31,6 +27,12 @@ import {
   CATEGORY_LABEL, CATEGORY_ICON, STATUS_LABEL, STATUS_TONE, URGENCY_LABEL, URGENCY_TONE,
 } from "@/lib/reports";
 import { URGENCY_COLORS } from "@/lib/leaflet-setup";
+import {
+  findKecamatanByCoords,
+  findNearestKelurahan,
+  TANGSEL_KECAMATAN,
+  type KecamatanData,
+} from "@/lib/tangsel-data";
 
 export const Route = createFileRoute("/_app/admin/reports/$id")({
   head: () => ({ meta: [{ title: "Detail Laporan" }] }),
@@ -103,6 +105,9 @@ const getUrgencyKey = (val: string): "low" | "medium" | "high" | "critical" => {
   if (norm.includes("kritis") || norm.includes("critical") || norm.includes("sangat parah")) return "critical";
   return "medium";
 };
+
+const card = "rounded-[32px] bg-card p-5 shadow-soft md:p-6";
+const eyebrow = "text-[10px] font-bold uppercase tracking-widest text-muted-foreground";
 
 function ReportDetailPage() {
   const { user } = useAuth();
@@ -198,7 +203,7 @@ function ReportDetailPage() {
         .select("assigned_to")
         .eq("report_id", id)
         .maybeSingle();
-      
+
       if (woData) {
         setAssignedPetugasId(woData.assigned_to);
       }
@@ -215,7 +220,6 @@ function ReportDetailPage() {
     const { error } = await supabase.from("reports").update({ status_pelaporan: status }).eq("id", report.id);
     if (error) {
       toast.error(error.message);
-      // Refetch to revert
       const { data } = await supabase.from("reports").select("*").eq("id", id).single();
       if (data) setReport(data as Report);
     } else {
@@ -272,462 +276,495 @@ function ReportDetailPage() {
   if (loading || !report) {
     return (
       <div className="flex h-[60vh] items-center justify-center">
-        <Loader2 className="h-8 w-8 animate-spin text-primary" />
+        <Loader2 className="h-8 w-8 animate-spin text-forest" />
       </div>
     );
   }
 
-  // photoUrl is already resolved via state
-
   const CategoryIcon = CATEGORY_ICON[report.category as keyof typeof CATEGORY_ICON];
   const urgencyKey = getUrgencyKey(report.kategori_pelaporan);
-  const urgencyColor = URGENCY_COLORS[urgencyKey] ?? "#5a7a55";
+  const urgencyColor = URGENCY_COLORS[urgencyKey] ?? "#6b6b63";
   const createdDate = new Date(report.created_at);
 
-  return (
-    <div className="w-full space-y-4 pt-0 pb-6 animate-in fade-in duration-500">
-      {/* Back button */}
-      <div className="-mb-1">
-        <Button
-          variant="ghost"
-          onClick={() => navigate({ to: "/admin" })}
-          className="gap-1.5 text-muted-foreground hover:text-primary -ml-2 transition-colors font-semibold h-8 text-xs px-2.5"
-        >
-          <ArrowLeft className="h-3.5 w-3.5" />
-          Kembali ke Dashboard
-        </Button>
-      </div>
+  const nearestKelurahan = findNearestKelurahan(report.latitude, report.longitude);
+  const adminKecamatan = nearestKelurahan
+    ? (TANGSEL_KECAMATAN[nearestKelurahan.kecamatanId] || findKecamatanByCoords(report.latitude, report.longitude))
+    : findKecamatanByCoords(report.latitude, report.longitude);
 
-      {/* Dense Dashboard Grid */}
-      <div className="grid gap-4 lg:grid-cols-12 w-full items-stretch">
-        {/* Left Column: Info & Analytics (col-span-8) */}
-        <div className="col-span-12 lg:col-span-8 flex flex-col gap-4">
-          {/* Card 1: Detail Laporan & Informasi Tiket */}
-          <Card className="border border-border/80 shadow-soft bg-card p-4 rounded-xl shrink-0">
-            <div className="flex flex-col sm:flex-row sm:items-center sm:justify-between gap-3 border-b border-border/50 pb-3 mb-3 shrink-0">
+  return (
+    <div className="w-full space-y-5 pb-6">
+      <button
+        onClick={() => navigate({ to: "/admin" })}
+        className="inline-flex h-10 items-center gap-2 rounded-full bg-card px-4 text-sm font-bold text-forest shadow-soft transition-colors hover:bg-sage dark:text-foreground"
+      >
+        <ArrowLeft className="h-4 w-4" /> Kembali ke Dashboard
+      </button>
+
+      <div className="grid w-full items-start gap-5 lg:grid-cols-12">
+        {/* ───────── Kolom kiri ───────── */}
+        <div className="flex flex-col gap-5 lg:col-span-8">
+          {/* Tiket */}
+          <div className={card}>
+            <div className="mb-5 flex flex-col gap-3 border-b border-border/50 pb-5 sm:flex-row sm:items-center sm:justify-between">
               <div>
-                <span className="text-[10px] font-bold text-primary tracking-widest uppercase">TIKET LAPORAN</span>
-                <h1 className="text-2xl font-extrabold text-foreground tracking-tight leading-none mt-1 font-display">
+                <span className={eyebrow}>Tiket Laporan</span>
+                <h1 className="mt-1 text-3xl font-extrabold leading-none tracking-tight text-forest dark:text-foreground">
                   #AURA-{report.id.slice(0, 8).toUpperCase()}
                 </h1>
               </div>
-              {/* Badges */}
-              <div className="flex flex-wrap items-center gap-1.5">
-                <Badge className="bg-primary/10 text-primary hover:bg-primary/15 border-transparent gap-1 py-1 px-2.5 rounded text-xs font-semibold">
+              <div className="flex flex-wrap items-center gap-2">
+                <span className="inline-flex items-center gap-1.5 rounded-full bg-sage px-3 py-1.5 text-xs font-bold text-forest">
                   <CategoryIcon className="h-3.5 w-3.5" />
                   {CATEGORY_LABEL[report.category as keyof typeof CATEGORY_LABEL]}
-                </Badge>
-                <Badge
-                  className="text-white border-transparent gap-1 py-1 px-2.5 rounded text-xs font-semibold"
+                </span>
+                <span
+                  className="inline-flex items-center gap-1.5 rounded-full px-3 py-1.5 text-xs font-bold text-white"
                   style={{ backgroundColor: urgencyColor }}
                 >
                   <AlertTriangle className="h-3.5 w-3.5" />
                   {URGENCY_LABEL[urgencyKey]}
-                </Badge>
-                <Badge className={`border-transparent py-1 px-2.5 rounded text-xs font-semibold ${
-                  report.status_pelaporan === 'progress' 
-                    ? STATUS_TONE.in_progress 
-                    : (STATUS_TONE[report.status_pelaporan as keyof typeof STATUS_TONE] || 'bg-secondary text-secondary-foreground')
+                </span>
+                <span className={`rounded-full px-3 py-1.5 text-xs font-bold ${
+                  report.status_pelaporan === "progress"
+                    ? STATUS_TONE.in_progress
+                    : (STATUS_TONE[report.status_pelaporan as keyof typeof STATUS_TONE] || "bg-secondary text-secondary-foreground")
                 }`}>
-                  {report.status_pelaporan === 'progress' 
-                    ? 'Dikerjakan' 
+                  {report.status_pelaporan === "progress"
+                    ? "Dikerjakan"
                     : (STATUS_LABEL[report.status_pelaporan as keyof typeof STATUS_LABEL] || report.status_pelaporan)}
-                </Badge>
+                </span>
               </div>
             </div>
 
-            {/* Quick Details Modern Grid */}
-            <div className="grid grid-cols-2 sm:grid-cols-3 gap-x-6 gap-y-4 py-2 text-sm shrink-0">
-              {/* Nama Pelapor */}
-              <div className="flex flex-col justify-center min-w-0">
-                <span className="text-[10px] font-bold text-muted-foreground uppercase tracking-widest font-sans">Nama Pelapor</span>
-                <span className="font-bold text-foreground text-sm sm:text-base mt-1 truncate font-display tracking-tight">{report.name || "Anonim"}</span>
-              </div>
-
-              {/* Kontak WA */}
-              <div className="flex flex-col justify-center min-w-0">
-                <span className="text-[10px] font-bold text-muted-foreground uppercase tracking-widest font-sans">Kontak WA</span>
-                <span className="font-bold text-foreground text-sm sm:text-base mt-1 font-display tracking-tight">{report.no_hp}</span>
-              </div>
-
-              {/* Tanggal Laporan */}
-              <div className="flex flex-col justify-center min-w-0">
-                <span className="text-[10px] font-bold text-muted-foreground uppercase tracking-widest font-sans">Tanggal Laporan</span>
-                <span className="font-bold text-foreground text-sm sm:text-base mt-1 font-display tracking-tight flex items-center gap-1.5">
-                  <Calendar className="h-3.5 w-3.5 text-primary/70 shrink-0" />
-                  {createdDate.toLocaleDateString('id-ID', { day: 'numeric', month: 'long', year: 'numeric' })}
-                </span>
-              </div>
-
-              {/* Koordinat GPS */}
-              <div className="flex flex-col justify-center min-w-0">
-                <span className="text-[10px] font-bold text-muted-foreground uppercase tracking-widest font-sans">Koordinat GPS</span>
-                <span className="font-mono font-bold text-foreground text-xs sm:text-sm mt-1 tracking-tight">
-                  {report.latitude.toFixed(5)}, {report.longitude.toFixed(5)}
-                </span>
-              </div>
-
-              {/* Waktu Laporan */}
-              <div className="flex flex-col justify-center min-w-0">
-                <span className="text-[10px] font-bold text-muted-foreground uppercase tracking-widest font-sans">Waktu Laporan</span>
-                <span className="font-bold text-foreground text-sm sm:text-base mt-1 font-display tracking-tight flex items-center gap-1.5">
-                  <Clock className="h-3.5 w-3.5 text-primary/70 shrink-0" />
-                  {formatDistanceToNow(createdDate, { addSuffix: true, locale: idLocale })}
-                </span>
-              </div>
-
-              {/* Empty slot to balance 3 columns */}
-              <div className="hidden sm:block"></div>
-
-              {/* Alamat & Peta Wilayah */}
-              <div className="flex flex-col justify-center min-w-0 col-span-2 sm:col-span-3 border-t border-border/30 pt-3.5 mt-1">
-                <span className="text-[10px] font-bold text-muted-foreground uppercase tracking-widest font-sans">Peta & Alamat Laporan</span>
-                <div className="flex flex-wrap items-center gap-x-2 gap-y-1.5 mt-1 text-sm sm:text-base font-bold text-foreground font-display tracking-tight">
-                  <span className="break-words">{report.address || "Alamat tidak terdeteksi"}</span>
-                  <a
-                    href={`https://www.openstreetmap.org/?mlat=${report.latitude}&mlon=${report.longitude}#map=18/${report.latitude}/${report.longitude}`}
-                    target="_blank"
-                    rel="noreferrer"
-                    className="inline-flex items-center gap-1 text-xs text-primary hover:text-primary-hover font-extrabold bg-primary/10 hover:bg-primary/20 border border-primary/20 px-2 py-0.5 rounded transition-all shrink-0"
-                  >
-                    Buka OpenStreetMap <ExternalLink className="h-3 w-3" />
-                  </a>
+            <div className="grid grid-cols-2 gap-x-6 gap-y-5 sm:grid-cols-3 lg:grid-cols-4">
+              <Field label="Nama Pelapor" value={report.name || "Anonim"} />
+              <Field label="Kontak WA" value={report.no_hp} />
+              <Field
+                label="Tanggal Laporan"
+                icon={Calendar}
+                value={createdDate.toLocaleDateString("id-ID", { day: "numeric", month: "long", year: "numeric" })}
+              />
+              <Field
+                label="Waktu Laporan"
+                icon={Clock}
+                value={formatDistanceToNow(createdDate, { addSuffix: true, locale: idLocale })}
+              />
+              {adminKecamatan && (
+                <div>
+                  <span className={eyebrow}>Kecamatan (Tangsel)</span>
+                  <div className="mt-1 flex items-center gap-1.5">
+                    <span
+                      className="inline-flex items-center rounded-md px-2 py-0.5 text-xs font-black text-white shadow-xs"
+                      style={{ backgroundColor: adminKecamatan.color }}
+                    >
+                      {adminKecamatan.code}
+                    </span>
+                    <span className="text-sm font-extrabold text-forest dark:text-foreground">
+                      {adminKecamatan.name}
+                    </span>
+                  </div>
                 </div>
+              )}
+              {nearestKelurahan && (
+                <div>
+                  <span className={eyebrow}>Kelurahan</span>
+                  <div className="mt-1 flex items-center gap-1.5">
+                    <span className="inline-flex items-center rounded-md bg-sage px-2 py-0.5 text-xs font-bold text-forest">
+                      {nearestKelurahan.code}
+                    </span>
+                    <span className="text-sm font-bold text-forest dark:text-foreground">
+                      Kel. {nearestKelurahan.name}
+                    </span>
+                  </div>
+                </div>
+              )}
+              <Field
+                label="Kota Administrasi"
+                value="Kota Tangerang Selatan"
+              />
+              <Field
+                label="Koordinat GPS"
+                mono
+                value={`${report.latitude.toFixed(5)}, ${report.longitude.toFixed(5)}`}
+              />
+            </div>
+
+            <div className="mt-5 rounded-3xl bg-sage-soft p-4">
+              <div className="flex flex-wrap items-center justify-between gap-2">
+                <span className={eyebrow}>Peta & Wilayah Administratif</span>
+                {adminKecamatan && nearestKelurahan && (
+                  <span
+                    className="inline-flex items-center gap-1.5 rounded-full px-3 py-1 text-xs font-bold text-white shadow-xs"
+                    style={{ backgroundColor: adminKecamatan.color }}
+                  >
+                    <span>{adminKecamatan.code} {adminKecamatan.shortName}</span>
+                    <span>•</span>
+                    <span>Kel. {nearestKelurahan.name}</span>
+                  </span>
+                )}
+              </div>
+
+              <div className="mt-3 flex flex-wrap items-center justify-between gap-x-4 gap-y-3">
+                <div className="space-y-1">
+                  <div className="flex items-start gap-1.5 text-sm font-bold text-forest dark:text-foreground">
+                    <MapPin className="mt-0.5 h-4 w-4 shrink-0 text-primary" />
+                    <span className="break-words">
+                      {report.address || `Kel. ${nearestKelurahan?.name ?? ""}, ${adminKecamatan?.name ?? ""}`}
+                    </span>
+                  </div>
+                  {adminKecamatan && nearestKelurahan && (
+                    <p className="pl-5 text-xs text-muted-foreground">
+                      Wilayah Resmi: Kelurahan {nearestKelurahan.name} ({nearestKelurahan.code}), {adminKecamatan.name}, Kota Tangerang Selatan
+                    </p>
+                  )}
+                </div>
+
+                <a
+                  href={`https://www.openstreetmap.org/?mlat=${report.latitude}&mlon=${report.longitude}#map=18/${report.latitude}/${report.longitude}`}
+                  target="_blank"
+                  rel="noreferrer"
+                  className="inline-flex shrink-0 items-center gap-1.5 rounded-full bg-primary px-3.5 py-1.5 text-xs font-bold text-primary-foreground transition-opacity hover:opacity-90"
+                >
+                  Buka OpenStreetMap <ExternalLink className="h-3 w-3" />
+                </a>
               </div>
             </div>
-          </Card>
+          </div>
 
-          {/* Card 2: Detail Laporan Warga */}
-          <Card className="p-4 border border-border/80 shadow-soft bg-card rounded-xl shrink-0">
-            <h3 className="text-sm font-bold uppercase text-primary/80 tracking-wider mb-3 flex items-center gap-2 border-b border-border/50 pb-2 shrink-0">
-              <User className="h-4 w-4 text-primary" />
+          {/* Detail laporan warga */}
+          <div className={card}>
+            <h3 className="mb-4 flex items-center gap-3 text-lg font-extrabold text-forest dark:text-foreground">
+              <span className="flex h-10 w-10 items-center justify-center rounded-full bg-sage">
+                <User className="h-4 w-4" />
+              </span>
               Detail Laporan Warga
             </h3>
-            <div className="grid gap-4 md:grid-cols-12">
-              {/* Left side: Reporter Profile */}
-              <div className="md:col-span-5 md:border-r md:border-border/40 md:pr-4 flex flex-col justify-center space-y-2.5">
+            <div className="grid gap-5 md:grid-cols-12">
+              <div className="space-y-3 md:col-span-5">
                 <div className="flex items-center gap-3">
-                  <div className="h-10 w-10 rounded-lg bg-leaf-gradient flex items-center justify-center text-primary-foreground font-extrabold text-sm shadow-soft shrink-0">
+                  <div className="flex h-12 w-12 shrink-0 items-center justify-center rounded-full bg-primary text-base font-extrabold text-primary-foreground">
                     {(report.name || "?")[0].toUpperCase()}
                   </div>
                   <div>
-                    <p className="font-bold text-sm text-foreground leading-tight">{report.name || "Anonim"}</p>
-                    <Badge variant="secondary" className="text-xs font-semibold py-0.5 px-2 bg-secondary/60 text-secondary-foreground border border-border/30 mt-0.5">
+                    <p className="text-sm font-extrabold leading-tight">{reporter?.full_name || report.name || "Anonim"}</p>
+                    <span className="mt-1 inline-block rounded-full bg-sage px-2.5 py-0.5 text-[11px] font-bold text-forest">
                       Pelapor Warga
-                    </Badge>
+                    </span>
                   </div>
                 </div>
 
-                <div className="space-y-1.5 text-sm pt-1">
-                  <div className="flex items-center justify-between bg-secondary/10 px-2.5 py-1.5 rounded-md border border-border/30 gap-2">
-                    <span className="text-xs text-muted-foreground font-semibold shrink-0">No. HP</span>
-                    <span className="font-bold text-foreground flex items-center gap-1.5 text-sm break-all text-right justify-end">
-                      <Phone className="h-3.5 w-3.5 text-primary shrink-0" />
-                      {report.no_hp}
+                <div className="space-y-2">
+                  <div className="flex items-center justify-between gap-2 rounded-full bg-sage-soft px-4 py-2">
+                    <span className="shrink-0 text-xs font-semibold text-muted-foreground">No. HP</span>
+                    <span className="flex items-center gap-1.5 break-all text-right text-sm font-bold">
+                      <Phone className="h-3.5 w-3.5 shrink-0" /> {report.no_hp}
                     </span>
                   </div>
                   {report.email && (
-                    <div className="flex items-center justify-between bg-secondary/10 px-2.5 py-1.5 rounded-md border border-border/30 gap-2">
-                      <span className="text-xs text-muted-foreground font-semibold shrink-0">Email</span>
-                      <span className="font-medium text-foreground flex items-center gap-1.5 text-sm break-all text-right justify-end">
-                        <Mail className="h-3.5 w-3.5 text-primary shrink-0" />
-                        {report.email}
+                    <div className="flex items-center justify-between gap-2 rounded-full bg-sage-soft px-4 py-2">
+                      <span className="shrink-0 text-xs font-semibold text-muted-foreground">Email</span>
+                      <span className="flex items-center gap-1.5 break-all text-right text-sm font-medium">
+                        <Mail className="h-3.5 w-3.5 shrink-0" /> {report.email}
                       </span>
                     </div>
                   )}
                 </div>
               </div>
 
-              {/* Right side: Description */}
-              <div className="md:col-span-7 md:pl-2 flex flex-col justify-center">
-                <div className="bg-primary/[0.02] border-l-4 border-primary p-3.5 rounded-r-lg rounded-l-sm bg-gradient-to-r from-primary/[0.03] to-transparent">
-                  <p className="text-xs md:text-sm text-foreground/90 leading-relaxed italic font-medium font-serif">
-                    "{report.detail_laporan}"
+              <div className="md:col-span-7">
+                <div className="h-full rounded-3xl border-[1.5px] border-dashed border-forest-soft/40 bg-field p-5">
+                  <p className="text-sm font-medium italic leading-relaxed text-forest/90">
+                    “{report.detail_laporan}”
                   </p>
                 </div>
               </div>
             </div>
-          </Card>
+          </div>
 
-          {/* Card 3: Analisis Teknis Laporan */}
+          {/* Analisis teknis */}
           {aiData && (
-            <Card className="p-4 border border-border/80 shadow-soft bg-card rounded-xl flex-1 flex flex-col justify-between">
-              <div className="flex items-center justify-between mb-3 pb-2 border-b border-border/50 shrink-0">
-                <div className="flex items-center gap-2">
-                  <div className="flex h-7 w-7 items-center justify-center rounded-lg bg-secondary/20 text-foreground border border-border/40 shadow-sm">
-                    <ClipboardList className="h-4.5 w-4.5 text-muted-foreground" />
-                  </div>
+            <div className={card}>
+              <div className="mb-5 flex items-center justify-between gap-3 border-b border-border/50 pb-4">
+                <div className="flex items-center gap-3">
+                  <span className="flex h-10 w-10 items-center justify-center rounded-full bg-forest text-primary">
+                    <ClipboardList className="h-4 w-4" />
+                  </span>
                   <div>
-                    <h3 className="font-bold text-sm text-foreground">Analisis Teknis Laporan</h3>
-                    <p className="text-xs text-muted-foreground font-medium">Hasil pengukuran kerusakan dan klasifikasi koordinat wilayah</p>
+                    <h3 className="text-lg font-extrabold text-forest dark:text-foreground">Analisis Teknis Laporan</h3>
+                    <p className="text-xs text-muted-foreground">Hasil pengukuran kerusakan dan klasifikasi koordinat wilayah</p>
                   </div>
                 </div>
-                <Badge variant="outline" className="bg-secondary/30 text-muted-foreground border-border/50 text-xs font-bold tracking-wider uppercase px-2.5 py-0.5">
-                  SISTEM
-                </Badge>
+                <span className="rounded-full bg-sage px-3 py-1 text-[10px] font-extrabold uppercase tracking-wider text-forest">Sistem</span>
               </div>
 
-              {/* Internal layout divided to resolve empty space */}
-              <div className="grid gap-4 md:grid-cols-12 items-stretch flex-1">
-                {/* Left inside grid: metrics & severity - Span 7 */}
-                <div className="md:col-span-7 flex flex-col justify-between space-y-3.5 h-full">
-                  <div className="grid gap-2 grid-cols-3 shrink-0">
-                    <div className="bg-secondary/5 hover:bg-secondary/10 px-2 py-2 rounded-lg border border-border/30 text-center flex flex-col justify-between min-h-[72px] transition-all duration-300">
-                      <span className="text-xs text-muted-foreground uppercase font-bold tracking-wider">Total Lubang</span>
-                      <p className="text-2xl font-extrabold text-foreground tracking-tight my-0.5">
-                        {aiData.laporan?.total_lubang_terdeteksi ?? 0}
-                      </p>
-                      <span className="text-xs text-muted-foreground/80 font-semibold">Lubang</span>
+              <div className="grid items-stretch gap-5 md:grid-cols-12">
+                <div className="space-y-4 md:col-span-7">
+                  <div className="grid grid-cols-3 gap-3">
+                    <div className="rounded-3xl bg-forest p-4 text-center text-white">
+                      <span className="text-[10px] font-bold uppercase tracking-wider text-white/70">Total Lubang</span>
+                      <p className="my-1 text-3xl font-extrabold text-primary">{aiData.laporan?.total_lubang_terdeteksi ?? 0}</p>
+                      <span className="text-[11px] text-white/60">Lubang</span>
                     </div>
-
-                    <div className="bg-secondary/5 hover:bg-secondary/10 px-2 py-2 rounded-lg border border-border/30 text-center flex flex-col justify-between min-h-[72px] transition-all duration-300">
-                      <span className="text-xs text-muted-foreground uppercase font-bold tracking-wider">Fasilitas Radius</span>
-                      <p className="text-2xl font-extrabold text-foreground tracking-tight my-0.5">
-                        {aiData.fasilitas.length}
-                      </p>
-                      <span className="text-xs text-muted-foreground/80 font-semibold">Terdeteksi</span>
+                    <div className="rounded-3xl bg-sage p-4 text-center text-forest">
+                      <span className="text-[10px] font-bold uppercase tracking-wider text-forest/70">Fasilitas Radius</span>
+                      <p className="my-1 text-3xl font-extrabold">{aiData.fasilitas.length}</p>
+                      <span className="text-[11px] text-forest/60">Terdeteksi</span>
                     </div>
-
-                    <div className="bg-secondary/5 hover:bg-secondary/10 px-2 py-2 rounded-lg border border-border/30 text-center flex flex-col justify-between min-h-[72px] transition-all duration-300">
-                      <span className="text-xs text-muted-foreground uppercase font-bold tracking-wider">Kelas Jalan</span>
-                      <p className="text-sm font-extrabold text-foreground truncate my-1.5 capitalize">
+                    <div className="rounded-3xl bg-sage-soft p-4 text-center">
+                      <span className="text-[10px] font-bold uppercase tracking-wider text-muted-foreground">Kelas Jalan</span>
+                      <p className="my-2.5 truncate text-sm font-extrabold capitalize text-forest dark:text-foreground">
                         {aiData.detail[0]?.kategori_pelaporan_osm || "Tidak Terpetakan"}
                       </p>
-                      <span className="text-xs text-muted-foreground/80 font-semibold">OSM</span>
+                      <span className="text-[11px] text-muted-foreground">OSM</span>
                     </div>
                   </div>
 
-                  {/* Severity Indicator Progress Bars */}
                   {aiData.detail[0] && (
-                    <div className="space-y-2.5 bg-secondary/5 border border-border/30 p-3 rounded-lg flex-1 flex flex-col justify-center mt-auto">
-                      <h4 className="text-xs font-bold text-foreground uppercase tracking-wider">Metrik Tingkat Keparahan</h4>
-                      <div className="space-y-2">
-                        <div className="space-y-1">
-                          <div className="flex justify-between text-xs font-semibold">
-                            <span className="text-muted-foreground">Persentase Kerusakan Area</span>
-                            <span className="text-destructive font-bold text-sm">{aiData.detail[0].persentase_kerusakan}%</span>
-                          </div>
-                          <div className="h-2 w-full bg-secondary/20 rounded-full overflow-hidden border border-border/20">
-                            <div 
-                              className="h-full bg-destructive transition-all duration-500 rounded-full" 
-                              style={{ width: `${aiData.detail[0].persentase_kerusakan}%` }}
-                            />
-                          </div>
-                        </div>
-
-                        <div className="space-y-1">
-                          <div className="flex justify-between text-xs font-semibold">
-                            <span className="text-muted-foreground">Estimasi Kedalaman Lubang</span>
-                            <span className="text-amber-500 font-bold text-sm">{aiData.detail[0].persentase_kedalaman}%</span>
-                          </div>
-                          <div className="h-2 w-full bg-secondary/20 rounded-full overflow-hidden border border-border/20">
-                            <div 
-                              className="h-full bg-amber-500 transition-all duration-500 rounded-full" 
-                              style={{ width: `${aiData.detail[0].persentase_kedalaman}%` }}
-                            />
-                          </div>
-                        </div>
-                      </div>
+                    <div className="space-y-4 rounded-3xl bg-sage-soft p-5">
+                      <h4 className="text-xs font-extrabold uppercase tracking-wider text-forest dark:text-foreground">
+                        Metrik Tingkat Keparahan
+                      </h4>
+                      <Meter
+                        label="Persentase Kerusakan Area"
+                        value={aiData.detail[0].persentase_kerusakan}
+                        barClass="bg-destructive"
+                        textClass="text-destructive"
+                      />
+                      <Meter
+                        label="Estimasi Kedalaman Lubang"
+                        value={aiData.detail[0].persentase_kedalaman}
+                        barClass="bg-orange"
+                        textClass="text-orange"
+                      />
                     </div>
                   )}
                 </div>
 
-                {/* Right inside grid: facilities and SLA - Span 5 */}
-                <div className="md:col-span-5 flex flex-col justify-between space-y-3 h-full">
-                  {/* Facilities */}
-                  <div className="space-y-1.5 flex-1">
-                    <h4 className="text-xs font-bold text-foreground uppercase tracking-wider flex items-center gap-1.5">
-                      <Building2 className="h-3.5 w-3.5 text-muted-foreground" />
-                      Fasilitas Sekitar (300m)
+                <div className="flex flex-col gap-4 md:col-span-5">
+                  <div className="flex-1">
+                    <h4 className="mb-2 flex items-center gap-2 text-xs font-extrabold uppercase tracking-wider text-forest dark:text-foreground">
+                      <Building2 className="h-3.5 w-3.5" /> Fasilitas Sekitar (300m)
                     </h4>
                     {aiData.fasilitas.length > 0 ? (
-                      <div className="flex flex-wrap gap-1.5 max-h-[84px] overflow-y-auto pr-1">
+                      <div className="flex max-h-[110px] flex-wrap gap-1.5 overflow-y-auto pr-1">
                         {aiData.fasilitas.map((f) => (
-                          <Badge key={f.id} variant="secondary" className="text-xs px-2 py-0.5 rounded bg-secondary/25 border border-border/30 text-foreground font-semibold flex items-center gap-1">
-                            <span className="h-1 w-1 rounded-full bg-muted-foreground/60" />
+                          <span key={f.id} className="inline-flex items-center gap-1.5 rounded-full bg-sage px-3 py-1 text-xs font-bold text-forest">
+                            <span className="h-1.5 w-1.5 rounded-full bg-forest-soft" />
                             {f.nama_fasilitas}
-                          </Badge>
+                          </span>
                         ))}
                       </div>
                     ) : (
-                      <div className="text-xs text-muted-foreground italic p-2 rounded border border-dashed border-border/60 text-center bg-secondary/5">
+                      <div className="rounded-3xl border-[1.5px] border-dashed border-forest-soft/40 p-3 text-center text-xs italic text-muted-foreground">
                         Tidak ada fasilitas terdeteksi.
                       </div>
                     )}
                   </div>
 
-                  {/* Recommendations */}
-                  <div className="space-y-1.5 pt-2 border-t border-border/40 shrink-0 mt-auto">
-                    <div className="flex gap-2 items-center text-xs bg-secondary/15 px-2.5 py-1.5 rounded-lg border border-border/30">
-                      <div className="p-1 bg-secondary/35 rounded text-foreground border border-border/50 shrink-0">
-                        <Wrench className="h-3.5 w-3.5 text-muted-foreground" />
-                      </div>
-                      <div className="min-w-0">
-                        <p className="text-xs font-bold text-muted-foreground uppercase tracking-wider">Instansi Penanganan</p>
-                        <p className="font-semibold text-foreground truncate text-sm mt-0.5">{aiData.detail[0]?.petugas_penanganan || "Dinas PUPR"}</p>
-                      </div>
-                    </div>
-
-                    <div className="flex gap-2 items-center text-xs bg-secondary/15 px-2.5 py-1.5 rounded-lg border border-border/30">
-                      <div className="p-1 bg-secondary/35 rounded text-foreground border border-border/50 shrink-0">
-                        <Clock className="h-3.5 w-3.5 text-muted-foreground" />
-                      </div>
-                      <div className="min-w-0">
-                        <p className="text-xs font-bold text-muted-foreground uppercase tracking-wider">Target Respon SLA</p>
-                        <p className="font-semibold text-foreground truncate text-sm mt-0.5">{aiData.detail[0]?.estimasi_waktu_penanganan || "24 Jam"}</p>
-                      </div>
-                    </div>
+                  <div className="space-y-2">
+                    <InfoPill
+                      icon={Wrench}
+                      label="Instansi Penanganan"
+                      value={
+                        aiData.detail[0]?.petugas_penanganan && !aiData.detail[0].petugas_penanganan.includes("Cirebon")
+                          ? aiData.detail[0].petugas_penanganan
+                          : "Dinas SDABMBK Kota Tangerang Selatan"
+                      }
+                    />
+                    <InfoPill icon={Clock} label="Target Respon SLA" value={aiData.detail[0]?.estimasi_waktu_penanganan || "24 Jam"} />
                   </div>
                 </div>
               </div>
-            </Card>
+            </div>
           )}
         </div>
 
-        {/* Right Column: Media & Actions (col-span-4) */}
-        <div className="col-span-12 lg:col-span-4 flex flex-col gap-4">
-          {/* Card 1: Bukti Foto */}
-          <Card className="overflow-hidden border border-border/80 shadow-soft bg-card p-4 rounded-xl shrink-0">
-            <h3 className="text-sm font-bold uppercase text-primary/80 tracking-wider mb-3 flex items-center gap-2 border-b border-border/50 pb-2">
-              <Camera className="h-4 w-4 text-primary" />
+        {/* ───────── Kolom kanan ───────── */}
+        <div className="flex flex-col gap-5 lg:col-span-4">
+          {/* Foto */}
+          <div className={card}>
+            <h3 className="mb-4 flex items-center gap-3 text-lg font-extrabold text-forest dark:text-foreground">
+              <span className="flex h-10 w-10 items-center justify-center rounded-full bg-sage">
+                <Camera className="h-4 w-4" />
+              </span>
               Bukti Foto Laporan
             </h3>
-            <div className="w-full h-[220px] relative group overflow-hidden rounded-lg bg-secondary/20 border border-border/40 flex items-center justify-center">
+            <div className="relative flex h-[240px] w-full items-center justify-center overflow-hidden rounded-3xl bg-sage-soft">
               {photoUrl && !photoError ? (
                 <img
                   src={photoUrl}
                   alt={report.name}
                   onLoad={() => setPhotoLoaded(true)}
                   onError={() => setPhotoError(true)}
-                  className={`h-full w-full object-cover transition-all duration-500 group-hover:scale-[1.03] ${
-                    photoLoaded ? "opacity-100" : "opacity-0"
-                  }`}
+                  className={`h-full w-full object-cover transition-opacity duration-500 ${photoLoaded ? "opacity-100" : "opacity-0"}`}
                 />
               ) : (
-                <div className="flex flex-col items-center justify-center gap-3 text-muted-foreground p-6">
-                  <div className="p-3 bg-background rounded-full border border-border/50 shadow-sm">
-                    <Camera className="h-6 w-6 text-muted-foreground/40" />
-                  </div>
-                  <p className="text-xs font-semibold italic opacity-60">Tidak ada foto bukti dilampirkan</p>
+                <div className="flex flex-col items-center justify-center gap-3 p-6 text-muted-foreground">
+                  <span className="flex h-14 w-14 items-center justify-center rounded-full bg-card">
+                    <Camera className="h-6 w-6 opacity-40" />
+                  </span>
+                  <p className="text-xs font-semibold italic opacity-70">Tidak ada foto bukti dilampirkan</p>
                 </div>
               )}
             </div>
-          </Card>
+          </div>
 
-          {/* Card 2: Panel Tindakan */}
-          <Card className="border border-border/80 shadow-soft bg-card rounded-xl overflow-hidden flex-1 flex flex-col justify-between">
-            <div className="p-4 space-y-4 h-full flex flex-col justify-between flex-1">
-              <div className="space-y-4 flex-1">
-                <div>
-                  <h3 className="font-bold text-sm text-foreground flex items-center gap-2">
-                    <Activity className="h-4 w-4 text-primary" />
-                    Panel Tindakan
-                  </h3>
-                  <p className="text-xs text-muted-foreground mt-0.5">Penanganan dan penugasan laporan</p>
-                </div>
+          {/* Panel tindakan */}
+          <div className={card}>
+            <h3 className="flex items-center gap-3 text-lg font-extrabold text-forest dark:text-foreground">
+              <span className="flex h-10 w-10 items-center justify-center rounded-full bg-primary text-primary-foreground">
+                <Activity className="h-4 w-4" />
+              </span>
+              <span>
+                Panel Tindakan
+                <span className="block text-xs font-normal text-muted-foreground">Penanganan dan penugasan laporan</span>
+              </span>
+            </h3>
 
-                {/* Status Control */}
-                <div className="space-y-1.5">
-                  <label className="text-xs font-bold uppercase text-muted-foreground/90 tracking-wider">Update Status Laporan</label>
-                  <Select
-                    value={report.status_pelaporan}
-                    onValueChange={(v) => updateStatus(v)}
-                  >
-                    <SelectTrigger className={`h-9 text-xs font-bold rounded-lg border border-border/80 transition-all ${
-                      report.status_pelaporan === 'progress' 
-                        ? STATUS_TONE.in_progress 
-                        : (STATUS_TONE[report.status_pelaporan as keyof typeof STATUS_TONE] || 'bg-secondary text-secondary-foreground')
-                    }`}>
-                      <SelectValue />
-                    </SelectTrigger>
-                    <SelectContent>
-                      {Object.entries(STATUS_LABEL).map(([k, v]) => (
-                        <SelectItem key={k} value={k} className="text-xs font-semibold">{v}</SelectItem>
-                      ))}
-                    </SelectContent>
-                  </Select>
-                </div>
-
-                {/* Urgency Control */}
-                <div className="space-y-1.5">
-                  <label className="text-xs font-bold uppercase text-muted-foreground/90 tracking-wider">Tingkat Urgensi</label>
-                  <Select
-                    value={report.kategori_pelaporan}
-                    onValueChange={(v) => updateUrgency(v)}
-                  >
-                    <SelectTrigger className={`h-9 text-xs font-bold rounded-lg border border-border/80 transition-all ${
-                      report.kategori_pelaporan === 'ringan' 
-                        ? URGENCY_TONE.low 
-                        : (URGENCY_TONE[report.kategori_pelaporan as keyof typeof URGENCY_TONE] || 'bg-secondary text-secondary-foreground')
-                    }`}>
-                      <SelectValue />
-                    </SelectTrigger>
-                    <SelectContent>
-                      {Object.entries(URGENCY_LABEL).map(([k, v]) => (
-                        <SelectItem key={k} value={k} className="text-xs font-semibold">{v}</SelectItem>
-                      ))}
-                    </SelectContent>
-                  </Select>
-                </div>
-
-                {/* Assign Petugas */}
-                <div className="space-y-1.5">
-                  <label className="text-xs font-bold uppercase text-muted-foreground/90 tracking-wider">Tugaskan Petugas Lapangan</label>
-                  <Select value={assignedPetugasId || undefined} onValueChange={(v) => assignPetugas(v)}>
-                    <SelectTrigger className="h-9 text-xs bg-background border border-border/80 rounded-lg font-medium">
-                      <SelectValue placeholder="Pilih Petugas Lapangan..." />
-                    </SelectTrigger>
-                    <SelectContent>
-                      {petugas.map((p) => (
-                        <SelectItem key={p.id} value={p.id} className="text-xs font-medium">{p.full_name}</SelectItem>
-                      ))}
-                    </SelectContent>
-                  </Select>
-                </div>
+            <div className="mt-5 space-y-4">
+              <div className="space-y-1.5">
+                <label className={eyebrow}>Update Status Laporan</label>
+                <Select value={report.status_pelaporan} onValueChange={(v) => updateStatus(v)}>
+                  <SelectTrigger className={`text-xs font-bold ${
+                    report.status_pelaporan === "progress"
+                      ? STATUS_TONE.in_progress
+                      : (STATUS_TONE[report.status_pelaporan as keyof typeof STATUS_TONE] || "")
+                  }`}>
+                    <SelectValue />
+                  </SelectTrigger>
+                  <SelectContent>
+                    {Object.entries(STATUS_LABEL).map(([k, v]) => (
+                      <SelectItem key={k} value={k} className="text-xs font-semibold">{v}</SelectItem>
+                    ))}
+                  </SelectContent>
+                </Select>
               </div>
 
-              {/* Metadata Footer */}
-              <div className="border-t border-border/60 pt-4 space-y-2 text-xs shrink-0 mt-auto">
-                <h4 className="text-xs font-bold uppercase text-muted-foreground/90 tracking-wider mb-1">Informasi Sistem</h4>
-                
-                <div className="flex justify-between items-center bg-secondary/5 px-2.5 py-1.5 rounded-lg border border-border/30">
-                  <span className="text-muted-foreground text-xs">ID Laporan</span>
-                  <span className="font-mono text-xs font-semibold bg-background border border-border px-1.5 py-0.5 rounded text-foreground">{report.id.slice(0, 13)}...</span>
-                </div>
-                
-                <div className="flex justify-between items-center bg-secondary/5 px-2.5 py-1.5 rounded-lg border border-border/30">
-                  <span className="text-muted-foreground text-xs">Status Laporan</span>
-                  <Badge variant="outline" className="bg-secondary/40 text-muted-foreground border-border/50 text-xs font-bold uppercase py-0.5 px-2">VALID</Badge>
-                </div>
+              <div className="space-y-1.5">
+                <label className={eyebrow}>Tingkat Urgensi</label>
+                <Select value={report.kategori_pelaporan} onValueChange={(v) => updateUrgency(v)}>
+                  <SelectTrigger className={`text-xs font-bold ${
+                    report.kategori_pelaporan === "ringan"
+                      ? URGENCY_TONE.low
+                      : (URGENCY_TONE[report.kategori_pelaporan as keyof typeof URGENCY_TONE] || "")
+                  }`}>
+                    <SelectValue />
+                  </SelectTrigger>
+                  <SelectContent>
+                    {Object.entries(URGENCY_LABEL).map(([k, v]) => (
+                      <SelectItem key={k} value={k} className="text-xs font-semibold">{v}</SelectItem>
+                    ))}
+                  </SelectContent>
+                </Select>
+              </div>
 
-                <div className="border-t border-border/60 pt-4 mt-2 shrink-0">
-                  <AlertDialog>
-                    <AlertDialogTrigger asChild>
-                      <Button variant="destructive" className="w-full text-xs font-bold gap-2 bg-destructive/10 hover:bg-destructive text-destructive hover:text-destructive-foreground border border-destructive/20 hover:border-transparent transition-all h-9 rounded-lg">
-                        <Trash2 className="h-4 w-4" />
-                        Hapus Laporan
-                      </Button>
-                    </AlertDialogTrigger>
-                    <AlertDialogContent>
-                      <AlertDialogHeader>
-                        <AlertDialogTitle>Apakah Anda yakin?</AlertDialogTitle>
-                        <AlertDialogDescription>
-                          Tindakan ini akan menghapus laporan secara permanen dari sistem dan database. Data detail kerusakan dan analisis terkait juga akan ikut terhapus.
-                        </AlertDialogDescription>
-                      </AlertDialogHeader>
-                      <AlertDialogFooter>
-                        <AlertDialogCancel>Batal</AlertDialogCancel>
-                        <AlertDialogAction onClick={deleteReport} className="bg-destructive hover:bg-destructive/95 text-destructive-foreground">
-                          Hapus Laporan
-                        </AlertDialogAction>
-                      </AlertDialogFooter>
-                    </AlertDialogContent>
-                  </AlertDialog>
-                </div>
+              <div className="space-y-1.5">
+                <label className={eyebrow}>Tugaskan Petugas Lapangan</label>
+                <Select value={assignedPetugasId || undefined} onValueChange={(v) => assignPetugas(v)}>
+                  <SelectTrigger className="text-xs font-medium">
+                    <SelectValue placeholder="Pilih Petugas Lapangan…" />
+                  </SelectTrigger>
+                  <SelectContent>
+                    {petugas.map((p) => (
+                      <SelectItem key={p.id} value={p.id} className="text-xs font-medium">{p.full_name}</SelectItem>
+                    ))}
+                  </SelectContent>
+                </Select>
               </div>
             </div>
-          </Card>
+
+            <div className="mt-6 space-y-2 border-t border-border/60 pt-5">
+              <h4 className={eyebrow}>Informasi Sistem</h4>
+              <div className="flex items-center justify-between rounded-full bg-sage-soft px-4 py-2">
+                <span className="text-xs text-muted-foreground">ID Laporan</span>
+                <span className="font-mono text-xs font-bold">{report.id.slice(0, 13)}…</span>
+              </div>
+              <div className="flex items-center justify-between rounded-full bg-sage-soft px-4 py-2">
+                <span className="text-xs text-muted-foreground">Status Laporan</span>
+                <span className="rounded-full bg-forest px-2.5 py-0.5 text-[10px] font-extrabold uppercase text-primary">Valid</span>
+              </div>
+
+              <AlertDialog>
+                <AlertDialogTrigger asChild>
+                  <button className="mt-3 inline-flex h-12 w-full items-center justify-center gap-2 rounded-full bg-destructive/10 text-sm font-bold text-destructive transition-colors hover:bg-destructive hover:text-white">
+                    <Trash2 className="h-4 w-4" /> Hapus Laporan
+                  </button>
+                </AlertDialogTrigger>
+                <AlertDialogContent className="max-w-sm rounded-[32px] p-8 text-center">
+                  <AlertDialogHeader className="items-center space-y-3 text-center sm:text-center">
+                    <span className="flex h-20 w-20 items-center justify-center rounded-full bg-destructive/10">
+                      <span className="flex h-12 w-12 items-center justify-center rounded-full bg-destructive text-white">
+                        <Trash className="h-6 w-6" />
+                      </span>
+                    </span>
+                    <AlertDialogTitle className="text-2xl font-extrabold text-destructive">Hapus Laporan?</AlertDialogTitle>
+                    <AlertDialogDescription className="text-center">
+                      Laporan akan dihapus permanen dari sistem dan database. Data detail kerusakan dan analisis terkait juga ikut terhapus.
+                    </AlertDialogDescription>
+                  </AlertDialogHeader>
+                  <AlertDialogFooter className="mt-2 grid grid-cols-2 gap-3 sm:space-x-0">
+                    <AlertDialogCancel className="mt-0 h-12 rounded-full border-[1.5px] border-forest font-bold text-forest">
+                      Batal
+                    </AlertDialogCancel>
+                    <AlertDialogAction
+                      onClick={deleteReport}
+                      className="h-12 rounded-full bg-destructive font-bold text-white hover:bg-destructive/90"
+                    >
+                      Ya, Hapus
+                    </AlertDialogAction>
+                  </AlertDialogFooter>
+                </AlertDialogContent>
+              </AlertDialog>
+            </div>
+          </div>
         </div>
+      </div>
+    </div>
+  );
+}
+
+function Field({
+  label, value, icon: Icon, mono,
+}: { label: string; value: string; icon?: React.ComponentType<{ className?: string }>; mono?: boolean }) {
+  return (
+    <div className="min-w-0">
+      <span className={eyebrow}>{label}</span>
+      <p className={`mt-1 flex items-center gap-1.5 text-sm font-extrabold text-forest sm:text-base dark:text-foreground ${mono ? "font-mono text-xs sm:text-sm" : ""}`}>
+        {Icon && <Icon className="h-3.5 w-3.5 shrink-0 opacity-70" />}
+        <span className="truncate">{value}</span>
+      </p>
+    </div>
+  );
+}
+
+function Meter({
+  label, value, barClass, textClass,
+}: { label: string; value: number; barClass: string; textClass: string }) {
+  const pct = Math.min(100, Math.max(0, value));
+  return (
+    <div className="space-y-1.5">
+      <div className="flex items-center justify-between text-xs font-semibold">
+        <span className="text-muted-foreground">{label}</span>
+        <span className={`text-sm font-extrabold ${textClass}`}>{value}%</span>
+      </div>
+      <div className="h-2.5 w-full overflow-hidden rounded-full bg-card">
+        <div className={`h-full rounded-full transition-all duration-500 ${barClass}`} style={{ width: `${pct}%` }} />
+      </div>
+    </div>
+  );
+}
+
+function InfoPill({
+  icon: Icon, label, value,
+}: { icon: React.ComponentType<{ className?: string }>; label: string; value: string }) {
+  return (
+    <div className="flex items-center gap-3 rounded-full bg-sage-soft py-2 pl-2 pr-4">
+      <span className="flex h-9 w-9 shrink-0 items-center justify-center rounded-full bg-forest text-primary">
+        <Icon className="h-4 w-4" />
+      </span>
+      <div className="min-w-0">
+        <p className="text-[10px] font-bold uppercase tracking-wider text-muted-foreground">{label}</p>
+        <p className="truncate text-sm font-extrabold text-forest dark:text-foreground">{value}</p>
       </div>
     </div>
   );

@@ -2,16 +2,13 @@ import { createFileRoute } from "@tanstack/react-router";
 import { useEffect, useState } from "react";
 import { supabase } from "@/integrations/supabase/client";
 import { type AppRole, ROLE_LABEL } from "@/lib/auth";
-import { Card } from "@/components/ui/card";
 import { Avatar, AvatarFallback } from "@/components/ui/avatar";
-import { Badge } from "@/components/ui/badge";
 import {
   Select, SelectContent, SelectItem, SelectTrigger, SelectValue,
 } from "@/components/ui/select";
 import { toast } from "sonner";
-import { Loader2, Search, UserCog, Trash2, Ban, ShieldCheck, AlertTriangle } from "lucide-react";
+import { Loader2, Search, Trash2, Ban, LockOpen, AlertTriangle } from "lucide-react";
 import { Input } from "@/components/ui/input";
-import { Button } from "@/components/ui/button";
 import {
   AlertDialog,
   AlertDialogAction,
@@ -23,12 +20,6 @@ import {
   AlertDialogTitle,
   AlertDialogTrigger,
 } from "@/components/ui/alert-dialog";
-import {
-  Tabs,
-  TabsContent,
-  TabsList,
-  TabsTrigger,
-} from "@/components/ui/tabs";
 
 export const Route = createFileRoute("/_app/admin/users")({
   head: () => ({ meta: [{ title: "Kelola Pengguna" }] }),
@@ -42,10 +33,13 @@ interface UserWithRole {
   role: AppRole | null;
 }
 
+type Filter = "all" | "admin" | "petugas" | "warga" | "blocked";
+
 function AdminUsersPage() {
   const [users, setUsers] = useState<UserWithRole[]>([]);
   const [loading, setLoading] = useState(true);
   const [search, setSearch] = useState("");
+  const [filter, setFilter] = useState<Filter>("all");
 
   const fetchUsers = async () => {
     setLoading(true);
@@ -69,16 +63,15 @@ function AdminUsersPage() {
       setLoading(false);
       return;
     }
-    const combined: UserWithRole[] = profiles
-      .map((p) => {
-        const userRole = roles.find((r) => r.user_id === p.id);
-        return {
-          id: p.id,
-          full_name: p.full_name,
-          email: null,
-          role: (userRole?.role as AppRole) ?? null,
-        };
-      });
+    const combined: UserWithRole[] = profiles.map((p) => {
+      const userRole = roles.find((r) => r.user_id === p.id);
+      return {
+        id: p.id,
+        full_name: p.full_name,
+        email: null,
+        role: (userRole?.role as AppRole) ?? null,
+      };
+    });
     setUsers(combined);
     setLoading(false);
   };
@@ -90,7 +83,7 @@ function AdminUsersPage() {
   const updateRole = async (userId: string, newRole: AppRole) => {
     // Hapus semua role lama milik user ini untuk menghindari bentrok duplicate key
     await supabase.from("user_roles").delete().eq("user_id", userId);
-    
+
     // Masukkan role baru
     const { error: err } = await supabase
       .from("user_roles")
@@ -100,26 +93,19 @@ function AdminUsersPage() {
       toast.error(err.message);
     } else {
       toast.success("Role berhasil diperbarui");
-      setUsers(users.map(u => u.id === userId ? { ...u, role: newRole } : u));
+      setUsers(users.map((u) => (u.id === userId ? { ...u, role: newRole } : u)));
     }
   };
 
-  const filteredUsers = users.filter(u => 
-    u.full_name.toLowerCase().includes(search.toLowerCase())
-  );
-
   const deleteUser = async (userId: string) => {
-    console.log("Memulai proses hapus untuk ID:", userId);
-    
     const { error: pErr } = await supabase.from("profiles").delete().eq("id", userId);
-    
+
     if (pErr) {
       console.error("Gagal hapus profile:", pErr);
       toast.error(`ERROR DB: ${pErr.message} (Code: ${pErr.code})`);
     } else {
-      console.log("Berhasil hapus dari profiles!");
-      toast.success("User berhasil dihapus PERMANEN dari database!");
-      setUsers(users.filter(u => u.id !== userId));
+      toast.success("Pengguna berhasil dihapus");
+      setUsers(users.filter((u) => u.id !== userId));
       fetchUsers();
     }
   };
@@ -131,195 +117,229 @@ function AdminUsersPage() {
       if (error) toast.error(error.message);
       else {
         toast.success("Pengguna berhasil diblokir");
-        setUsers(users.map(u => u.id === userId ? { ...u, role: null } : u));
+        setUsers(users.map((u) => (u.id === userId ? { ...u, role: null } : u)));
       }
     } else {
       // Unblock = set to warga
-      // Hapus role lama dulu sebelum insert untuk menghindari bentrok duplicate key
       await supabase.from("user_roles").delete().eq("user_id", userId);
       const { error } = await supabase.from("user_roles").insert({ user_id: userId, role: "warga" });
       if (error) toast.error(error.message);
       else {
         toast.success("Blokir dibuka, peran diset ke Warga");
-        setUsers(users.map(u => u.id === userId ? { ...u, role: "warga" } : u));
+        setUsers(users.map((u) => (u.id === userId ? { ...u, role: "warga" } : u)));
       }
     }
   };
 
+  const count = (f: Filter) =>
+    f === "all" ? users.length
+      : f === "blocked" ? users.filter((u) => u.role === null).length
+      : users.filter((u) => u.role === f).length;
+
+  const TABS: { key: Filter; label: string }[] = [
+    { key: "all", label: "Semua" },
+    { key: "admin", label: "Admin" },
+    { key: "petugas", label: "Petugas" },
+    { key: "warga", label: "Warga" },
+    { key: "blocked", label: "Terblokir" },
+  ];
+
+  const visible = users
+    .filter((u) => u.full_name.toLowerCase().includes(search.toLowerCase()))
+    .filter((u) =>
+      filter === "all" ? true : filter === "blocked" ? u.role === null : u.role === filter
+    );
+
   return (
     <div className="space-y-6">
-      <div className="flex flex-col gap-4 md:flex-row md:items-center md:justify-between">
+      <div className="flex flex-col gap-4 px-2 md:flex-row md:items-end md:justify-between">
         <div>
-          <h2 className="text-2xl font-bold tracking-tight">Kelola Pengguna</h2>
-          <p className="text-muted-foreground text-sm">
-            Atur peran akses untuk warga, petugas lapangan, dan admin dinas.
+          <h2 className="text-3xl font-extrabold tracking-tight text-forest md:text-4xl dark:text-foreground">
+            Kelola Pengguna
+          </h2>
+          <p className="mt-2 max-w-md text-sm text-muted-foreground">
+            Atur peran, blokir akses, dan hapus akun pengguna aplikasi AURA di seluruh Tangerang Selatan.
           </p>
         </div>
-        <div className="relative w-full md:w-72">
-          <Search className="absolute left-3 top-1/2 h-4 w-4 -translate-y-1/2 text-muted-foreground" />
-          <Input 
-            placeholder="Cari nama pengguna..." 
-            className="pl-9"
+        <div className="relative w-full md:w-80">
+          <Search className="pointer-events-none absolute left-4 top-1/2 h-4 w-4 -translate-y-1/2 text-muted-foreground" />
+          <Input
+            placeholder="Cari nama pengguna…"
+            className="pl-11"
             value={search}
             onChange={(e) => setSearch(e.target.value)}
           />
         </div>
       </div>
 
-      <Tabs defaultValue="all" className="w-full">
-        <TabsList className="grid w-full grid-cols-5 lg:w-[600px] mb-4">
-          <TabsTrigger value="all">Semua</TabsTrigger>
-          <TabsTrigger value="admin">Admin</TabsTrigger>
-          <TabsTrigger value="petugas">Petugas</TabsTrigger>
-          <TabsTrigger value="warga">Warga</TabsTrigger>
-          <TabsTrigger value="blocked">Terblokir</TabsTrigger>
-        </TabsList>
+      {/* Filter tab */}
+      <div className="flex flex-wrap gap-2 px-2">
+        {TABS.map((t) => {
+          const active = filter === t.key;
+          const isBlocked = t.key === "blocked";
+          return (
+            <button
+              key={t.key}
+              onClick={() => setFilter(t.key)}
+              className={`inline-flex items-center gap-2 rounded-full px-5 py-2.5 text-sm font-bold transition-colors ${
+                active
+                  ? "bg-forest text-white"
+                  : isBlocked
+                    ? "bg-card text-destructive hover:bg-destructive/10"
+                    : "bg-card text-forest hover:bg-sage dark:text-foreground"
+              }`}
+            >
+              {t.label}
+              <span className={`text-xs ${active ? "text-primary" : "text-muted-foreground"}`}>{count(t.key)}</span>
+            </button>
+          );
+        })}
+      </div>
 
-        <Card className="overflow-hidden shadow-soft border-none bg-transparent">
-          {loading ? (
-            <Card className="flex h-64 items-center justify-center border border-border">
-              <Loader2 className="h-8 w-8 animate-spin text-primary" />
-            </Card>
-          ) : (
-            <>
-              <TabsContent value="all">
-                <UserTable users={filteredUsers} onUpdateRole={updateRole} onToggleBlock={toggleBlock} onDelete={deleteUser} />
-              </TabsContent>
-              <TabsContent value="admin">
-                <UserTable users={filteredUsers.filter(u => u.role === "admin")} onUpdateRole={updateRole} onToggleBlock={toggleBlock} onDelete={deleteUser} />
-              </TabsContent>
-              <TabsContent value="petugas">
-                <UserTable users={filteredUsers.filter(u => u.role === "petugas")} onUpdateRole={updateRole} onToggleBlock={toggleBlock} onDelete={deleteUser} />
-              </TabsContent>
-              <TabsContent value="warga">
-                <UserTable users={filteredUsers.filter(u => u.role === "warga")} onUpdateRole={updateRole} onToggleBlock={toggleBlock} onDelete={deleteUser} />
-              </TabsContent>
-              <TabsContent value="blocked">
-                <UserTable users={filteredUsers.filter(u => u.role === null)} onUpdateRole={updateRole} onToggleBlock={toggleBlock} onDelete={deleteUser} />
-              </TabsContent>
-            </>
-          )}
-        </Card>
-      </Tabs>
+      {/* Tabel */}
+      <div className="rounded-[32px] bg-card/70 p-3 shadow-soft md:p-4">
+        {loading ? (
+          <div className="flex h-64 items-center justify-center">
+            <Loader2 className="h-8 w-8 animate-spin text-forest" />
+          </div>
+        ) : (
+          <UserTable users={visible} onUpdateRole={updateRole} onToggleBlock={toggleBlock} onDelete={deleteUser} />
+        )}
+        {!loading && (
+          <p className="px-3 pb-2 pt-4 text-xs text-muted-foreground">
+            Menampilkan {visible.length} dari {users.length} pengguna
+          </p>
+        )}
+      </div>
     </div>
   );
 }
 
-function UserTable({ 
-  users, 
-  onUpdateRole, 
-  onToggleBlock, 
-  onDelete 
-}: { 
-  users: UserWithRole[], 
-  onUpdateRole: (id: string, role: AppRole) => void,
-  onToggleBlock: (id: string, currentRole: AppRole | null) => void,
-  onDelete: (id: string) => void
+function UserTable({
+  users,
+  onUpdateRole,
+  onToggleBlock,
+  onDelete,
+}: {
+  users: UserWithRole[];
+  onUpdateRole: (id: string, role: AppRole) => void;
+  onToggleBlock: (id: string, currentRole: AppRole | null) => void;
+  onDelete: (id: string) => void;
 }) {
   return (
-    <Card className="overflow-hidden border border-border">
-      <div className="overflow-x-auto">
-        <table className="w-full text-left text-sm">
-          <thead className="bg-secondary/30 border-b border-border">
+    <div className="overflow-x-auto">
+      <table className="w-full min-w-[640px] text-left text-sm">
+        <thead>
+          <tr className="bg-sage-soft text-[11px] uppercase tracking-wider text-muted-foreground">
+            <th className="rounded-l-full px-5 py-3.5 font-bold">Pengguna</th>
+            <th className="px-5 py-3.5 font-bold">Peran</th>
+            <th className="px-5 py-3.5 font-bold">Ubah Peran</th>
+            <th className="rounded-r-full px-5 py-3.5 text-right font-bold">Aksi</th>
+          </tr>
+        </thead>
+        <tbody className="divide-y divide-border/60">
+          {users.length === 0 ? (
             <tr>
-              <th className="px-6 py-4 font-semibold">Pengguna</th>
-              <th className="px-6 py-4 font-semibold">Peran</th>
-              <th className="px-6 py-4 font-semibold">Ubah Peran</th>
-              <th className="px-6 py-4 font-semibold text-right">Aksi</th>
+              <td colSpan={4} className="px-6 py-12 text-center italic text-muted-foreground">
+                Tidak ada pengguna dalam daftar ini.
+              </td>
             </tr>
-          </thead>
-          <tbody className="divide-y divide-border">
-            {users.length === 0 ? (
-              <tr>
-                <td colSpan={4} className="px-6 py-12 text-center text-muted-foreground italic bg-background/50">
-                  Tidak ada pengguna dalam daftar ini.
-                </td>
-              </tr>
-            ) : (
-              users.map((u) => (
-                <tr key={u.id} className="hover:bg-secondary/20 transition-colors">
-                  <td className="px-6 py-4">
+          ) : (
+            users.map((u) => {
+              const blocked = u.role === null;
+              return (
+                <tr key={u.id} className={blocked ? "opacity-60" : ""}>
+                  <td className="px-5 py-4">
                     <div className="flex items-center gap-3">
-                      <Avatar className="h-9 w-9">
-                        <AvatarFallback className="bg-primary/10 text-primary font-bold">
+                      <Avatar className="h-10 w-10">
+                        <AvatarFallback className="bg-sage font-bold text-forest">
                           {u.full_name.charAt(0).toUpperCase()}
                         </AvatarFallback>
                       </Avatar>
-                      <span className="font-medium">{u.full_name}</span>
+                      <span className="font-bold text-forest dark:text-foreground">{u.full_name}</span>
                     </div>
                   </td>
-                  <td className="px-6 py-4">
-                    {u.role ? (
-                      <Badge variant="secondary" className="font-normal">
-                        {ROLE_LABEL[u.role]}
-                      </Badge>
-                    ) : (
-                      <Badge variant="destructive" className="font-normal">
-                        Diblokir
-                      </Badge>
-                    )}
+
+                  <td className="px-5 py-4">
+                    <span
+                      className={`inline-flex items-center gap-1.5 rounded-full px-3 py-1 text-xs font-bold ${
+                        blocked ? "bg-destructive/10 text-destructive" : "bg-sage text-forest"
+                      }`}
+                    >
+                      <span className={`h-1.5 w-1.5 rounded-full ${blocked ? "bg-destructive" : "bg-warning"}`} />
+                      {blocked ? "Terblokir" : ROLE_LABEL[u.role!]}
+                    </span>
                   </td>
-                  <td className="px-6 py-4">
+
+                  <td className="px-5 py-4">
                     <Select
                       value={u.role || "blocked"}
+                      disabled={blocked}
                       onValueChange={(v) => {
                         if (v === "blocked") onToggleBlock(u.id, u.role);
                         else onUpdateRole(u.id, v as AppRole);
                       }}
                     >
-                      <SelectTrigger className="h-9 w-40">
+                      <SelectTrigger className="h-10 w-40">
                         <SelectValue />
                       </SelectTrigger>
                       <SelectContent>
-                        <SelectItem value="blocked" className="text-destructive font-medium">Blokir Akses</SelectItem>
                         {Object.entries(ROLE_LABEL).map(([key, label]) => (
                           <SelectItem key={key} value={key}>
                             {label}
                           </SelectItem>
                         ))}
+                        <SelectItem value="blocked" className="font-medium text-destructive">Blokir Akses</SelectItem>
                       </SelectContent>
                     </Select>
                   </td>
-                  <td className="px-6 py-4 text-right">
+
+                  <td className="px-5 py-4">
                     <div className="flex justify-end gap-2">
-                      <Button 
-                        variant="ghost" 
-                        size="icon" 
-                        className={`h-8 w-8 ${u.role ? 'text-muted-foreground' : 'text-success hover:text-success'}`}
+                      <button
                         onClick={() => onToggleBlock(u.id, u.role)}
-                        title={u.role ? "Blokir Pengguna" : "Buka Blokir"}
+                        title={blocked ? "Buka Blokir" : "Blokir Pengguna"}
+                        aria-label={blocked ? "Buka Blokir" : "Blokir Pengguna"}
+                        className={`flex h-10 w-10 items-center justify-center rounded-full transition-colors ${
+                          blocked
+                            ? "bg-primary text-primary-foreground hover:opacity-90"
+                            : "bg-sage text-forest hover:bg-sage/70"
+                        }`}
                       >
-                        {u.role ? <Ban className="h-4 w-4" /> : <ShieldCheck className="h-4 w-4" />}
-                      </Button>
-                      
+                        {blocked ? <LockOpen className="h-4 w-4" /> : <Ban className="h-4 w-4" />}
+                      </button>
+
                       <AlertDialog>
                         <AlertDialogTrigger asChild>
-                          <Button 
-                            variant="ghost" 
-                            size="icon" 
-                            className="h-8 w-8 text-destructive hover:text-destructive hover:bg-destructive/10"
-                            title="Hapus Data Profil"
+                          <button
+                            title="Hapus Pengguna"
+                            aria-label="Hapus Pengguna"
+                            className="flex h-10 w-10 items-center justify-center rounded-full bg-destructive/10 text-destructive transition-colors hover:bg-destructive/20"
                           >
                             <Trash2 className="h-4 w-4" />
-                          </Button>
+                          </button>
                         </AlertDialogTrigger>
-                        <AlertDialogContent>
-                          <AlertDialogHeader>
-                            <div className="flex items-center gap-3 text-destructive">
-                              <AlertTriangle className="h-6 w-6" />
-                              <AlertDialogTitle>Hapus Pengguna?</AlertDialogTitle>
-                            </div>
-                            <AlertDialogDescription>
-                              Tindakan ini akan menghapus data profil <strong>{u.full_name}</strong> secara permanen. 
+                        <AlertDialogContent className="max-w-sm rounded-[32px] p-8 text-center">
+                          <AlertDialogHeader className="items-center space-y-3 text-center sm:text-center">
+                            <span className="flex h-20 w-20 items-center justify-center rounded-full bg-destructive/10">
+                              <span className="flex h-12 w-12 items-center justify-center rounded-full bg-destructive text-white">
+                                <AlertTriangle className="h-6 w-6" />
+                              </span>
+                            </span>
+                            <AlertDialogTitle className="text-2xl font-extrabold text-forest">Hapus Pengguna?</AlertDialogTitle>
+                            <AlertDialogDescription className="text-center">
+                              Data profil <strong>{u.full_name}</strong> akan dihapus. Penghapusan bersifat permanen dan tidak dapat dibatalkan.
                             </AlertDialogDescription>
                           </AlertDialogHeader>
-                          <AlertDialogFooter>
-                            <AlertDialogCancel>Batal</AlertDialogCancel>
-                            <AlertDialogAction 
+                          <AlertDialogFooter className="mt-2 grid grid-cols-2 gap-3 sm:space-x-0">
+                            <AlertDialogCancel className="mt-0 h-12 rounded-full border-[1.5px] border-forest font-bold text-forest">
+                              Batal
+                            </AlertDialogCancel>
+                            <AlertDialogAction
                               onClick={() => onDelete(u.id)}
-                              className="bg-destructive text-destructive-foreground hover:bg-destructive/90"
+                              className="h-12 rounded-full bg-destructive font-bold text-white hover:bg-destructive/90"
                             >
-                              Ya, Hapus Permanen
+                              Ya, Hapus
                             </AlertDialogAction>
                           </AlertDialogFooter>
                         </AlertDialogContent>
@@ -327,11 +347,11 @@ function UserTable({
                     </div>
                   </td>
                 </tr>
-              ))
-            )}
-          </tbody>
-        </table>
-      </div>
-    </Card>
+              );
+            })
+          )}
+        </tbody>
+      </table>
+    </div>
   );
 }

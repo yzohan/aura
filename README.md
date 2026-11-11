@@ -1,11 +1,11 @@
 # AURA — Ekosistem Tata Kota Cerdas (Full-Stack App / FS)
 
-AURA adalah platform tata kota cerdas yang menghubungkan warga dengan petugas dinas untuk penanganan infrastruktur publik secara cepat, transparan, dan berbasis data spasial. Platform ini mempermudah warga untuk melaporkan kerusakan jalan, trotoar, dan PJU, yang kemudian diidentifikasi menggunakan model AI (Computer Vision) dan dipetakan ke dalam dashboard GIS Admin untuk penugasan petugas dinas secara real-time.
+AURA adalah platform tata kota cerdas yang menghubungkan warga dengan petugas dinas untuk penanganan infrastruktur publik secara cepat, transparan, dan berbasis data spasial. Platform ini mempermudah warga untuk melaporkan kerusakan jalan berlubang dengan 3 kategori urgensi yaitu: ringan, sedang, dan kritis yang kemudian diidentifikasi menggunakan model AI (Computer Vision) dan dipetakan ke dalam dashboard GIS Admin untuk penugasan petugas dinas secara real-time.
 
 ---
 
 > [!NOTE]
-> Ini adalah dokumentasi khusus untuk folder **FS (Full-Stack Web Application)**, bukan untuk repositori/folder AI (Machine Learning).
+> Ini adalah dokumentasi khusus untuk folder **FS (Full-Stack Web Application)**
 
 ---
 
@@ -13,7 +13,7 @@ AURA adalah platform tata kota cerdas yang menghubungkan warga dengan petugas di
 
 - **Core**: React 19 & TypeScript
 - **Framework & Router**: TanStack Start (Full-stack framework berbasis Vite & TanStack Router)
-- **Database & Auth**: Supabase (REST APIs, PostgreSQL, Real-time Spasial, dan Multi-role Auth Warga/Petugas/Admin)
+- **Database & Auth**: Supabase (REST APIs, PostgreSQL, Real-time Spasial)
 - **Styling**: Tailwind CSS v4 dengan skema Eco-Urban (Forest green, Sage, Emerald, Terracotta)
 - **Map & GIS**: Leaflet & MapLibre GL (Peta interaktif 3D spasial)
 - **Deployment**: Cloudflare Workers / Pages
@@ -68,7 +68,7 @@ bun run dev
 # Atau menggunakan npm
 npm run dev
 ```
-Setelah dijalankan, buka browser di alamat: `http://localhost:3000` (atau port lain yang tertera di terminal).
+Setelah dijalankan, buka browser di alamat: `http://localhost:8080` (atau port lain yang tertera di terminal).
 
 ---
 
@@ -117,6 +117,6 @@ npx wrangler deploy
 ## Tim Pengembang Full-Stack (FS)
 
 - **Nathania Englandia Saraswati** (Full-Stack Development / Database & Auth / Cloudflare Serverless) — [GitHub](https://github.com/yzohan)
-- **Nethania Emmanuela Rahadian** (Full-Stack Development / Main Dashboard Layout & Statistics Chart) — [GitHub](https://github.com/nethania)
+- **Nethania Emmanuela Rahadian** (Full-Stack Development / Main Dashboard Layout & Statistics Chart) — [GitHub](https://github.com/nethaniaemr)
 
 *Catatan: Proyek kolaborasi Lintas Path - Coding Camp 2026 didukung oleh DBS Foundation.*

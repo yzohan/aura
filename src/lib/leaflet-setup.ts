@@ -19,6 +19,31 @@ export const URGENCY_COLORS: Record<string, string> = {
   critical: "#c0432e",
 };
 
+// Titik Pusat Kota Tangerang Selatan (Kantor Walikota Tangsel / Pusat Geografis)
+export const TANGSEL_CENTER: [number, number] = [-6.292, 106.712];
+
+// Batas Geografis Kota Tangerang Selatan (Max Bounds untuk mengunci peta)
+export const TANGSEL_BOUNDS: [[number, number], [number, number]] = [
+  [-6.42, 106.58], // Barat Daya (Setu / Pamulang perbatasan)
+  [-6.18, 106.82], // Timur Laut (Pondok Aren / Ciputat Timur perbatasan)
+];
+
+// Cek apakah koordinat berada di dalam area Kota Tangerang Selatan
+export function isWithinTangsel(lat: number, lng: number): boolean {
+  return lat >= -6.40 && lat <= -6.18 && lng >= 106.58 && lng <= 106.82;
+}
+
+// Preset titik-titik kecamatan di Tangerang Selatan
+export const TANGSEL_PRESETS: { name: string; lat: number; lng: number }[] = [
+  { name: "Pamulang", lat: -6.3421, lng: 106.7382 },
+  { name: "Ciputat", lat: -6.3115, lng: 106.7452 },
+  { name: "Ciputat Timur", lat: -6.3025, lng: 106.7610 },
+  { name: "Pondok Aren (Bintaro)", lat: -6.2731, lng: 106.7214 },
+  { name: "Serpong (BSD)", lat: -6.3074, lng: 106.6710 },
+  { name: "Serpong Utara", lat: -6.2415, lng: 106.6582 },
+  { name: "Setu (Puspitek)", lat: -6.3550, lng: 106.6850 },
+];
+
 export function urgencyDivIcon(urgency: string) {
   const color = URGENCY_COLORS[urgency] ?? "#5a7a55";
   return L.divIcon({

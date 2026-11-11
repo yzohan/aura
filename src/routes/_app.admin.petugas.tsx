@@ -3,26 +3,23 @@ import { useEffect, useState } from "react";
 import { supabase } from "@/integrations/supabase/client";
 import { useAuth } from "@/lib/auth";
 import { createClient } from "@supabase/supabase-js";
-import { Card } from "@/components/ui/card";
 import { Avatar, AvatarFallback, AvatarImage } from "@/components/ui/avatar";
-import { 
-  Loader2, Search, MapPin, Phone, UserCog, Calendar, CheckCircle2, 
-  ClipboardList, Clock, Edit2, Save, UserPlus, Camera 
+import {
+  Loader2, Search, MapPin, Phone, UserCog, CheckCircle2,
+  Pencil, UserPlus, Camera, ArrowRight, X, Zap, ClipboardList, Smartphone,
 } from "lucide-react";
 import { Input } from "@/components/ui/input";
-import { Button } from "@/components/ui/button";
-import { Label } from "@/components/ui/label";
 import { Textarea } from "@/components/ui/textarea";
 import {
   Dialog,
   DialogContent,
-  DialogHeader,
   DialogTitle,
+  DialogDescription,
   DialogTrigger,
-  DialogClose
+  DialogClose,
 } from "@/components/ui/dialog";
 import { toast } from "sonner";
-import { Badge } from "@/components/ui/badge";
+import roadImg from "@/assets/ciputat_road.jpg";
 
 export const Route = createFileRoute("/_app/admin/petugas")({
   head: () => ({ meta: [{ title: "Kelola Petugas" }] }),
@@ -50,9 +47,38 @@ const getTempSupabase = () => {
     auth: {
       persistSession: false,
       autoRefreshToken: false,
-    }
+    },
   });
 };
+
+// Ubah path/URL storage "reports" jadi signed URL (berlaku 1 tahun)
+async function resolveAvatarUrl(avatar: string | null): Promise<string | null> {
+  if (!avatar) return avatar;
+  let path = avatar;
+  let isStoragePath = false;
+  if (avatar.startsWith("http")) {
+    const marker = "/storage/v1/object/public/reports/";
+    const index = avatar.indexOf(marker);
+    if (index !== -1) {
+      path = avatar.substring(index + marker.length);
+      isStoragePath = true;
+    }
+  } else {
+    isStoragePath = true;
+  }
+  if (!isStoragePath) return avatar;
+  try {
+    const { data } = await supabase.storage.from("reports").createSignedUrl(path, 31536000);
+    if (data?.signedUrl) return data.signedUrl;
+  } catch (e) {
+    console.error("Gagal membuat signed URL:", e);
+  }
+  return avatar;
+}
+
+const labelCls = "text-sm font-bold";
+const pillBtn =
+  "inline-flex h-12 items-center justify-center rounded-full px-6 text-sm font-bold transition-opacity hover:opacity-90";
 
 function AdminPetugasPage() {
   const { user } = useAuth();
@@ -60,7 +86,7 @@ function AdminPetugasPage() {
   const [loading, setLoading] = useState(true);
   const [search, setSearch] = useState("");
   const [activeId, setActiveId] = useState<string | null>(null);
-  
+
   // State for edit form
   const [isEditDialogOpen, setIsEditDialogOpen] = useState(false);
   const [editForm, setEditForm] = useState({ full_name: "", phone: "", address: "", avatar_url: "" });
@@ -74,7 +100,7 @@ function AdminPetugasPage() {
 
   const fetchPetugas = async () => {
     setLoading(true);
-    
+
     const { data: roles, error: rErr } = await supabase
       .from("user_roles")
       .select("user_id")
@@ -92,7 +118,7 @@ function AdminPetugasPage() {
       return;
     }
 
-    const userIds = roles.map(r => r.user_id);
+    const userIds = roles.map((r) => r.user_id);
 
     const { data: profiles, error: pErr } = await supabase
       .from("profiles")
@@ -117,45 +143,18 @@ function AdminPetugasPage() {
 
     const combined: PetugasProfile[] = await Promise.all(
       profiles.map(async (p) => {
-        const pWorkOrders = workOrders?.filter(w => w.assigned_to === p.id) || [];
-        const completed = pWorkOrders.filter(w => w.completed_at !== null).length;
-
-        let avatar = p.avatar_url;
-        if (avatar) {
-          let path = avatar;
-          let isStoragePath = false;
-          if (avatar.startsWith("http")) {
-            const marker = "/storage/v1/object/public/reports/";
-            const index = avatar.indexOf(marker);
-            if (index !== -1) {
-              path = avatar.substring(index + marker.length);
-              isStoragePath = true;
-            }
-          } else {
-            isStoragePath = true;
-          }
-          if (isStoragePath) {
-            try {
-              const { data } = await supabase.storage
-                .from("reports")
-                .createSignedUrl(path, 31536000);
-              if (data?.signedUrl) {
-                avatar = data.signedUrl;
-              }
-            } catch (e) {
-              console.error("Gagal membuat signed URL untuk petugas:", e);
-            }
-          }
-        }
+        const pWorkOrders = workOrders?.filter((w) => w.assigned_to === p.id) || [];
+        const completed = pWorkOrders.filter((w) => w.completed_at !== null).length;
+        const avatar = await resolveAvatarUrl(p.avatar_url);
 
         return {
           ...(p as any),
           avatar_url: avatar,
           stats: {
             total: pWorkOrders.length,
-            completed: completed,
+            completed,
             pending: pWorkOrders.length - completed,
-          }
+          },
         };
       })
     );
@@ -168,7 +167,7 @@ function AdminPetugasPage() {
   useEffect(() => {
     fetchPetugas();
 
-    // Subscribe to real-time updates for profiles and user_roles to automatically keep the list fresh
+    // Realtime: jaga daftar tetap segar
     const channel = supabase
       .channel("admin-petugas-realtime")
       .on("postgres_changes", { event: "*", schema: "public", table: "profiles" }, () => {
@@ -190,27 +189,27 @@ function AdminPetugasPage() {
     }
   }, [isAddDialogOpen]);
 
-  const filteredPetugas = petugasList.filter(p => 
+  const filteredPetugas = petugasList.filter((p) =>
     p.full_name.toLowerCase().includes(search.toLowerCase())
   );
 
-  const activePetugas = petugasList.find(p => p.id === activeId);
+  const activePetugas = petugasList.find((p) => p.id === activeId);
 
-  // Handle opening dialog
+  // Isi form edit saat petugas aktif / dialog berubah
   useEffect(() => {
     if (activePetugas) {
       setEditForm({
         full_name: activePetugas.full_name || "",
         phone: activePetugas.phone || "",
         address: activePetugas.address || "",
-        avatar_url: activePetugas.avatar_url || ""
+        avatar_url: activePetugas.avatar_url || "",
       });
     }
   }, [activePetugas, isEditDialogOpen]);
 
   const handleSaveBiodata = async () => {
     if (!activePetugas) return;
-    
+
     if (!editForm.full_name.trim()) {
       toast.error("Nama lengkap tidak boleh kosong.");
       return;
@@ -234,44 +233,53 @@ function AdminPetugasPage() {
       toast.error("Gagal menyimpan data: " + error.message);
     } else {
       toast.success("Biodata petugas berhasil diperbarui!");
-      
-      let resolvedAvatar = updates.avatar_url;
-      if (resolvedAvatar) {
-        let path = resolvedAvatar;
-        let isStoragePath = false;
-        if (resolvedAvatar.startsWith("http")) {
-          const marker = "/storage/v1/object/public/reports/";
-          const index = resolvedAvatar.indexOf(marker);
-          if (index !== -1) {
-            path = resolvedAvatar.substring(index + marker.length);
-            isStoragePath = true;
-          }
-        } else {
-          isStoragePath = true;
-        }
-        if (isStoragePath) {
-          try {
-            const { data } = await supabase.storage
-              .from("reports")
-              .createSignedUrl(path, 31536000);
-            if (data?.signedUrl) {
-              resolvedAvatar = data.signedUrl;
-            }
-          } catch (e) {
-            console.error("Gagal membuat signed URL setelah simpan:", e);
-          }
-        }
-      }
+      const resolvedAvatar = await resolveAvatarUrl(updates.avatar_url);
 
-      setPetugasList(prev => prev.map(p => {
-        if (p.id === activePetugas.id) {
-          return { ...p, ...updates, avatar_url: resolvedAvatar };
-        }
-        return p;
-      }));
+      setPetugasList((prev) =>
+        prev.map((p) =>
+          p.id === activePetugas.id ? { ...p, ...updates, avatar_url: resolvedAvatar } : p
+        )
+      );
       setIsEditDialogOpen(false);
     }
     setIsSaving(false);
+  };
+
+  const handleUploadAvatar = async (e: React.ChangeEvent<HTMLInputElement>) => {
+    const file = e.target.files?.[0];
+    if (!file || !activePetugas) return;
+
+    if (!file.type.startsWith("image/")) {
+      toast.error("File harus berupa gambar.");
+      return;
+    }
+    if (file.size > 2 * 1024 * 1024) {
+      toast.error("Ukuran gambar maksimal 2MB.");
+      return;
+    }
+
+    setIsUploading(true);
+    try {
+      const ext = file.name.split(".").pop() ?? "jpg";
+      const uploaderId = user?.id || activePetugas.id;
+      const filePath = `${uploaderId}/petugas-${activePetugas.id}-${Date.now()}.${ext}`;
+
+      const { error: upErr } = await supabase.storage
+        .from("reports")
+        .upload(filePath, file, { cacheControl: "3600", upsert: true });
+      if (upErr) throw upErr;
+
+      const { data } = supabase.storage.from("reports").getPublicUrl(filePath);
+
+      if (data?.publicUrl) {
+        setEditForm((prev) => ({ ...prev, avatar_url: data.publicUrl }));
+        toast.success("Foto profil berhasil diunggah! Ingat untuk klik Simpan Perubahan.");
+      }
+    } catch (err: any) {
+      toast.error("Gagal mengunggah gambar: " + err.message);
+    } finally {
+      setIsUploading(false);
+    }
   };
 
   const handleCreatePetugas = async () => {
@@ -291,7 +299,7 @@ function AdminPetugasPage() {
 
     const tempSupabase = getTempSupabase();
 
-    // 1. Sign up the user in Supabase Auth (does not sign out current admin because persistSession: false)
+    // 1. Sign up user di Supabase Auth (admin tidak ter-logout karena persistSession: false)
     const { data: signUpData, error: signUpErr } = await tempSupabase.auth.signUp({
       email: addForm.email.trim(),
       password: addForm.password,
@@ -299,8 +307,8 @@ function AdminPetugasPage() {
         data: {
           full_name: addForm.full_name.trim(),
           phone: addForm.phone.trim() || null,
-        }
-      }
+        },
+      },
     });
 
     if (signUpErr || !signUpData.user) {
@@ -311,7 +319,7 @@ function AdminPetugasPage() {
 
     const newUserId = signUpData.user.id;
 
-    // 2. Try to update phone & address on the automatically generated profile
+    // 2. Update phone & address pada profile yang otomatis terbentuk
     const { error: profileUpdateErr } = await supabase
       .from("profiles")
       .update({
@@ -321,7 +329,7 @@ function AdminPetugasPage() {
       .eq("id", newUserId);
 
     if (profileUpdateErr) {
-      // Fallback to upsert if profile trigger hasn't finished running yet
+      // Fallback upsert jika trigger profile belum selesai
       await supabase
         .from("profiles")
         .upsert({
@@ -332,7 +340,7 @@ function AdminPetugasPage() {
         });
     }
 
-    // 3. Assign role 'petugas' in user_roles table
+    // 3. Tetapkan role 'petugas'
     const { error: roleErr } = await supabase
       .from("user_roles")
       .insert({
@@ -352,107 +360,98 @@ function AdminPetugasPage() {
     setIsAdding(false);
   };
 
+  const ratio = activePetugas && activePetugas.stats.total > 0
+    ? Math.round((activePetugas.stats.completed / activePetugas.stats.total) * 1000) / 10
+    : 0;
+
   return (
-    <div className="space-y-6 flex flex-col h-full animate-in fade-in duration-300">
-      <div className="flex flex-col gap-4 md:flex-row md:items-center md:justify-between shrink-0 border-b border-border/50 pb-5">
+    <div className="space-y-6">
+      {/* Header */}
+      <div className="flex flex-col gap-4 px-2 lg:flex-row lg:items-end lg:justify-between">
         <div>
-          <h2 className="text-2xl font-bold tracking-tight">
+          <h2 className="text-3xl font-extrabold tracking-tight text-forest md:text-4xl dark:text-foreground">
             Kelola Petugas
           </h2>
-          <p className="text-muted-foreground text-sm mt-1">
-            Manajemen biodata dan performa petugas lapangan aktif.
+          <p className="mt-2 max-w-md text-sm text-muted-foreground">
+            Pantau penugasan, kontak, dan kinerja petugas lapangan di seluruh kelurahan Tangerang Selatan.
           </p>
         </div>
-        
-        <div className="flex flex-col sm:flex-row gap-3 w-full md:w-auto items-stretch sm:items-center">
-          <div className="relative flex-1 md:w-72">
-            <Search className="absolute left-3 top-1/2 h-4 w-4 -translate-y-1/2 text-muted-foreground" />
-            <Input 
-              placeholder="Cari nama petugas..." 
-              className="pl-9 bg-background"
+
+        <div className="flex flex-col gap-3 sm:flex-row sm:items-center">
+          <div className="relative w-full sm:w-72">
+            <Search className="pointer-events-none absolute left-4 top-1/2 h-4 w-4 -translate-y-1/2 text-muted-foreground" />
+            <Input
+              placeholder="Cari nama petugas…"
+              className="pl-11"
               value={search}
               onChange={(e) => setSearch(e.target.value)}
             />
           </div>
-          
+
+          {/* Dialog tambah petugas */}
           <Dialog open={isAddDialogOpen} onOpenChange={setIsAddDialogOpen}>
             <DialogTrigger asChild>
-              <Button className="gap-2 shadow-sm font-semibold">
-                <UserPlus className="h-4 w-4" />
-                Tambah Petugas
-              </Button>
+              <button className="inline-flex h-12 shrink-0 items-center justify-between gap-3 rounded-full bg-primary pl-6 pr-1.5 text-sm font-bold text-primary-foreground transition-opacity hover:opacity-90">
+                Tugaskan Petugas Baru
+                <span className="flex h-9 w-9 items-center justify-center rounded-full bg-forest text-primary">
+                  <ArrowRight className="h-4 w-4" />
+                </span>
+              </button>
             </DialogTrigger>
-            <DialogContent className="sm:max-w-[425px]">
-              <DialogHeader>
-                <DialogTitle>Tugaskan Petugas Baru</DialogTitle>
-              </DialogHeader>
-              <div className="grid gap-4 py-4 max-h-[70vh] overflow-y-auto pr-1">
-                <div className="grid gap-2">
-                  <Label htmlFor="add-name">Nama Lengkap</Label>
-                  <Input 
-                    id="add-name" 
-                    placeholder="Contoh: Mas Rusdi" 
-                    value={addForm.full_name}
-                    onChange={(e) => setAddForm(prev => ({ ...prev, full_name: e.target.value }))}
-                  />
+            <DialogContent className="rounded-[32px] p-7 sm:max-w-lg [&>button]:hidden">
+              <div className="flex items-center gap-3">
+                <span className="flex h-12 w-12 items-center justify-center rounded-full bg-primary text-primary-foreground">
+                  <UserPlus className="h-5 w-5" />
+                </span>
+                <DialogTitle className="flex-1 text-2xl font-extrabold text-forest dark:text-foreground">
+                  Tugaskan Petugas Baru
+                </DialogTitle>
+                <DialogClose asChild>
+                  <button aria-label="Tutup" className="flex h-10 w-10 items-center justify-center rounded-full bg-sage text-forest hover:bg-sage/70">
+                    <X className="h-4 w-4" />
+                  </button>
+                </DialogClose>
+              </div>
+              <DialogDescription className="sr-only">Form petugas baru</DialogDescription>
+
+              <div className="mt-2 max-h-[60vh] space-y-4 overflow-y-auto pr-1">
+                <div className="space-y-1.5">
+                  <label htmlFor="add-name" className={labelCls}>Nama Lengkap</label>
+                  <Input id="add-name" placeholder="Contoh: Mas Rusdi" value={addForm.full_name}
+                    onChange={(e) => setAddForm((prev) => ({ ...prev, full_name: e.target.value }))} />
                 </div>
-                <div className="grid gap-2">
-                  <Label htmlFor="add-email">Email Login</Label>
-                  <Input 
-                    id="add-email" 
-                    type="email"
-                    placeholder="RusdiImut@aura.com" 
-                    value={addForm.email}
-                    onChange={(e) => setAddForm(prev => ({ ...prev, email: e.target.value }))}
-                  />
+                <div className="space-y-1.5">
+                  <label htmlFor="add-email" className={labelCls}>Email Login</label>
+                  <Input id="add-email" type="email" placeholder="rusdi@aura.com" value={addForm.email}
+                    onChange={(e) => setAddForm((prev) => ({ ...prev, email: e.target.value }))} />
                 </div>
-                <div className="grid gap-2">
-                  <Label htmlFor="add-password">Password Login</Label>
-                  <Input 
-                    id="add-password" 
-                    type="password"
-                    placeholder="Password minimal 6 karakter" 
-                    value={addForm.password}
-                    onChange={(e) => setAddForm(prev => ({ ...prev, password: e.target.value }))}
-                  />
+                <div className="space-y-1.5">
+                  <label htmlFor="add-password" className={labelCls}>Password Login</label>
+                  <Input id="add-password" type="password" placeholder="Minimal 6 karakter" value={addForm.password}
+                    onChange={(e) => setAddForm((prev) => ({ ...prev, password: e.target.value }))} />
                 </div>
-                <div className="grid gap-2">
-                  <Label htmlFor="add-phone">Nomor Telepon (Opsional)</Label>
-                  <Input 
-                    id="add-phone" 
-                    placeholder="08123456789" 
-                    value={addForm.phone}
-                    onChange={(e) => setAddForm(prev => ({ ...prev, phone: e.target.value }))}
-                  />
+                <div className="space-y-1.5">
+                  <label htmlFor="add-phone" className={labelCls}>Nomor Telepon (Opsional)</label>
+                  <Input id="add-phone" placeholder="08123456789" value={addForm.phone}
+                    onChange={(e) => setAddForm((prev) => ({ ...prev, phone: e.target.value }))} />
                 </div>
-                <div className="grid gap-2">
-                  <Label htmlFor="add-address">Alamat Lengkap (Opsional)</Label>
-                  <Textarea 
-                    id="add-address" 
-                    placeholder="Jl. Raya No. 1..." 
-                    className="resize-none"
-                    rows={3}
+                <div className="space-y-1.5">
+                  <label htmlFor="add-address" className={labelCls}>Alamat Lengkap (Opsional)</label>
+                  <Textarea id="add-address" placeholder="Jl. Raya No. 1…" className="resize-none" rows={3}
                     value={addForm.address}
-                    onChange={(e) => setAddForm(prev => ({ ...prev, address: e.target.value }))}
-                  />
+                    onChange={(e) => setAddForm((prev) => ({ ...prev, address: e.target.value }))} />
                 </div>
               </div>
-              <div className="flex justify-end gap-3 border-t border-border/50 pt-4">
+
+              <div className="mt-3 grid grid-cols-2 gap-3">
                 <DialogClose asChild>
-                  <Button variant="ghost">Batal</Button>
+                  <button className={`${pillBtn} border-[1.5px] border-forest text-forest hover:bg-sage`}>Batal</button>
                 </DialogClose>
-                <Button 
-                  onClick={handleCreatePetugas} 
-                  disabled={isAdding} 
-                  className="gap-2"
-                >
-                  {isAdding ? (
-                    <Loader2 className="h-4 w-4 animate-spin" />
-                  ) : (
-                    <Save className="h-4 w-4" />
-                  )}
-                  Tugaskan Sebagai Petugas
-                </Button>
+                <button onClick={handleCreatePetugas} disabled={isAdding}
+                  className={`${pillBtn} gap-2 bg-primary text-primary-foreground disabled:opacity-60`}>
+                  {isAdding && <Loader2 className="h-4 w-4 animate-spin" />}
+                  Tugaskan
+                </button>
               </div>
             </DialogContent>
           </Dialog>
@@ -460,297 +459,254 @@ function AdminPetugasPage() {
       </div>
 
       {loading ? (
-        <div className="flex flex-1 items-center justify-center py-20">
-          <Loader2 className="h-8 w-8 animate-spin text-primary" />
+        <div className="flex items-center justify-center py-20">
+          <Loader2 className="h-8 w-8 animate-spin text-forest" />
         </div>
       ) : filteredPetugas.length === 0 ? (
-        <Card className="flex flex-1 flex-col items-center justify-center border-dashed gap-4 rounded-xl py-16">
+        <div className="flex flex-col items-center justify-center gap-4 rounded-[32px] border-[1.5px] border-dashed border-forest-soft/40 bg-card py-16">
           <UserCog className="h-12 w-12 text-muted-foreground/50" />
           <div className="text-center">
-            <p className="text-lg font-medium">Tidak ada petugas</p>
-            <p className="text-sm text-muted-foreground mt-1">Belum ada data petugas yang cocok dengan pencarian.</p>
+            <p className="text-lg font-extrabold">Tidak ada petugas</p>
+            <p className="mt-1 text-sm text-muted-foreground">Belum ada data petugas yang cocok dengan pencarian.</p>
           </div>
-        </Card>
+        </div>
       ) : (
-        <div className="flex flex-col lg:flex-row gap-6 items-start">
-          
-          {/* LEFT PANEL - LIST */}
-          <div className="w-full lg:w-[320px] shrink-0 flex flex-col gap-3">
-            <div className="text-xs font-semibold text-muted-foreground uppercase tracking-wider mb-1">
+        <div className="grid items-start gap-6 lg:grid-cols-[300px_1fr]">
+          {/* Daftar petugas */}
+          <div className="rounded-[32px] bg-card p-5 shadow-soft">
+            <h3 className="px-1 text-lg font-extrabold text-forest dark:text-foreground">
               Daftar Petugas ({filteredPetugas.length})
-            </div>
-            <div className="grid gap-2 max-h-[600px] overflow-y-auto pr-2 custom-scrollbar">
-              {filteredPetugas.map((petugas) => (
-                <button
-                  key={petugas.id}
-                  onClick={() => setActiveId(petugas.id)}
-                  className={`w-full text-left flex items-center gap-3 p-3 rounded-lg border transition-all duration-200 ${
-                    activeId === petugas.id 
-                      ? "bg-primary/5 border-primary shadow-sm" 
-                      : "bg-card border-border hover:bg-secondary/45"
-                  }`}
-                >
-                  <Avatar className="h-10 w-10 border border-border/50 shadow-sm">
-                    <AvatarImage src={petugas.avatar_url || ""} className="object-cover" />
-                    <AvatarFallback className="bg-primary/10 text-primary font-bold text-sm">
-                      {petugas.full_name.charAt(0).toUpperCase()}
-                    </AvatarFallback>
-                  </Avatar>
-                  <div className="flex-1 min-w-0">
-                    <p className="font-medium text-sm truncate">{petugas.full_name}</p>
-                    <p className="text-xs text-muted-foreground mt-0.5 truncate">
-                      {petugas.stats.total} Tugas
-                    </p>
-                  </div>
-                </button>
-              ))}
+            </h3>
+            <div className="mt-4 grid max-h-[620px] gap-2 overflow-y-auto pr-1">
+              {filteredPetugas.map((petugas) => {
+                const active = activeId === petugas.id;
+                return (
+                  <button
+                    key={petugas.id}
+                    onClick={() => setActiveId(petugas.id)}
+                    className={`flex w-full items-center gap-3 rounded-full border-2 p-2 pr-4 text-left transition-colors ${
+                      active
+                        ? "border-primary bg-sage"
+                        : "border-transparent hover:bg-sage-soft"
+                    }`}
+                  >
+                    <Avatar className="h-11 w-11">
+                      <AvatarImage src={petugas.avatar_url || ""} className="object-cover" />
+                      <AvatarFallback className="bg-sage text-sm font-bold text-forest">
+                        {petugas.full_name.charAt(0).toUpperCase()}
+                      </AvatarFallback>
+                    </Avatar>
+                    <div className="min-w-0 flex-1">
+                      <p className="truncate text-sm font-bold">{petugas.full_name}</p>
+                      <p className="text-xs text-muted-foreground">{petugas.stats.total} Tugas</p>
+                    </div>
+                    {active && <span className="h-2.5 w-2.5 rounded-full bg-forest" />}
+                  </button>
+                );
+              })}
             </div>
           </div>
 
-          {/* RIGHT PANEL - BIODATA DETAILS */}
+          {/* Detail petugas */}
           {activePetugas && (
-            <Card className="flex-1 overflow-hidden w-full flex flex-col shadow-sm border-border">
-              {/* Cover Header */}
-              <div className="h-32 bg-primary/10 relative shrink-0 border-b border-border/50">
-                <div className="absolute inset-0 bg-gradient-to-r from-primary/20 to-primary/5 opacity-50" />
-              </div>
-              
-              <div className="px-6 pb-6 lg:px-8 lg:pb-8 flex-1 flex flex-col relative">
-                {/* Profile Picture Overlay */}
-                <div className="flex justify-between items-end -mt-12 mb-5">
-                  <Avatar className="h-24 w-24 border-4 border-card shadow-sm bg-card">
-                    <AvatarImage src={activePetugas.avatar_url || ""} className="object-cover" />
-                    <AvatarFallback className="bg-primary/10 text-primary text-3xl font-bold">
-                      {activePetugas.full_name.charAt(0).toUpperCase()}
-                    </AvatarFallback>
-                  </Avatar>
-                  <div className="flex flex-col items-end gap-2 mb-2">
-                    <Badge variant="outline" className="bg-background text-xs font-mono">
+            <div className="space-y-6">
+              {/* Kartu profil */}
+              <div className="overflow-hidden rounded-[32px] bg-card shadow-soft">
+                <div className="relative h-44 bg-forest">
+                  <img src={roadImg} alt="" className="absolute inset-0 h-full w-full object-cover opacity-60" />
+                  <div className="absolute inset-0 bg-gradient-to-t from-forest/50 to-transparent" />
+                </div>
+
+                <div className="relative px-6 pb-7 md:px-8">
+                  <div className="-mt-14 flex flex-wrap items-end justify-between gap-3">
+                    <Avatar className="h-28 w-28 border-[6px] border-card shadow-md">
+                      <AvatarImage src={activePetugas.avatar_url || ""} className="object-cover" />
+                      <AvatarFallback className="bg-primary text-3xl font-extrabold text-primary-foreground">
+                        {activePetugas.full_name.charAt(0).toUpperCase()}
+                      </AvatarFallback>
+                    </Avatar>
+
+                    <div className="flex gap-2">
+                      {activePetugas.phone && (
+                        <a
+                          href={`tel:${activePetugas.phone}`}
+                          className="inline-flex h-11 items-center gap-2 rounded-full border-[1.5px] border-forest px-5 text-sm font-bold text-forest transition-colors hover:bg-sage dark:border-foreground dark:text-foreground"
+                        >
+                          <Smartphone className="h-4 w-4" /> Hubungi
+                        </a>
+                      )}
+
+                      {/* Dialog edit biodata */}
+                      <Dialog open={isEditDialogOpen} onOpenChange={setIsEditDialogOpen}>
+                        <DialogTrigger asChild>
+                          <button className="inline-flex h-11 items-center gap-2 rounded-full border-[1.5px] border-forest px-5 text-sm font-bold text-forest transition-colors hover:bg-sage dark:border-foreground dark:text-foreground">
+                            <Pencil className="h-4 w-4" /> Edit Biodata
+                          </button>
+                        </DialogTrigger>
+                        <DialogContent className="rounded-[32px] p-7 sm:max-w-lg [&>button]:hidden">
+                          <div className="flex items-center gap-3">
+                            <span className="flex h-12 w-12 items-center justify-center rounded-full bg-primary text-primary-foreground">
+                              <Pencil className="h-5 w-5" />
+                            </span>
+                            <DialogTitle className="flex-1 text-2xl font-extrabold text-forest dark:text-foreground">
+                              Edit Biodata Petugas
+                            </DialogTitle>
+                            <DialogClose asChild>
+                              <button aria-label="Tutup" className="flex h-10 w-10 items-center justify-center rounded-full bg-sage text-forest hover:bg-sage/70">
+                                <X className="h-4 w-4" />
+                              </button>
+                            </DialogClose>
+                          </div>
+                          <DialogDescription className="sr-only">Form edit biodata petugas</DialogDescription>
+
+                          <div className="mt-2 space-y-4">
+                            <div className="space-y-1.5">
+                              <label htmlFor="edit-name" className={labelCls}>Nama Lengkap</label>
+                              <Input id="edit-name" placeholder="Contoh: Mas Rusdi" value={editForm.full_name}
+                                onChange={(e) => setEditForm((prev) => ({ ...prev, full_name: e.target.value }))} required />
+                            </div>
+
+                            <div className="space-y-1.5">
+                              <label className={`${labelCls} flex items-center justify-between`}>
+                                <span>Foto Profil (unggah atau URL)</span>
+                                {isUploading && <Loader2 className="h-3.5 w-3.5 animate-spin" />}
+                              </label>
+                              <div className="flex gap-2">
+                                <label className="flex h-12 shrink-0 cursor-pointer select-none items-center gap-2 rounded-full bg-sage px-5 text-xs font-bold text-forest hover:bg-sage/70">
+                                  <Camera className="h-4 w-4" />
+                                  Pilih Gambar
+                                  <input type="file" accept="image/*" className="sr-only"
+                                    disabled={isUploading || isSaving} onChange={handleUploadAvatar} />
+                                </label>
+                                <Input id="avatar" placeholder="Atau tempel link foto…" value={editForm.avatar_url}
+                                  disabled={isUploading}
+                                  onChange={(e) => setEditForm((prev) => ({ ...prev, avatar_url: e.target.value }))} />
+                              </div>
+                            </div>
+
+                            <div className="space-y-1.5">
+                              <label htmlFor="phone" className={labelCls}>Nomor Telepon</label>
+                              <Input id="phone" placeholder="08123456789" value={editForm.phone}
+                                onChange={(e) => setEditForm((prev) => ({ ...prev, phone: e.target.value }))} />
+                            </div>
+                            <div className="space-y-1.5">
+                              <label htmlFor="address" className={labelCls}>Alamat Lengkap</label>
+                              <Textarea id="address" placeholder="Jl. Merdeka No. 1…" className="resize-none" rows={3}
+                                value={editForm.address}
+                                onChange={(e) => setEditForm((prev) => ({ ...prev, address: e.target.value }))} />
+                            </div>
+                          </div>
+
+                          <div className="mt-3 grid grid-cols-2 gap-3">
+                            <DialogClose asChild>
+                              <button className={`${pillBtn} border-[1.5px] border-forest text-forest hover:bg-sage`}>Batal</button>
+                            </DialogClose>
+                            <button onClick={handleSaveBiodata} disabled={isSaving}
+                              className={`${pillBtn} gap-2 bg-primary text-primary-foreground disabled:opacity-60`}>
+                              {isSaving && <Loader2 className="h-4 w-4 animate-spin" />}
+                              Simpan Perubahan
+                            </button>
+                          </div>
+                        </DialogContent>
+                      </Dialog>
+                    </div>
+                  </div>
+
+                  <div className="mt-4 flex flex-wrap gap-2">
+                    <span className="rounded-full bg-sage px-3 py-1 text-xs font-bold text-forest">
                       ID: {activePetugas.id.split("-")[0].toUpperCase()}
-                    </Badge>
-                  </div>
-                </div>
-
-                <div className="mb-6 flex items-start justify-between">
-                  <div>
-                    <h1 className="text-2xl lg:text-3xl font-bold text-foreground mb-1.5">{activePetugas.full_name}</h1>
-                    <p className="text-sm text-muted-foreground flex items-center gap-1.5 font-medium">
-                      <UserCog className="h-4 w-4 text-primary" /> Petugas Lapangan Aktif
-                    </p>
-                  </div>
-                  
-                  {/* Tombol Edit Biodata */}
-                  <Dialog open={isEditDialogOpen} onOpenChange={setIsEditDialogOpen}>
-                    <DialogTrigger asChild>
-                      <Button variant="outline" className="gap-2 shadow-sm shrink-0">
-                        <Edit2 className="h-4 w-4" />
-                        Edit Biodata
-                      </Button>
-                    </DialogTrigger>
-                    <DialogContent className="sm:max-w-[425px]">
-                      <DialogHeader>
-                        <DialogTitle>Edit Biodata Petugas</DialogTitle>
-                      </DialogHeader>
-                      <div className="grid gap-4 py-4">
-                        <div className="grid gap-2">
-                          <Label htmlFor="edit-name">Nama Lengkap</Label>
-                          <Input 
-                            id="edit-name" 
-                            placeholder="Contoh: Mas Rusdi" 
-                            value={editForm.full_name}
-                            onChange={(e) => setEditForm(prev => ({ ...prev, full_name: e.target.value }))}
-                            required
-                          />
-                        </div>
-                        <div className="grid gap-2">
-                          <Label className="flex items-center justify-between">
-                            <span>Foto Profil (Unggah langsung atau URL)</span>
-                            {isUploading && <Loader2 className="h-3.5 w-3.5 animate-spin text-primary" />}
-                          </Label>
-                          <div className="flex gap-2">
-                            <label className="flex cursor-pointer items-center gap-2 rounded-lg border border-dashed border-border bg-secondary/40 px-3 text-xs text-muted-foreground hover:border-primary/40 shrink-0 h-10 select-none items-center justify-center">
-                              <Camera className="h-4 w-4 text-primary" />
-                              <span>Pilih Gambar</span>
-                              <input 
-                                type="file" 
-                                accept="image/*" 
-                                className="sr-only"
-                                disabled={isUploading || isSaving}
-                                onChange={async (e) => {
-                                  const file = e.target.files?.[0];
-                                  if (!file || !activePetugas) return;
-                                  
-                                  if (!file.type.startsWith("image/")) {
-                                    toast.error("File harus berupa gambar.");
-                                    return;
-                                  }
-                                  if (file.size > 2 * 1024 * 1024) {
-                                    toast.error("Ukuran gambar maksimal 2MB.");
-                                    return;
-                                  }
-                                  
-                                  setIsUploading(true);
-                                  try {
-                                    const ext = file.name.split(".").pop() ?? "jpg";
-                                    const uploaderId = user?.id || activePetugas.id;
-                                    const filePath = `${uploaderId}/petugas-${activePetugas.id}-${Date.now()}.${ext}`;
-                                    
-                                    const { error: upErr } = await supabase.storage
-                                      .from("reports")
-                                      .upload(filePath, file, {
-                                        cacheControl: "3600",
-                                        upsert: true,
-                                      });
-                                    if (upErr) throw upErr;
-                                    
-                                    const { data } = supabase.storage
-                                      .from("reports")
-                                      .getPublicUrl(filePath);
-                                      
-                                    if (data?.publicUrl) {
-                                      setEditForm(prev => ({ ...prev, avatar_url: data.publicUrl }));
-                                      toast.success("Foto profil berhasil diunggah! Ingat untuk klik Simpan Perubahan.");
-                                    }
-                                  } catch (err: any) {
-                                    toast.error("Gagal mengunggah gambar: " + err.message);
-                                  } finally {
-                                    setIsUploading(false);
-                                  }
-                                }}
-                              />
-                            </label>
-                            <Input 
-                              id="avatar" 
-                              placeholder="Atau tempel Link Foto URL..." 
-                              value={editForm.avatar_url}
-                              disabled={isUploading}
-                              onChange={(e) => setEditForm(prev => ({ ...prev, avatar_url: e.target.value }))}
-                            />
-                          </div>
-                          <p className="text-[11px] text-muted-foreground">Pilih file gambar dari galeri Anda, atau tempel link foto di kolom samping.</p>
-                        </div>
-                        <div className="grid gap-2">
-                          <Label htmlFor="phone">Nomor Telepon</Label>
-                          <Input 
-                            id="phone" 
-                            placeholder="08123456789" 
-                            value={editForm.phone}
-                            onChange={(e) => setEditForm(prev => ({ ...prev, phone: e.target.value }))}
-                          />
-                        </div>
-                        <div className="grid gap-2">
-                          <Label htmlFor="address">Alamat Lengkap</Label>
-                          <Textarea 
-                            id="address" 
-                            placeholder="Jl. Merdeka No. 1..." 
-                            className="resize-none"
-                            rows={3}
-                            value={editForm.address}
-                            onChange={(e) => setEditForm(prev => ({ ...prev, address: e.target.value }))}
-                          />
-                        </div>
-                      </div>
-                      <div className="flex justify-end gap-3">
-                        <DialogClose asChild>
-                          <Button variant="ghost">Batal</Button>
-                        </DialogClose>
-                        <Button onClick={handleSaveBiodata} disabled={isSaving} className="gap-2">
-                          {isSaving ? (
-                            <Loader2 className="h-4 w-4 animate-spin" />
-                          ) : (
-                            <Save className="h-4 w-4" />
-                          )}
-                          Simpan Perubahan
-                        </Button>
-                      </div>
-                    </DialogContent>
-                  </Dialog>
-                </div>
-
-                {/* Grid Info & Stats */}
-                <div className="grid grid-cols-1 xl:grid-cols-2 gap-8 border-t border-border/50 pt-6">
-                  
-                  {/* Biodata Kontak */}
-                  <div className="space-y-4">
-                    <h3 className="text-xs font-bold uppercase tracking-widest text-primary/70 border-b pb-2 mb-4">Informasi Kontak</h3>
-                    
-                    <div className="flex items-start gap-3">
-                      <div className="p-2 bg-secondary rounded-md text-muted-foreground shrink-0 mt-0.5">
-                        <Phone className="h-4 w-4 text-primary" />
-                      </div>
-                      <div>
-                        <p className="text-xs text-muted-foreground font-semibold mb-0.5">Nomor Telepon</p>
-                        <p className="text-sm font-medium">{activePetugas.phone || "Belum diatur"}</p>
-                      </div>
-                    </div>
-                    
-                    <div className="flex items-start gap-3">
-                      <div className="p-2 bg-secondary rounded-md text-muted-foreground shrink-0 mt-0.5">
-                        <MapPin className="h-4 w-4 text-primary" />
-                      </div>
-                      <div>
-                        <p className="text-xs text-muted-foreground font-semibold mb-0.5">Alamat Lengkap</p>
-                        <p className="text-sm font-medium leading-relaxed">{activePetugas.address || "Belum diatur"}</p>
-                      </div>
-                    </div>
-
-                    <div className="flex items-start gap-3">
-                      <div className="p-2 bg-secondary rounded-md text-muted-foreground shrink-0 mt-0.5">
-                        <Calendar className="h-4 w-4 text-primary" />
-                      </div>
-                      <div>
-                        <p className="text-xs text-muted-foreground font-semibold mb-0.5">Terdaftar Sejak</p>
-                        <p className="text-sm font-medium">
-                          {new Date(activePetugas.created_at).toLocaleDateString('id-ID', {
-                            day: 'numeric', month: 'long', year: 'numeric'
-                          })}
-                        </p>
-                      </div>
-                    </div>
+                    </span>
+                    <span className="inline-flex items-center gap-1.5 rounded-full bg-sage px-3 py-1 text-xs font-bold text-forest">
+                      <CheckCircle2 className="h-3.5 w-3.5" /> Terverifikasi
+                    </span>
                   </div>
 
-                  {/* Statistik Performa */}
-                  <div className="space-y-4">
-                    <h3 className="text-xs font-bold uppercase tracking-widest text-primary/70 border-b pb-2 mb-4">Statistik Kinerja</h3>
-                    <div className="grid grid-cols-1 gap-3">
-                      <div className="bg-card p-4 rounded-lg border flex items-center justify-between shadow-sm">
-                        <div className="flex items-center gap-3">
-                          <div className="p-2.5 bg-blue-500/10 text-blue-500 rounded-md shrink-0">
-                            <ClipboardList className="h-5 w-5" />
-                          </div>
-                          <span className="text-sm font-semibold text-muted-foreground">Total Tugas</span>
-                        </div>
-                        <span className="text-xl font-bold">{activePetugas.stats.total}</span>
-                      </div>
-
-                      <div className="bg-card p-4 rounded-lg border flex items-center justify-between shadow-sm">
-                        <div className="flex items-center gap-3">
-                          <div className="p-2.5 bg-success/10 text-success rounded-md shrink-0">
-                            <CheckCircle2 className="h-5 w-5" />
-                          </div>
-                          <span className="text-sm font-semibold text-muted-foreground">Tugas Selesai</span>
-                        </div>
-                        <span className="text-xl font-bold text-success">{activePetugas.stats.completed}</span>
-                      </div>
-
-                      <div className="bg-card p-4 rounded-lg border flex items-center justify-between shadow-sm">
-                        <div className="flex items-center gap-3">
-                          <div className="p-2.5 bg-warning/10 text-warning rounded-md shrink-0">
-                            <Clock className="h-5 w-5" />
-                          </div>
-                          <span className="text-sm font-semibold text-muted-foreground">Sedang Dikerjakan</span>
-                        </div>
-                        <span className="text-xl font-bold text-warning">{activePetugas.stats.pending}</span>
-                      </div>
-                    </div>
-                  </div>
-
+                  <h3 className="mt-3 text-3xl font-extrabold text-forest dark:text-foreground">{activePetugas.full_name}</h3>
+                  <p className="text-sm text-muted-foreground">Petugas Lapangan</p>
                 </div>
               </div>
-            </Card>
+
+              {/* Informasi kontak */}
+              <div>
+                <h3 className="mb-3 px-2 text-xl font-extrabold text-forest dark:text-foreground">Informasi Kontak</h3>
+                <div className="grid gap-4 md:grid-cols-3">
+                  <InfoCard icon={Phone} label="Nomor Telepon" value={activePetugas.phone || "Belum diatur"} />
+                  <InfoCard icon={MapPin} label="Alamat Lengkap" value={activePetugas.address || "Belum diatur"} />
+                  <InfoCard
+                    icon={CheckCircle2}
+                    label="Terdaftar Sejak"
+                    value={new Date(activePetugas.created_at).toLocaleDateString("id-ID", {
+                      day: "numeric", month: "long", year: "numeric",
+                    })}
+                  />
+                </div>
+              </div>
+
+              {/* Statistik kinerja */}
+              <div>
+                <h3 className="mb-3 px-2 text-xl font-extrabold text-forest dark:text-foreground">Statistik Kinerja</h3>
+                <div className="grid gap-4 md:grid-cols-3">
+                  <div className="rounded-[28px] bg-forest p-5 text-white">
+                    <div className="flex items-center justify-between">
+                      <span className="text-sm">Total Tugas</span>
+                      <span className="flex h-10 w-10 items-center justify-center rounded-full bg-white/10 text-primary">
+                        <ClipboardList className="h-4 w-4" />
+                      </span>
+                    </div>
+                    <p className="mt-6 text-5xl font-extrabold text-primary">{activePetugas.stats.total}</p>
+                  </div>
+                  <div className="rounded-[28px] bg-sage p-5 text-forest">
+                    <div className="flex items-center justify-between">
+                      <span className="text-sm">Tugas Selesai</span>
+                      <span className="flex h-10 w-10 items-center justify-center rounded-full bg-forest text-primary">
+                        <CheckCircle2 className="h-4 w-4" />
+                      </span>
+                    </div>
+                    <p className="mt-6 text-5xl font-extrabold">{activePetugas.stats.completed}</p>
+                  </div>
+                  <div className="rounded-[28px] bg-card p-5 text-forest shadow-soft dark:text-foreground">
+                    <div className="flex items-center justify-between">
+                      <span className="text-sm">Sedang Dikerjakan</span>
+                      <span className="flex h-10 w-10 items-center justify-center rounded-full bg-primary text-primary-foreground">
+                        <Zap className="h-4 w-4" />
+                      </span>
+                    </div>
+                    <p className="mt-6 text-5xl font-extrabold">{activePetugas.stats.pending}</p>
+                  </div>
+                </div>
+              </div>
+
+              {/* Tingkat penyelesaian */}
+              <div className="rounded-[28px] bg-card p-6 shadow-soft">
+                <div className="flex items-center justify-between gap-4">
+                  <h4 className="text-lg font-extrabold text-forest dark:text-foreground">Tingkat Penyelesaian</h4>
+                  <span className="text-3xl font-extrabold text-forest dark:text-foreground">{ratio}%</span>
+                </div>
+                <div className="mt-3 h-3 w-full overflow-hidden rounded-full bg-sage-soft">
+                  <div className="h-full rounded-full bg-primary transition-all" style={{ width: `${ratio}%` }} />
+                </div>
+                <p className="mt-3 text-sm text-muted-foreground">
+                  {activePetugas.stats.completed} dari {activePetugas.stats.total} tugas telah diselesaikan sejak terdaftar.
+                </p>
+              </div>
+            </div>
           )}
         </div>
       )}
+    </div>
+  );
+}
+
+function InfoCard({
+  icon: Icon, label, value,
+}: { icon: React.ComponentType<{ className?: string }>; label: string; value: string }) {
+  return (
+    <div className="card-dashed p-5">
+      <span className="flex h-11 w-11 items-center justify-center rounded-full bg-primary text-primary-foreground">
+        <Icon className="h-5 w-5" />
+      </span>
+      <p className="mt-4 text-xs text-muted-foreground">{label}</p>
+      <p className="mt-1 text-sm font-extrabold leading-relaxed text-forest dark:text-foreground">{value}</p>
     </div>
   );
 }

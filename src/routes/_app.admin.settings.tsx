@@ -1,26 +1,14 @@
 import { createFileRoute } from "@tanstack/react-router";
 import { useState, useEffect } from "react";
-import { Card } from "@/components/ui/card";
-import { Button } from "@/components/ui/button";
 import { Input } from "@/components/ui/input";
-import { Label } from "@/components/ui/label";
 import { Switch } from "@/components/ui/switch";
-import { Tabs, TabsContent, TabsList, TabsTrigger } from "@/components/ui/tabs";
 import { toast } from "sonner";
 import {
-  Save,
-  Settings,
-  ShieldAlert,
-  Bell,
-  Sliders,
-  Loader2,
-  Info,
-  Building,
-  CheckCircle2,
+  ArrowRight, Bell, Globe, Loader2, Shield, SlidersHorizontal, Tag,
 } from "lucide-react";
 
 export const Route = createFileRoute("/_app/admin/settings")({
-  head: () => ({ meta: [{ title: "Pengaturan Sistem " }] }),
+  head: () => ({ meta: [{ title: "Pengaturan Sistem" }] }),
   component: AdminSettingsPage,
 });
 
@@ -56,16 +44,31 @@ const DEFAULT_SETTINGS: SystemSettings = {
   catJalan: true,
 };
 
+type TabKey = "general" | "security" | "notifications" | "categories";
+
+const TABS: { key: TabKey; label: string; icon: React.ComponentType<{ className?: string }> }[] = [
+  { key: "general", label: "Umum", icon: SlidersHorizontal },
+  { key: "security", label: "Keamanan", icon: Shield },
+  { key: "notifications", label: "Notifikasi", icon: Bell },
+  { key: "categories", label: "Kategori", icon: Tag },
+];
+
+const labelCls = "text-xs font-bold text-forest dark:text-foreground";
+
 function AdminSettingsPage() {
   const [settings, setSettings] = useState<SystemSettings>(DEFAULT_SETTINGS);
+  const [saved, setSaved] = useState<SystemSettings>(DEFAULT_SETTINGS);
   const [saving, setSaving] = useState(false);
   const [loading, setLoading] = useState(true);
+  const [tab, setTab] = useState<TabKey>("general");
 
   useEffect(() => {
     try {
-      const saved = localStorage.getItem("aura_system_settings");
-      if (saved) {
-        setSettings({ ...DEFAULT_SETTINGS, ...JSON.parse(saved) });
+      const raw = localStorage.getItem("aura_system_settings");
+      if (raw) {
+        const merged = { ...DEFAULT_SETTINGS, ...JSON.parse(raw) };
+        setSettings(merged);
+        setSaved(merged);
       }
     } catch (e) {
       console.error("Gagal membaca pengaturan dari localStorage", e);
@@ -73,6 +76,8 @@ function AdminSettingsPage() {
       setLoading(false);
     }
   }, []);
+
+  const dirty = JSON.stringify(settings) !== JSON.stringify(saved);
 
   const handleSave = async (e: React.FormEvent) => {
     e.preventDefault();
@@ -83,6 +88,7 @@ function AdminSettingsPage() {
 
     try {
       localStorage.setItem("aura_system_settings", JSON.stringify(settings));
+      setSaved(settings);
       toast.success("Pengaturan berhasil disimpan ke sistem!");
     } catch (err: any) {
       toast.error("Gagal menyimpan: " + err.message);
@@ -92,315 +98,268 @@ function AdminSettingsPage() {
   };
 
   const updateField = <K extends keyof SystemSettings>(key: K, value: SystemSettings[K]) => {
-    setSettings((prev) => ({
-      ...prev,
-      [key]: value,
-    }));
+    setSettings((prev) => ({ ...prev, [key]: value }));
   };
 
   if (loading) {
     return (
       <div className="flex h-64 items-center justify-center">
-        <Loader2 className="h-8 w-8 animate-spin text-primary" />
+        <Loader2 className="h-8 w-8 animate-spin text-forest" />
       </div>
     );
   }
 
+  const card = "rounded-[32px] bg-card p-6 shadow-soft md:p-8";
+
   return (
     <div className="space-y-6">
-      <div>
-        <h2 className="text-2xl font-bold tracking-tight">Pengaturan Sistem</h2>
-        <p className="text-muted-foreground text-sm">
-          Konfigurasi perilaku aplikasi, kuota pelaporan, webhook notifikasi, dan kategori aktif.
+      <div className="px-2">
+        <h2 className="text-3xl font-extrabold tracking-tight text-forest md:text-4xl dark:text-foreground">
+          Pengaturan Sistem
+        </h2>
+        <p className="mt-2 max-w-xl text-sm text-muted-foreground">
+          Atur identitas aplikasi, kebijakan penggunaan, saluran notifikasi, dan kategori kerusakan yang aktif di AURA.
         </p>
       </div>
 
-      <form onSubmit={handleSave}>
-        <Tabs defaultValue="general" className="w-full">
-          <div className="flex flex-col gap-4 md:flex-row md:items-start">
-            <TabsList className="flex md:flex-col h-auto w-full md:w-64 gap-1 p-2 bg-sidebar border border-border rounded-xl shrink-0">
-              <TabsTrigger value="general" className="w-full justify-start py-2.5 gap-2 cursor-pointer">
-                <Building className="h-4 w-4" />
-                Umum & Informasi
-              </TabsTrigger>
-              <TabsTrigger value="security" className="w-full justify-start py-2.5 gap-2 cursor-pointer">
-                <ShieldAlert className="h-4 w-4" />
-                Batas & Anti-Spam
-              </TabsTrigger>
-              <TabsTrigger value="notifications" className="w-full justify-start py-2.5 gap-2 cursor-pointer">
-                <Bell className="h-4 w-4" />
-                Notifikasi Otomatis
-              </TabsTrigger>
-              <TabsTrigger value="categories" className="w-full justify-start py-2.5 gap-2 cursor-pointer">
-                <Sliders className="h-4 w-4" />
-                Kategori Laporan
-              </TabsTrigger>
-            </TabsList>
-
-            <div className="flex-1 w-full space-y-6">
-              <TabsContent value="general">
-                <Card className="p-6 space-y-6 border border-border">
-                  <div>
-                    <h3 className="text-lg font-medium">Informasi & Akses Umum</h3>
-                    <p className="text-xs text-muted-foreground">Sesuaikan identitas instansi dan aturan GPS default.</p>
-                  </div>
-
-                  <div className="grid gap-4">
-                    <div className="grid gap-2">
-                      <Label htmlFor="appName">Nama Aplikasi / Instansi</Label>
-                      <Input
-                        id="appName"
-                        value={settings.appName}
-                        onChange={(e) => updateField("appName", e.target.value)}
-                        placeholder="Contoh: AURA - Pengaduan Kerusakan"
-                        required
-                      />
-                      <p className="text-[11px] text-muted-foreground">Digunakan pada nama website dan navigasi utama.</p>
-                    </div>
-
-                    <div className="grid gap-2">
-                      <Label htmlFor="appUrl">Domain Aplikasi</Label>
-                      <Input
-                        id="appUrl"
-                        value={settings.appUrl}
-                        onChange={(e) => updateField("appUrl", e.target.value)}
-                        placeholder="https://aura-ai.aura-project.workers.dev"
-                        required
-                      />
-                    </div>
-
-                    <div className="flex items-center justify-between p-4 rounded-xl border border-border bg-secondary/20">
-                      <div className="space-y-0.5 max-w-[80%]">
-                        <Label className="text-sm font-semibold">Wajibkan GPS Perangkat</Label>
-                        <p className="text-xs text-muted-foreground">
-                          Jika diaktifkan, warga tidak dapat mengirim laporan tanpa koordinat lokasi GPS asli dari perangkat.
-                        </p>
-                      </div>
-                      <Switch
-                        checked={settings.requireGps}
-                        onCheckedChange={(checked) => updateField("requireGps", checked)}
-                      />
-                    </div>
-
-                    <div className="flex items-center justify-between p-4 rounded-xl border border-border bg-secondary/20">
-                      <div className="space-y-0.5 max-w-[80%]">
-                        <Label className="text-sm font-semibold">Distribusi Tugas Otomatis (Auto-Assign)</Label>
-                        <p className="text-xs text-muted-foreground">
-                          Secara otomatis membuat Work Order ke petugas lapangan terdekat ketika ada laporan baru masuk.
-                        </p>
-                      </div>
-                      <Switch
-                        checked={settings.enableAutoAssign}
-                        onCheckedChange={(checked) => updateField("enableAutoAssign", checked)}
-                      />
-                    </div>
-                  </div>
-                </Card>
-              </TabsContent>
-
-              {/* TAB 2: BATAS & ANTI-SPAM */}
-              <TabsContent value="security">
-                <Card className="p-6 space-y-6 border border-border">
-                  <div>
-                    <h3 className="text-lg font-medium">Batas Penggunaan & Kebijakan Anti-Spam</h3>
-                    <p className="text-xs text-muted-foreground">
-                      Mencegah warga menyalahgunakan pelaporan atau mengirim laporan palsu berkali-kali.
-                    </p>
-                  </div>
-
-                  <div className="grid gap-4">
-                    <div className="grid gap-2">
-                      <Label htmlFor="maxReports">Maks. Laporan Harian Per Perangkat (IP)</Label>
-                      <Input
-                        id="maxReports"
-                        type="number"
-                        min={1}
-                        max={10}
-                        value={settings.maxReportsPerDay}
-                        onChange={(e) => updateField("maxReportsPerDay", parseInt(e.target.value) || 3)}
-                        required
-                      />
-                      <p className="text-[11px] text-muted-foreground">
-                        Jumlah laporan maksimum yang dapat dikirim oleh satu alamat IP dalam 24 jam.
-                      </p>
-                    </div>
-
-                    <div className="grid gap-2">
-                      <Label htmlFor="cooldown">Masa Reset Kuota IP (Jam)</Label>
-                      <Input
-                        id="cooldown"
-                        type="number"
-                        min={1}
-                        max={72}
-                        value={settings.ipCooldownPeriod}
-                        onChange={(e) => updateField("ipCooldownPeriod", parseInt(e.target.value) || 24)}
-                        required
-                      />
-                    </div>
-
-                    <div className="grid gap-2">
-                      <Label htmlFor="spamThreshold">Pendeteksi Duplikasi Judul (%)</Label>
-                      <Input
-                        id="spamThreshold"
-                        type="number"
-                        min={50}
-                        max={100}
-                        value={settings.spamThreshold}
-                        onChange={(e) => updateField("spamThreshold", parseInt(e.target.value) || 80)}
-                        required
-                      />
-                      <p className="text-[11px] text-muted-foreground">
-                        Sistem memblokir laporan baru jika kemiripan kata dengan laporan aktif lain melebihi batas ini.
-                      </p>
-                    </div>
-                  </div>
-                </Card>
-              </TabsContent>
-
-              {/* TAB 3: NOTIFIKASI */}
-              <TabsContent value="notifications">
-                <Card className="p-6 space-y-6 border border-border">
-                  <div>
-                    <h3 className="text-lg font-medium">Notifikasi Dinas & Saluran Eksternal</h3>
-                    <p className="text-xs text-muted-foreground">
-                      Atur saluran komunikasi dinas untuk pemberitahuan instan ketika ada laporan baru masuk.
-                    </p>
-                  </div>
-
-                  <div className="space-y-6">
-                    <div className="space-y-4">
-                      <div className="flex items-center justify-between">
-                        <div className="space-y-0.5">
-                          <Label className="font-semibold text-sm">Notifikasi Email Dinas</Label>
-                          <p className="text-xs text-muted-foreground">Kirim log laporan baru ke kotak masuk admin utama.</p>
-                        </div>
-                        <Switch
-                          checked={settings.notifyEmail}
-                          onCheckedChange={(checked) => updateField("notifyEmail", checked)}
-                        />
-                      </div>
-
-                      {settings.notifyEmail && (
-                        <div className="grid gap-2 pl-4 border-l-2 border-primary/20">
-                          <Label htmlFor="adminEmail">Alamat Email Dinas</Label>
-                          <Input
-                            id="adminEmail"
-                            type="email"
-                            value={settings.adminEmail}
-                            onChange={(e) => updateField("adminEmail", e.target.value)}
-                            placeholder="admin@dinas.aura.go.id"
-                            required={settings.notifyEmail}
-                          />
-                        </div>
-                      )}
-                    </div>
-
-                    <hr className="border-border" />
-
-                    <div className="space-y-4">
-                      <div className="flex items-center justify-between">
-                        <div className="space-y-0.5">
-                          <Label className="font-semibold text-sm">Integrasi Telegram Bot</Label>
-                          <p className="text-xs text-muted-foreground">
-                            Kirim ringkasan koordinat & foto ke grup koordinasi lapangan di Telegram.
-                          </p>
-                        </div>
-                        <Switch
-                          checked={settings.notifyTelegram}
-                          onCheckedChange={(checked) => updateField("notifyTelegram", checked)}
-                        />
-                      </div>
-
-                      {settings.notifyTelegram && (
-                        <div className="grid gap-4 pl-4 border-l-2 border-primary/20">
-                          <div className="grid gap-2">
-                            <Label htmlFor="tgToken">Bot API Token</Label>
-                            <Input
-                              id="tgToken"
-                              type="password"
-                              value={settings.telegramToken}
-                              onChange={(e) => updateField("telegramToken", e.target.value)}
-                              placeholder="1234567890:ABCdefGhIJKlmNoPQRsT..."
-                              required={settings.notifyTelegram}
-                            />
-                          </div>
-                          <div className="grid gap-2">
-                            <Label htmlFor="tgChat">Chat ID / ID Grup</Label>
-                            <Input
-                              id="tgChat"
-                              value={settings.telegramChatId}
-                              onChange={(e) => updateField("telegramChatId", e.target.value)}
-                              placeholder="-100XXXXXXXXXX"
-                              required={settings.notifyTelegram}
-                            />
-                          </div>
-                        </div>
-                      )}
-                    </div>
-                  </div>
-                </Card>
-              </TabsContent>
-
-              <TabsContent value="categories">
-                <Card className="p-6 space-y-6 border border-border">
-                  <div>
-                    <h3 className="text-lg font-medium">Kategori Kerusakan Aktif</h3>
-                    <p className="text-xs text-muted-foreground">
-                      Pilih kategori infrastruktur yang terbuka bagi pelaporan warga. Kategori non-aktif tidak akan muncul di form warga.
-                    </p>
-                  </div>
-
-                  <div className="space-y-4">
-                    <div className="flex items-center justify-between p-3.5 rounded-xl border border-border hover:bg-secondary/10 transition-colors">
-                      <div className="space-y-0.5">
-                        <Label className="text-sm font-semibold">Jalan Berlubang</Label>
-                        <p className="text-xs text-muted-foreground">Meliputi lubang jalan, jalan retak, bergelombang, atau ambles.</p>
-                      </div>
-                      <Switch
-                        checked={settings.catJalan}
-                        onCheckedChange={(checked) => updateField("catJalan", checked)}
-                      />
-                    </div>
-                  </div>
-                </Card>
-              </TabsContent>
-
-              {/* SAVE FLOATING OR BOTTOM ACTION */}
-              <div className="flex justify-end pt-2">
-                <Button
-                  type="submit"
-                  disabled={saving}
-                  className="bg-leaf-gradient text-primary-foreground shadow-soft hover:opacity-95 px-6 gap-2"
-                >
-                  {saving ? (
-                    <>
-                      <Loader2 className="h-4 w-4 animate-spin" />
-                      Menyimpan...
-                    </>
-                  ) : (
-                    <>
-                      <Save className="h-4 w-4" />
-                      Simpan Perubahan
-                    </>
-                  )}
-                </Button>
-              </div>
+      <form onSubmit={handleSave} className="space-y-6">
+        <div className="grid items-start gap-6 lg:grid-cols-[250px_1fr]">
+          {/* Menu tab */}
+          <div className="rounded-[28px] bg-card p-2 shadow-soft">
+            <div className="flex gap-1 overflow-x-auto lg:flex-col">
+              {TABS.map((t) => {
+                const active = tab === t.key;
+                return (
+                  <button
+                    key={t.key}
+                    type="button"
+                    onClick={() => setTab(t.key)}
+                    className={`flex shrink-0 items-center gap-3 rounded-full py-2 pl-2 pr-5 text-sm font-bold transition-colors ${
+                      active ? "bg-forest text-white" : "text-forest hover:bg-sage-soft dark:text-foreground"
+                    }`}
+                  >
+                    <span className={`flex h-9 w-9 items-center justify-center rounded-full ${active ? "bg-primary text-primary-foreground" : "bg-sage text-forest"}`}>
+                      <t.icon className="h-4 w-4" />
+                    </span>
+                    {t.label}
+                  </button>
+                );
+              })}
             </div>
           </div>
-        </Tabs>
-      </form>
 
-      {/* INFO FOOTER */}
-      <div className="flex items-start gap-3 rounded-xl border border-blue-500/20 bg-blue-500/5 p-4 text-sm text-blue-600 dark:text-blue-400">
-        <Info className="h-4 w-4 shrink-0 mt-0.5" />
-        <div className="space-y-1">
-          <p className="font-semibold text-xs">Petunjuk Penggunaan</p>
-          <p className="text-xs opacity-90 leading-relaxed">
-            Perubahan pada pengaturan ini akan langsung memengaruhi UI form pengaduan warga secara real-time. Batasan
-            laporan harian menggunakan alamat IP untuk menghalangi serangan spam tanpa mengharuskan warga membuat akun terlebih dahulu.
-          </p>
+          <div>
+            {/* UMUM */}
+            {tab === "general" && (
+              <div className={card}>
+                <h3 className="text-2xl font-extrabold text-forest dark:text-foreground">Informasi dan Akses Umum</h3>
+                <p className="mt-1 text-sm text-muted-foreground">Identitas aplikasi dan aturan dasar akses perangkat petugas.</p>
+
+                <div className="mt-6 space-y-5">
+                  <div className="space-y-1.5">
+                    <label htmlFor="appName" className={labelCls}>Nama Aplikasi / Instansi</label>
+                    <Input id="appName" value={settings.appName}
+                      onChange={(e) => updateField("appName", e.target.value)}
+                      placeholder="Contoh: AURA - Dinas PUPR Tangerang Selatan" required />
+                  </div>
+
+                  <div className="space-y-1.5">
+                    <label htmlFor="appUrl" className={labelCls}>Domain Aplikasi</label>
+                    <div className="relative">
+                      <Globe className="pointer-events-none absolute left-4 top-1/2 h-4 w-4 -translate-y-1/2 text-muted-foreground" />
+                      <Input id="appUrl" className="pl-11" value={settings.appUrl}
+                        onChange={(e) => updateField("appUrl", e.target.value)}
+                        placeholder="aura-tangsel.id" required />
+                    </div>
+                  </div>
+
+                  <div className="border-t border-border/60 pt-5">
+                    <ToggleRow
+                      title="Wajibkan GPS Perangkat"
+                      desc="Warga dan petugas harus mengaktifkan lokasi GPS agar koordinat laporan tercatat akurat sebelum dapat dikirim."
+                      checked={settings.requireGps}
+                      onChange={(v) => updateField("requireGps", v)}
+                    />
+                  </div>
+                  <div className="border-t border-border/60 pt-5">
+                    <ToggleRow
+                      title="Distribusi Tugas Otomatis (Auto-Assign)"
+                      desc="Laporan baru otomatis ditugaskan ke petugas terdekat yang tersedia berdasarkan lokasi dan beban kerja saat ini."
+                      checked={settings.enableAutoAssign}
+                      onChange={(v) => updateField("enableAutoAssign", v)}
+                    />
+                  </div>
+                </div>
+              </div>
+            )}
+
+            {/* KEAMANAN */}
+            {tab === "security" && (
+              <div className={card}>
+                <p className="text-[11px] font-bold uppercase tracking-wider text-muted-foreground">Tab Keamanan</p>
+                <h3 className="text-2xl font-extrabold text-forest dark:text-foreground">Batas Penggunaan dan Kebijakan Anti-Spam</h3>
+                <p className="mt-1 text-sm text-muted-foreground">
+                  Mencegah penyalahgunaan pelaporan atau pengiriman laporan palsu berkali-kali.
+                </p>
+
+                <div className="mt-6 space-y-6">
+                  <SliderRow
+                    id="maxReports" label="Maks. Laporan Harian Per Perangkat (IP)"
+                    min={1} max={10} value={settings.maxReportsPerDay}
+                    onChange={(v) => updateField("maxReportsPerDay", v)}
+                  />
+                  <SliderRow
+                    id="cooldown" label="Masa Reset Kuota IP (Jam)"
+                    min={1} max={72} value={settings.ipCooldownPeriod}
+                    onChange={(v) => updateField("ipCooldownPeriod", v)}
+                  />
+                  <SliderRow
+                    id="spamThreshold" label="Pendeteksi Duplikasi Judul (%)"
+                    min={50} max={100} value={settings.spamThreshold}
+                    onChange={(v) => updateField("spamThreshold", v)}
+                  />
+                </div>
+              </div>
+            )}
+
+            {/* NOTIFIKASI */}
+            {tab === "notifications" && (
+              <div className={card}>
+                <h3 className="text-2xl font-extrabold text-forest dark:text-foreground">Notifikasi Dinas dan Saluran Eksternal</h3>
+                <p className="mt-1 text-sm text-muted-foreground">
+                  Atur saluran komunikasi dinas untuk pemberitahuan instan saat ada laporan baru.
+                </p>
+
+                <div className="mt-6 space-y-5">
+                  <ToggleRow
+                    title="Notifikasi Email Dinas"
+                    desc="Kirim log laporan baru ke kotak masuk admin utama."
+                    checked={settings.notifyEmail}
+                    onChange={(v) => updateField("notifyEmail", v)}
+                  />
+                  {settings.notifyEmail && (
+                    <div className="space-y-1.5 border-l-2 border-primary/50 pl-4">
+                      <label htmlFor="adminEmail" className={labelCls}>Alamat Email Dinas</label>
+                      <Input id="adminEmail" type="email" value={settings.adminEmail}
+                        onChange={(e) => updateField("adminEmail", e.target.value)}
+                        placeholder="admin@dinas.aura.go.id" required={settings.notifyEmail} />
+                    </div>
+                  )}
+
+                  <div className="border-t border-border/60 pt-5">
+                    <ToggleRow
+                      title="Integrasi Telegram Bot"
+                      desc="Kirim ringkasan koordinat dan foto ke grup koordinasi lapangan di Telegram."
+                      checked={settings.notifyTelegram}
+                      onChange={(v) => updateField("notifyTelegram", v)}
+                    />
+                  </div>
+                  {settings.notifyTelegram && (
+                    <div className="space-y-4 border-l-2 border-primary/50 pl-4">
+                      <div className="space-y-1.5">
+                        <label htmlFor="tgToken" className={labelCls}>Bot API Token</label>
+                        <Input id="tgToken" type="password" value={settings.telegramToken}
+                          onChange={(e) => updateField("telegramToken", e.target.value)}
+                          placeholder="1234567890:ABCdefGhIJKlmNoPQRsT…" required={settings.notifyTelegram} />
+                      </div>
+                      <div className="space-y-1.5">
+                        <label htmlFor="tgChat" className={labelCls}>Chat ID / ID Grup</label>
+                        <Input id="tgChat" value={settings.telegramChatId}
+                          onChange={(e) => updateField("telegramChatId", e.target.value)}
+                          placeholder="-100XXXXXXXXXX" required={settings.notifyTelegram} />
+                      </div>
+                    </div>
+                  )}
+                </div>
+              </div>
+            )}
+
+            {/* KATEGORI */}
+            {tab === "categories" && (
+              <div className={card}>
+                <h3 className="text-2xl font-extrabold text-forest dark:text-foreground">Kategori Kerusakan Aktif</h3>
+                <p className="mt-1 text-sm text-muted-foreground">
+                  Pilih kategori yang terbuka bagi pelaporan warga. Kategori non-aktif tidak muncul di form warga.
+                </p>
+                <div className="mt-6">
+                  <ToggleRow
+                    title="Jalan Berlubang"
+                    desc="Meliputi lubang jalan, jalan retak, bergelombang, atau ambles."
+                    checked={settings.catJalan}
+                    onChange={(v) => updateField("catJalan", v)}
+                  />
+                </div>
+              </div>
+            )}
+          </div>
         </div>
+
+        {/* Bar simpan */}
+        <div className="sticky bottom-4 z-20 mx-auto flex w-fit max-w-full items-center gap-4 rounded-full bg-card py-2 pl-6 pr-2 shadow-elev">
+          <span className="flex items-center gap-2 text-sm text-muted-foreground">
+            <span className={`h-2 w-2 rounded-full ${dirty ? "bg-warning" : "bg-success"}`} />
+            {dirty ? "Perubahan belum disimpan ke sistem" : "Semua perubahan sudah tersimpan"}
+          </span>
+          <button
+            type="submit"
+            disabled={saving || !dirty}
+            className="inline-flex h-11 items-center gap-3 rounded-full bg-primary pl-6 pr-1.5 text-sm font-bold text-primary-foreground transition-opacity hover:opacity-90 disabled:opacity-50"
+          >
+            {saving ? "Menyimpan…" : "Simpan Pengaturan"}
+            <span className="flex h-8 w-8 items-center justify-center rounded-full bg-forest text-primary">
+              {saving ? <Loader2 className="h-4 w-4 animate-spin" /> : <ArrowRight className="h-4 w-4" />}
+            </span>
+          </button>
+        </div>
+      </form>
+    </div>
+  );
+}
+
+function ToggleRow({
+  title, desc, checked, onChange,
+}: { title: string; desc: string; checked: boolean; onChange: (v: boolean) => void }) {
+  return (
+    <div className="flex items-center justify-between gap-6">
+      <div className="max-w-xl">
+        <p className="text-sm font-extrabold text-forest dark:text-foreground">{title}</p>
+        <p className="mt-1 text-xs leading-relaxed text-muted-foreground">{desc}</p>
       </div>
+      <Switch
+        checked={checked}
+        onCheckedChange={onChange}
+        className="shrink-0 data-[state=checked]:bg-primary"
+      />
+    </div>
+  );
+}
+
+function SliderRow({
+  id, label, min, max, value, onChange,
+}: { id: string; label: string; min: number; max: number; value: number; onChange: (v: number) => void }) {
+  return (
+    <div className="grid items-center gap-3 md:grid-cols-[minmax(0,1fr)_1.4fr_auto] md:gap-6">
+      <label htmlFor={id} className="text-sm font-extrabold text-forest dark:text-foreground">{label}</label>
+      <input
+        id={id}
+        type="range"
+        min={min}
+        max={max}
+        value={value}
+        onChange={(e) => onChange(parseInt(e.target.value))}
+        className="h-2 w-full cursor-pointer accent-primary"
+      />
+      <Input
+        type="number"
+        min={min}
+        max={max}
+        value={value}
+        onChange={(e) => {
+          const n = parseInt(e.target.value);
+          onChange(Number.isNaN(n) ? min : Math.min(max, Math.max(min, n)));
+        }}
+        className="h-11 w-24 text-center font-bold"
+      />
     </div>
   );
 }

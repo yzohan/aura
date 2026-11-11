@@ -1,5 +1,5 @@
 import { Link, useNavigate } from "@tanstack/react-router";
-import { Leaf, LogOut, Menu, X } from "lucide-react";
+import { ArrowRight, LogOut, Leaf, MapPin, Menu, X } from "lucide-react";
 import { useState } from "react";
 import { useAuth, ROLE_HOME, ROLE_LABEL } from "@/lib/auth";
 import { Button } from "@/components/ui/button";
@@ -12,16 +12,28 @@ import {
   DropdownMenuTrigger,
 } from "@/components/ui/dropdown-menu";
 import { Avatar, AvatarFallback } from "@/components/ui/avatar";
-import codingCampLogo from "@/assets/dbs-camp-logo.png";
 
 const PUBLIC_LINKS = [
   { to: "/", label: "Beranda" },
+  { to: "/daerah", label: "Rating Daerah" },
   { to: "/tentang", label: "Tentang" },
   { to: "/fitur", label: "Fitur" },
-  { to: "/tim", label: "Tim" },
 ];
 
-export function SiteHeader() {
+export function Logo({ dark = false }: { dark?: boolean }) {
+  return (
+    <span className="flex items-center gap-2">
+      <span className="flex h-10 w-10 items-center justify-center rounded-full bg-primary text-primary-foreground">
+        <Leaf className="h-5 w-5" />
+      </span>
+      <span className={`text-lg font-extrabold tracking-tight ${dark ? "text-white" : "text-forest dark:text-foreground"}`}>
+        AURA
+      </span>
+    </span>
+  );
+}
+
+export function SiteHeader({ overlay = false }: { overlay?: boolean }) {
   const { user, profile, role, signOut } = useAuth();
   const navigate = useNavigate();
   const [open, setOpen] = useState(false);
@@ -34,87 +46,92 @@ export function SiteHeader() {
     .toUpperCase();
 
   return (
-    <header className="sticky top-0 z-40 border-b border-border/60 bg-background/80 backdrop-blur-md">
-      <div className="container mx-auto flex h-16 items-center justify-between px-4">
-        <Link to="/" className="flex items-center gap-2">
-          <span className="flex h-9 w-9 items-center justify-center rounded-xl bg-leaf-gradient text-primary-foreground shadow-soft">
-            <Leaf className="h-5 w-5" />
-          </span>
-          <span className="text-lg font-bold tracking-tight">AURA</span>
-        </Link>
+    <header className={`${overlay ? "absolute inset-x-0 top-0 pt-8 md:pt-11" : "sticky top-0 pt-3 md:pt-4"} z-40 px-3 md:px-6`}>
+      <div className="mx-auto max-w-[1200px] rounded-full border border-border/60 bg-card/90 shadow-soft backdrop-blur-md">
+        <div className="flex h-14 items-center justify-between pl-3 pr-2 md:pl-4">
+          <Link to="/" aria-label="AURA — Beranda">
+            <Logo />
+          </Link>
 
-        <nav className="hidden items-center gap-1 md:flex">
-          {PUBLIC_LINKS.map((l) => (
-            <Link
-              key={l.to}
-              to={l.to}
-              className="rounded-md px-3 py-2 text-sm font-medium text-muted-foreground transition-colors hover:bg-secondary hover:text-foreground"
-              activeProps={{ className: "rounded-md px-3 py-2 text-sm font-semibold text-primary bg-secondary" }}
-              activeOptions={{ exact: true }}
-            >
-              {l.label}
-            </Link>
-          ))}
-        </nav>
+          <nav className="hidden items-center gap-1 md:flex" aria-label="Navigasi utama">
+            {PUBLIC_LINKS.map((l) => (
+              <Link
+                key={l.to}
+                to={l.to}
+                className="rounded-full px-4 py-2 text-sm font-semibold text-muted-foreground transition-colors hover:bg-secondary hover:text-foreground"
+                activeProps={{ className: "rounded-full px-4 py-2 text-sm font-bold text-forest bg-sage" }}
+                activeOptions={{ exact: true }}
+              >
+                {l.label}
+              </Link>
+            ))}
+          </nav>
 
-        <div className="hidden items-center gap-2 md:flex">
-          {user && role ? (
-            <DropdownMenu>
-              <DropdownMenuTrigger asChild>
-                <Button variant="ghost" className="gap-2 px-2">
-                  <Avatar className="h-8 w-8">
-                    <AvatarFallback className="bg-primary text-primary-foreground text-xs">
-                      {initials}
-                    </AvatarFallback>
-                  </Avatar>
-                  <div className="text-left">
-                    <p className="text-sm font-medium leading-none">{profile?.full_name ?? "Pengguna"}</p>
-                    <p className="text-xs text-muted-foreground">{ROLE_LABEL[role]}</p>
-                  </div>
-                </Button>
-              </DropdownMenuTrigger>
-              <DropdownMenuContent align="end" className="w-56">
-                <DropdownMenuLabel>{user.email}</DropdownMenuLabel>
-                <DropdownMenuSeparator />
-                <DropdownMenuItem onClick={() => navigate({ to: ROLE_HOME[role] })}>
-                  Dashboard saya
-                </DropdownMenuItem>
-                <DropdownMenuSeparator />
-                <DropdownMenuItem
-                  onClick={async () => {
-                    await signOut();
-                    navigate({ to: "/" });
-                  }}
-                >
-                  <LogOut className="mr-2 h-4 w-4" /> Keluar
-                </DropdownMenuItem>
-              </DropdownMenuContent>
-            </DropdownMenu>
-          ) : (
-            <Button variant="ghost" asChild>
-              <Link to="/warga">Lapor Sekarang</Link>
-            </Button>
-          )}
+          <div className="hidden items-center gap-2 md:flex">
+            {user && role ? (
+              <DropdownMenu>
+                <DropdownMenuTrigger asChild>
+                  <Button variant="ghost" className="h-11 gap-2 px-2">
+                    <Avatar className="h-8 w-8">
+                      <AvatarFallback className="bg-primary text-primary-foreground text-xs">
+                        {initials}
+                      </AvatarFallback>
+                    </Avatar>
+                    <div className="text-left">
+                      <p className="text-sm font-semibold leading-none">{profile?.full_name ?? "Pengguna"}</p>
+                      <p className="mt-0.5 text-xs text-muted-foreground">{ROLE_LABEL[role]}</p>
+                    </div>
+                  </Button>
+                </DropdownMenuTrigger>
+                <DropdownMenuContent align="end" className="w-56 rounded-2xl">
+                  <DropdownMenuLabel>{user.email}</DropdownMenuLabel>
+                  <DropdownMenuSeparator />
+                  <DropdownMenuItem onClick={() => navigate({ to: ROLE_HOME[role] })}>
+                    Dashboard saya
+                  </DropdownMenuItem>
+                  <DropdownMenuSeparator />
+                  <DropdownMenuItem
+                    onClick={async () => {
+                      await signOut();
+                      navigate({ to: "/" });
+                    }}
+                  >
+                    <LogOut className="mr-2 h-4 w-4" /> Keluar
+                  </DropdownMenuItem>
+                </DropdownMenuContent>
+              </DropdownMenu>
+            ) : (
+              <Button asChild variant="dark" className="h-11 gap-3 pl-5 pr-1.5">
+                <Link to="/warga">
+                  Lapor Sekarang
+                  <span className="flex h-8 w-8 items-center justify-center rounded-full bg-primary text-primary-foreground">
+                    <ArrowRight className="h-4 w-4" />
+                  </span>
+                </Link>
+              </Button>
+            )}
+          </div>
+
+          <button
+            className="flex h-11 w-11 items-center justify-center rounded-full bg-secondary md:hidden"
+            onClick={() => setOpen((o) => !o)}
+            aria-label={open ? "Tutup menu" : "Buka menu"}
+            aria-expanded={open}
+          >
+            {open ? <X className="h-5 w-5" /> : <Menu className="h-5 w-5" />}
+          </button>
         </div>
-
-        <button
-          className="flex h-10 w-10 items-center justify-center rounded-md md:hidden"
-          onClick={() => setOpen((o) => !o)}
-          aria-label="Toggle menu"
-        >
-          {open ? <X className="h-5 w-5" /> : <Menu className="h-5 w-5" />}
-        </button>
       </div>
 
       {open && (
-        <div className="border-t border-border bg-background md:hidden">
-          <div className="container mx-auto flex flex-col gap-1 px-4 py-3">
+        <div className="mx-auto mt-2 max-w-[1200px] rounded-3xl border border-border/60 bg-card p-3 shadow-elev md:hidden">
+          <div className="flex flex-col gap-1">
             {PUBLIC_LINKS.map((l) => (
               <Link
                 key={l.to}
                 to={l.to}
                 onClick={() => setOpen(false)}
-                className="rounded-md px-3 py-2 text-sm font-medium text-muted-foreground hover:bg-secondary"
+                className="rounded-full px-4 py-3 text-sm font-semibold text-foreground hover:bg-secondary"
               >
                 {l.label}
               </Link>
@@ -123,7 +140,7 @@ export function SiteHeader() {
               {user && role ? (
                 <>
                   <Button
-                    variant="outline"
+                    variant="dark"
                     onClick={() => {
                       setOpen(false);
                       navigate({ to: ROLE_HOME[role] });
@@ -143,7 +160,7 @@ export function SiteHeader() {
                   </Button>
                 </>
               ) : (
-                <Button variant="outline" asChild onClick={() => setOpen(false)}>
+                <Button variant="dark" asChild onClick={() => setOpen(false)}>
                   <Link to="/warga">Lapor Sekarang</Link>
                 </Button>
               )}
@@ -156,43 +173,47 @@ export function SiteHeader() {
 }
 
 export function SiteFooter() {
+  const nav = [
+    { to: "/", t: "Beranda" },
+    { to: "/daerah", t: "Rating Daerah & Warga" },
+    { to: "/tentang", t: "Tentang" },
+    { to: "/fitur", t: "Fitur" },
+  ];
+  const layanan = [
+    { to: "/warga", t: "Lapor Jalan Berlubang" },
+    { to: "/auth/login", t: "Masuk Admin / Petugas" },
+  ];
   return (
-    <footer className="border-t border-border bg-secondary/30">
-      <div className="container mx-auto grid gap-8 px-4 py-12 md:grid-cols-4">
-        <div className="md:col-span-2">
-          <div className="flex items-center gap-2">
-            <span className="flex h-9 w-9 items-center justify-center rounded-xl bg-leaf-gradient text-primary-foreground">
-              <Leaf className="h-5 w-5" />
-            </span>
-            <span className="text-lg font-bold">AURA</span>
+    <footer className="mt-16 rounded-t-[48px] bg-forest text-sage-soft md:rounded-t-[64px]">
+      <div className="mx-auto max-w-[1200px] px-5 pb-8 pt-14 md:pt-16">
+        <div className="grid gap-10 md:grid-cols-[1.6fr_1fr_1fr]">
+          <div>
+            <Logo dark />
+            <p className="mt-4 max-w-xs text-sm leading-relaxed text-sage-soft/80">
+              Ekosistem Tata Kota Cerdas untuk pelaporan jalan berlubang di Tangerang Selatan.
+            </p>
           </div>
-          <p className="mt-3 max-w-md text-sm text-muted-foreground">
-            Ekosistem tata kota cerdas untuk deteksi dan penanganan kerusakan infrastruktur publik
-            secara cepat, transparan, dan berbasis data spasial.
-          </p>
-          <div className="mt-5 flex flex-col gap-2">
-            <span className="text-[10px] font-bold uppercase tracking-wider text-muted-foreground/60">Organized & Supported By</span>
-            <img src={codingCampLogo} alt="Coding Camp powered by DBS Foundation" className="h-10 w-fit object-contain opacity-80 hover:opacity-100 transition-opacity dark:invert" />
+          <div>
+            <h4 className="font-bold text-white">Navigasi</h4>
+            <ul className="mt-4 space-y-3 text-sm text-sage-soft/80">
+              {nav.map((l) => (
+                <li key={l.t}><Link to={l.to} className="hover:text-primary">{l.t}</Link></li>
+              ))}
+            </ul>
+          </div>
+          <div>
+            <h4 className="font-bold text-white">Layanan</h4>
+            <ul className="mt-4 space-y-3 text-sm text-sage-soft/80">
+              {layanan.map((l) => (
+                <li key={l.t}><Link to={l.to} className="hover:text-primary">{l.t}</Link></li>
+              ))}
+            </ul>
           </div>
         </div>
-        <div>
-          <h4 className="text-sm font-semibold">Produk</h4>
-          <ul className="mt-3 space-y-2 text-sm text-muted-foreground">
-            <li><Link to="/fitur" className="hover:text-foreground">Fitur</Link></li>
-            <li><Link to="/tentang" className="hover:text-foreground">Tentang</Link></li>
-            <li><Link to="/tim" className="hover:text-foreground">Tim</Link></li>
-          </ul>
+
+        <div className="mt-10 flex flex-col items-center justify-between gap-2 border-t border-white/10 pt-6 text-xs text-sage-soft/60 md:flex-row">
+          <span>© {new Date().getFullYear()} AURA. Seluruh hak cipta dilindungi.</span>
         </div>
-        <div>
-          <h4 className="text-sm font-semibold">Aksi</h4>
-          <ul className="mt-3 space-y-2 text-sm text-muted-foreground">
-            <li><Link to="/warga" className="hover:text-foreground">Lapor Kerusakan</Link></li>
-            <li><Link to="/auth/login" className="hover:text-foreground">Masuk (Admin/Petugas)</Link></li>
-          </ul>
-        </div>
-      </div>
-      <div className="border-t border-border py-4 text-center text-xs text-muted-foreground">
-        © {new Date().getFullYear()} AURA · Coding Camp 2026 powered by DBS Foundation
       </div>
     </footer>
   );
