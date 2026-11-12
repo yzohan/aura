@@ -16,7 +16,6 @@ import {
   Users,
   FileText,
   Star,
-  Map as MapIcon,
   ScanSearch,
   MessageSquarePlus,
   Send,
@@ -60,15 +59,6 @@ export const Route = createFileRoute("/")({
   }),
   component: HomePage,
 });
-
-const PARTNERS_CONFIG = [
-  { name: "Dinas PUPR", icon: Wrench },
-  { name: "Dishub", icon: Activity },
-  { name: "PJU Kota", icon: Lightbulb },
-  { name: "Tata Ruang", icon: MapPin },
-  { name: "Bappeda", icon: ShieldCheck },
-  { name: "Kominfo", icon: Info },
-];
 
 const QUICK_CARDS = [
   { icon: Camera, t: "Foto dan GPS", d: "Satu foto, lokasi terekam otomatis." },
@@ -217,8 +207,8 @@ function HomePage() {
             <span className="flex items-center gap-2"><Clock className="h-4 w-4" /> Status laporan bisa dipantau</span>
           </div>
 
-          {/* 4 kartu layanan */}
-          <div className="mx-auto mt-8 grid max-w-[1200px] gap-4 px-2 sm:grid-cols-2 lg:grid-cols-4">
+          {/* 3 kartu layanan */}
+          <div className="mx-auto mt-8 grid max-w-[1200px] gap-4 px-2 sm:grid-cols-2 lg:grid-cols-3">
             {QUICK_CARDS.map(({ icon: Icon, t, d }) => (
               <div key={t} className="flex min-h-[200px] flex-col rounded-[28px] border border-border bg-card p-6 shadow-soft">
                 <span className="flex h-12 w-12 items-center justify-center rounded-full bg-sage text-forest">
@@ -230,31 +220,6 @@ function HomePage() {
                   <ArrowRight className="h-4 w-4" />
                 </span>
               </div>
-            ))}
-            <Link
-              to="/warga"
-              className="flex min-h-[200px] flex-col rounded-[28px] bg-primary p-6 text-primary-foreground transition-transform hover:-translate-y-1"
-            >
-              <span className="flex h-12 w-12 items-center justify-center rounded-full bg-forest text-primary">
-                <MapIcon className="h-5 w-5" />
-              </span>
-              <h3 className="mt-5 text-lg font-extrabold">Peta Publik</h3>
-              <p className="mt-1 text-sm text-forest/80">Lihat laporan terbaru di sekitarmu.</p>
-              <span className="mt-auto flex h-9 w-9 items-center justify-center self-end rounded-full bg-forest text-primary">
-                <ArrowRight className="h-4 w-4" />
-              </span>
-            </Link>
-          </div>
-        </section>
-
-        {/* MITRA */}
-        <section className="mt-10 py-4">
-          <p className="mb-4 text-center text-xs font-bold text-muted-foreground">Partner Strategis</p>
-          <div className="mx-auto flex max-w-[1200px] flex-wrap justify-center gap-3 px-4">
-            {PARTNERS_CONFIG.map((p) => (
-              <span key={p.name} className="flex items-center gap-2.5 rounded-full bg-secondary px-5 py-2.5 text-sm font-semibold text-forest">
-                <p.icon className="h-4 w-4" /> {p.name}
-              </span>
             ))}
           </div>
         </section>
